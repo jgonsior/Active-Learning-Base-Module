@@ -121,10 +121,15 @@ def get_db(db_name_or_type):
 #  else:
 #  logging.basicConfig(level=level)
 
+# really dirty hack to provide logging as functions instead of objects
+def init_logger(logfilepath):
+    global logfile_path
+    logfile_path = logfilepath
+
 
 def log_it(message):
     #  print(message)
-    with open("tmp/log.txt", "a") as f:
+    with open(logfile_path, "a") as f:
         f.write(
             "["
             + str(threading.get_ident())
@@ -166,6 +171,7 @@ def standard_config(additional_parameters=None):
         "--RANDOM_SEED", type=int, default=42, help="-1 Enables true Randomness"
     )
     parser.add_argument("--TEST_FRACTION", type=float, default=0.5)
+    parser.add_argument("--LOG_FILE", type=str, default="log.txt")
 
     if additional_parameters is not None:
         for additional_parameter in additional_parameters:
@@ -180,6 +186,8 @@ def standard_config(additional_parameters=None):
     if config.RANDOM_SEED != -1:
         np.random.seed(config.RANDOM_SEED)
         random.seed(config.RANDOM_SEED)
+
+    init_logger(config.LOG_FILE)
 
     return config
 
