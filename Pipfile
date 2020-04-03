@@ -11,7 +11,6 @@ black = "==19.10b0"
 
 [packages]
 pandas = "*"
-matplotlib = "*"
 sklearn = "*"
 numpy = "*"
 mlens = "*"
@@ -20,11 +19,7 @@ sklearn-deap = "*"
 peewee = "*"
 json-tricks = "*"
 psycopg2 = ">2.5"
-altair = "*"
-altair-viewer = "*"
 tabulate = "*"
-jupyter = "*"
-nb-black = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3"
