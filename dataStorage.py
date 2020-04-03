@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from experiment_setup_lib import log_it
+from .experiment_setup_lib import log_it
 
 
 class DataStorage:

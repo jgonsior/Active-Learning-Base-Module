@@ -3,7 +3,7 @@ from pprint import pprint
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
-from activeLearner import ActiveLearner
+from ..activeLearner import ActiveLearner
 
 
 class BoundaryPairSampler(ActiveLearner):

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import entropy
 
-from cluster_strategies import BaseClusterStrategy
+from .baseClusterStrategy import BaseClusterStrategy
 
 
 class MostUncertainClusterStrategy(BaseClusterStrategy):

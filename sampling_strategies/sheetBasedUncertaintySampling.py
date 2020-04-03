@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import entropy
 
-from sampling_strategies.sheetBasedActiveLearner import SheetBasedActiveLearner
+from .sheetBasedActiveLearner import SheetBasedActiveLearner
 
 
 class SheetBasedUncertaintySampler(SheetBasedActiveLearner):

@@ -1,4 +1,4 @@
-from cluster_strategies import BaseClusterStrategy
+from .baseClusterStrategy import BaseClusterStrategy
 
 
 class DummyClusterStrategy(BaseClusterStrategy):

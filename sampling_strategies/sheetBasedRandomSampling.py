@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from sampling_strategies.sheetBasedActiveLearner import SheetBasedActiveLearner
+from .sheetBasedActiveLearner import SheetBasedActiveLearner
 
 
 class SheetBasedRandomSampler(SheetBasedActiveLearner):

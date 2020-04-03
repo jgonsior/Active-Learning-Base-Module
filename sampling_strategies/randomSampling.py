@@ -1,6 +1,6 @@
 import random
 
-from activeLearner import ActiveLearner
+from ..activeLearner import ActiveLearner
 
 
 class RandomSampler(ActiveLearner):

@@ -3,7 +3,7 @@ from itertools import chain
 import numpy as np
 from scipy.stats import entropy
 
-from activeLearner import ActiveLearner
+from ..activeLearner import ActiveLearner
 
 
 class UncertaintySampler(ActiveLearner):

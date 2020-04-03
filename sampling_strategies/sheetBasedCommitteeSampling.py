@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.utils.class_weight import compute_sample_weight
 
-from sampling_strategies.sheetBasedActiveLearner import SheetBasedActiveLearner
+from .sheetBasedActiveLearner import SheetBasedActiveLearner
 
 
 class Committee:

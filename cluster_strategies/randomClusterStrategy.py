@@ -1,6 +1,6 @@
 import random
 
-from cluster_strategies import BaseClusterStrategy
+from .baseClusterStrategy import BaseClusterStrategy
 
 
 class RandomClusterStrategy(BaseClusterStrategy):

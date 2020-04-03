@@ -1,6 +1,6 @@
 import numpy as np
 
-from activeLearner import ActiveLearner
+from ..activeLearner import ActiveLearner
 
 
 class SheetBasedActiveLearner(ActiveLearner):

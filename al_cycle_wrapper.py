@@ -9,21 +9,21 @@ from timeit import default_timer as timer
 from json_tricks import dumps
 from sklearn.preprocessing import LabelEncoder
 
-from cluster_strategies import (
+from .cluster_strategies import (
     DummyClusterStrategy,
     MostUncertainClusterStrategy,
     RandomClusterStrategy,
     RoundRobinClusterStrategy,
 )
-from dataStorage import DataStorage
-from experiment_setup_lib import (
+from .dataStorage import DataStorage
+from .experiment_setup_lib import (
     ExperimentResult,
     calculate_global_score,
     classification_report_and_confusion_matrix,
     get_db,
     get_param_distribution,
 )
-from sampling_strategies import BoundaryPairSampler, RandomSampler, UncertaintySampler
+from .sampling_strategies import BoundaryPairSampler, RandomSampler, UncertaintySampler
 
 
 def train_al(X_train, Y_train, X_test, Y_test, label_encoder, hyper_parameters):

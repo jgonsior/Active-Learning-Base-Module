@@ -1,7 +1,7 @@
 import random
 from collections import defaultdict
 
-from cluster_strategies import BaseClusterStrategy
+from .baseClusterStrategy import BaseClusterStrategy
 
 
 class RoundRobinClusterStrategy(BaseClusterStrategy):

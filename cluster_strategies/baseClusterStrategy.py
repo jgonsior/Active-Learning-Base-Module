@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 from sklearn.cluster import OPTICS, MiniBatchKMeans, cluster_optics_dbscan
 
-from experiment_setup_lib import log_it
+from ..experiment_setup_lib import log_it
 
 
 class BaseClusterStrategy:

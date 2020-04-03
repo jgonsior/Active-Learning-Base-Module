@@ -15,7 +15,7 @@ from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.class_weight import compute_sample_weight
 
-from experiment_setup_lib import (
+from .experiment_setup_lib import (
     calculate_roc_auc,
     classification_report_and_confusion_matrix,
     get_single_al_run_stats_row,
