@@ -245,17 +245,9 @@ class ActiveLearner:
         return certain_X, recommended_labels, certain_indices
 
     def increase_labeled_dataset(self):
-        # dict of cluster -> [X_train_unlabeled_indices]
         X_train_unlabeled_cluster_indices = self.cluster_strategy.get_cluster_indices(
             clf=self.clf_list[0], nr_queries_per_iteration=self.nr_queries_per_iteration
         )
-
-        #  for cluster_id, cluster_indices in X_train_unlabeled_cluster_indices.items(
-        #  ):
-        #  log_it(
-        #  "Selected cluster ", cluster_id, ":\t",
-        #  self.cluster_strategy._entropy(
-        #  self.dataset_storage.Y_train_unlabeled.loc[cluster_indices]))
 
         # ask strategy for new datapoint
         query_indices = self.calculate_next_query_indices(
@@ -468,6 +460,7 @@ class ActiveLearner:
 
                 if early_stop_reached and X_query is None:
                     break
+
                 if X_query is None:
                     # ask oracle for some "hard data"
                     X_query, Y_query, query_indices = self.increase_labeled_dataset()
