@@ -338,7 +338,10 @@ def get_single_al_run_stats_row(
             amount_of_unlabeled -= query_length
 
     if "accuracy" not in metrics_per_al_cycle["test_data_metrics"][0][index][0].keys():
-        return "No test accuracy found"
+        test_acc = -1
+    else:
+        test_acc = metrics_per_al_cycle["test_data_metrics"][0][index][0]["accuracy"]
+        #  return "No test accuracy found"
 
     if (
         "accuracy"
@@ -357,7 +360,7 @@ def get_single_al_run_stats_row(
         amount_of_labeled,
         amount_of_unlabeled,
         metrics_per_al_cycle["query_length"][index],
-        metrics_per_al_cycle["test_data_metrics"][0][index][0]["accuracy"],
+        test_acc,
         metrics_per_al_cycle["train_labeled_data_metrics"][0][index][0]["accuracy"],
         metrics_per_al_cycle["train_unlabeled_data_metrics"][0][index][0]["accuracy"],
         metrics_per_al_cycle["stop_certainty_list"][index],

@@ -170,12 +170,19 @@ class DataStorage:
         self.X_train_labeled = self.X_train_labeled.append(X_query)
         self.X_train_unlabeled = self.X_train_unlabeled.drop(query_indices)
 
-        self.Y_train_strong_labels = self.Y_train_strong_labels.append(
-            self.Y_train_unlabeled.loc[query_indices]
-        )
+        try:
+            self.Y_train_strong_labels = self.Y_train_strong_labels.append(
+                self.Y_train_unlabeled.loc[query_indices]
+            )
+        except KeyError:
+            # in a non experiment setting an error will be thrown because self.Y_train_unlabeled of course doesn't contains the labels
+            for query_index in query_indices:
+                self.Y_train_strong_labels.loc[query_index] = [-1]
 
         self.Y_train_labeled = self.Y_train_labeled.append(Y_query)
-        self.Y_train_unlabeled = self.Y_train_unlabeled.drop(query_indices)
+        self.Y_train_unlabeled = self.Y_train_unlabeled.drop(
+            query_indices, errors="ignore"
+        )
 
         # remove indices from all clusters in unlabeled and add to labeled
         for cluster_id in self.X_train_unlabeled_cluster_indices.keys():

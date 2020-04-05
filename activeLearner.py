@@ -33,6 +33,7 @@ class ActiveLearner:
         N_JOBS,
         NR_LEARNING_ITERATIONS,
         NR_QUERIES_PER_ITERATION,
+        oracle,
     ):
         if RANDOM_SEED != -1:
             np.random.seed(RANDOM_SEED)
@@ -67,6 +68,7 @@ class ActiveLearner:
         self.cluster_strategy = cluster_strategy
         self.data_storage = dataset_storage
         self.amount_of_user_asked_queries = 0
+        self.oracle = oracle
 
     def calculate_stopping_criteria_stddev(self):
         accuracy_list = self.query_weak_accuracy_list
@@ -86,12 +88,15 @@ class ActiveLearner:
         )
 
     def calculate_stopping_criteria_certainty(self):
-        Y_train_unlabeled_pred_proba = self.clf_list[0].predict_proba(
-            self.data_storage.X_train_unlabeled.to_numpy()
-        )
+        if self.data_storage.X_train_unlabeled.shape[0] == 0:
+            self.metrics_per_al_cycle["stop_certainty_list"].append(-1)
+        else:
+            Y_train_unlabeled_pred_proba = self.clf_list[0].predict_proba(
+                self.data_storage.X_train_unlabeled.to_numpy()
+            )
 
-        result = np.apply_along_axis(entropy, 1, Y_train_unlabeled_pred_proba)
-        self.metrics_per_al_cycle["stop_certainty_list"].append(np.max(result))
+            result = np.apply_along_axis(entropy, 1, Y_train_unlabeled_pred_proba)
+            self.metrics_per_al_cycle["stop_certainty_list"].append(np.max(result))
 
     @abc.abstractmethod
     def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices, *args):
@@ -252,7 +257,7 @@ class ActiveLearner:
             self.data_storage.X_train_labeled_cluster_indices.pop(cluster_id)
         return certain_X, recommended_labels, certain_indices
 
-    def increase_labeled_dataset(self):
+    def get_newly_labeled_data(self):
         X_train_unlabeled_cluster_indices = self.cluster_strategy.get_cluster_indices(
             clf=self.clf_list[0], nr_queries_per_iteration=self.nr_queries_per_iteration
         )
@@ -265,7 +270,7 @@ class ActiveLearner:
         X_query = self.data_storage.X_train_unlabeled.loc[query_indices]
 
         # ask oracle for new query
-        Y_query = self.data_storage.Y_train_unlabeled.loc[query_indices]
+        Y_query = self.oracle.get_labels(query_indices, self.data_storage)
         return X_query, Y_query, query_indices
 
     def uncertainty_recommendation(self, CERTAINTY_THRESHOLD, CERTAINTY_RATIO):
@@ -412,7 +417,6 @@ class ActiveLearner:
                 self.nr_queries_per_iteration = self.data_storage.X_train_unlabeled.shape[
                     0
                 ]
-
             if self.nr_queries_per_iteration == 0:
                 break
 
@@ -460,18 +464,24 @@ class ActiveLearner:
                         recommendation_value = "S"
 
                 if X_query is not None:
-                    Y_query_strong = self.data_storage.Y_train_unlabeled.loc[
+                    if (
                         query_indices
-                    ]
-                    #  log_it(Y_query_strong)
+                        in self.data_storage.Y_train_unlabeled.index.values
+                    ):
+                        Y_query_strong = self.data_storage.Y_train_unlabeled.loc[
+                            query_indices
+                        ]
+                    else:
+                        Y_query_strong = Y_query
+                        #  log_it(Y_query_strong)
                     #  log_it(Y_query)
 
                 if early_stop_reached and X_query is None:
                     break
 
                 if X_query is None:
-                    # ask oracle for some "hard data"
-                    X_query, Y_query, query_indices = self.increase_labeled_dataset()
+                    # ask oracle for some new labels
+                    X_query, Y_query, query_indices = self.get_newly_labeled_data()
                     recommendation_value = "A"
                     self.amount_of_user_asked_queries += len(Y_query)
                     Y_query_strong = None
@@ -500,7 +510,10 @@ class ActiveLearner:
 
             # calculate new metrics
             self.calculate_post_metrics(X_query, Y_query, Y_query_strong=Y_query_strong)
-
+            #  print(X_query)
+            #  print(Y_query)
+            #  print(query_indices)
+            #  print("unlabeled", self.data_storage.X_train_unlabeled)
             self.calculate_stopping_criteria_accuracy()
             self.calculate_stopping_criteria_stddev()
             self.calculate_stopping_criteria_certainty()
@@ -545,4 +558,8 @@ class ActiveLearner:
                 if not ALLOW_RECOMMENDATIONS_AFTER_STOP:
                     break
 
-        return self.clf_list, self.metrics_per_al_cycle
+        return (
+            self.clf_list,
+            self.metrics_per_al_cycle,
+            self.data_storage.Y_train_unlabeled,
+        )

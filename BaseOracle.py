@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-def Oracle(ABC):
+class BaseOracle(ABC):
     @abstractmethod
-    def get_next_indices(self, data_storage):
+    def get_labels(self, query_indices, data_storage):
+        pass

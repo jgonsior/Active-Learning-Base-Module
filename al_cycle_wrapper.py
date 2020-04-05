@@ -33,6 +33,7 @@ def train_al(
     label_encoder,
     START_SET_SIZE,
     hyper_parameters,
+    oracle,
     TEST_FRACTION=None,
     X_test=None,
     Y_test=None,
@@ -76,6 +77,7 @@ def train_al(
         "RANDOM_SEED": hyper_parameters["RANDOM_SEED"],
         "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
         "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
+        "oracle": oracle,
     }
 
     if hyper_parameters["SAMPLING"] == "random":
@@ -97,7 +99,7 @@ def train_al(
         ("No Active Learning Strategy specified")
 
     start = timer()
-    trained_active_clf_list, metrics_per_al_cycle = active_learner.learn(
+    trained_active_clf_list, metrics_per_al_cycle, Y_train = active_learner.learn(
         **hyper_parameters
     )
     end = timer()
