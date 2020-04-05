@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -15,58 +16,111 @@ class DataStorage:
 
     def set_training_data(
         self,
-        X_train,
-        Y_train,
-        label_encoder,
-        test_fraction,
-        start_set_size,
+        X_labeled,
+        Y_labeled,
+        X_unlabeled=None,
+        START_SET_SIZE=None,
+        TEST_FRACTION=None,
+        label_encoder=None,
+        hyper_parameters=None,
         X_test=None,
         Y_test=None,
     ):
-        # split training data into labeled and unlabeled dataset
-        # ensure that at least one sample of each label is present!
-        (
-            self.X_train_labeled,
-            self.X_train_unlabeled,
-            self.Y_train_labeled,
-            self.Y_train_unlabeled,
-        ) = train_test_split(X_train, Y_train, train_size=start_set_size)
+        """ 
+        1. get start_set from X_labeled
+        2. if X_unlabeled is None : experiment!
+            2.1 if X_test: rest von X_labeled wird X_train_unlabeled
+            2.2 if X_test is none: split rest von X_labeled in X_train_unlabeled und X_test
+           else (kein experiment):
+           X_unlabeled wird X_unlabeled, rest von X_labeled wird X_train_unlabeled_
+        
+        """
 
-        Y_train_labeled_set = set(self.Y_train_labeled[0].to_numpy())
+        # separate X_labeled into start_set and labeled _rest
 
-        if len(Y_train_labeled_set) < len(label_encoder.classes_):
+        if START_SET_SIZE == len(X_labeled):
+            X_labeled_rest = None
+            self.X_train_labeled = X_labeled
+            Y_labeled_rest = None
+            self.Y_train_labeled = Y_labeled
+
+        else:
+            (
+                X_labeled_rest,
+                self.X_train_labeled,
+                Y_labeled_rest,
+                self.Y_train_labeled,
+            ) = train_test_split(X_labeled, Y_labeled, test_size=START_SET_SIZE)
+
+        # check if the minimum amount of labeled data is present in the start set size
+        labels_not_in_start_set = set(range(0, len(label_encoder.classes_)))
+
+        all_label_in_start_set = False
+        for Y in self.Y_train_labeled:
+            if Y in labels_not_in_start_set:
+                labels_not_in_start_set.remove(Y)
+            if len(labels_not_in_start_set) == 0:
+                all_label_in_start_set = True
+                break
+
+        if not all_label_in_start_set:
+            if X_labeled_rest is None:
+                print("Please specify at least one labeled example of each class")
+                exit(-1)
+
             # move more data here from the classes not present
-            for class_not_present in range(0, len(label_encoder.classes_)):
-                if class_not_present in Y_train_labeled_set:
-                    continue
-                Y_not_present = self.Y_train_unlabeled[
-                    self.Y_train_unlabeled[0] == class_not_present
-                ].iloc[0:1]
-                #  print(Y_not_present)
-                #  print(Y_not_present.index)
-                X_not_present = self.X_train_unlabeled.loc[Y_not_present.index]
+            for label in labels_not_in_start_set:
+                Y_not_present = Y_labeled_rest[Y_labeled_rest[0] == label].iloc[0:1]
 
-                #  print(Y_not_present)
-                #  print(X_not_present)
+                # iloc not loc because we use the index from numpy
+                X_not_present = X_labeled_rest.loc[Y_not_present.index]
 
                 self.X_train_labeled = self.X_train_labeled.append(X_not_present)
-                self.X_train_unlabeled = self.X_train_unlabeled.drop(
-                    X_not_present.index
-                )
+                X_labeled_rest = X_labeled_rest.drop(X_not_present.index)
 
                 self.Y_train_labeled = self.Y_train_labeled.append(Y_not_present)
-                self.Y_train_unlabeled = self.Y_train_unlabeled.drop(
-                    Y_not_present.index
-                )
+                Y_labeled_rest = Y_labeled_rest.drop(Y_not_present.index)
+
+        if X_unlabeled is not None:
+            self.X_train_unlabeled = X_unlabeled
+            self.Y_train_unlabeled = pd.DataFrame(
+                columns=Y_labeled_rest.columns, dtype=int
+            )
+
+            self.X_test = X_labeled_rest
+            self.Y_test = Y_labeled_rest
+        else:
+            # experiment setting!
+            # create some fake unlabeled data
+
+            if X_test is not None:
+                self.X_train_unlabeled = X_labeled_rest
+                self.Y_train_unlabeled = Y_labeled_rest
+                self.X_test = X_test
+                self.Y_test = Y_test
+            else:
+                # further split labeled rest for train_test
+                (
+                    self.X_train_unlabeled,
+                    self.X_test,
+                    self.Y_train_unlabeled,
+                    self.Y_test,
+                ) = train_test_split(X_labeled_rest, Y_labeled_rest, TEST_FRACTION)
+
+        Y_train_labeled_set = set(self.Y_train_labeled[0].to_numpy())
 
         self._print_data_segmentation()
 
         self.X_train_unlabeled_cluster_indices = {}
+
+        # remove the labeled data from X_train_labeled and merge it with the unlabeled data
+        # while preserving the labels
+        # and storing the indics of the labeled data
+        # so that the first iteration can be a "fake iteration zero" of the AL cycle
+        # (metrics will than automatically be calculated for this one too)
         self.prepare_fake_iteration_zero()
         log_it(self.X_train_labeled.shape)
         self.label_encoder = label_encoder
-        self.X_test = X_test
-        self.Y_test = Y_test
 
     def prepare_fake_iteration_zero(self):
         # fake iteration zero where we add the given ground truth labels all at once
@@ -76,15 +130,18 @@ class DataStorage:
         self.X_train_labeled = pd.DataFrame(
             columns=original_X_train_labeled.columns, dtype=float
         )
-        self.Y_train_labeled = pd.DataFrame(
-            columns=original_Y_train_labeled.columns, dtype=int
-        )
+
+        if self.X_train_labeled is not None:
+            self.Y_train_labeled = pd.DataFrame(
+                columns=original_Y_train_labeled.columns, dtype=int
+            )
 
         # this one is a bit tricky:
         # we merge both back together here -> but solely for the purpose of using them as the first oracle query down below
         self.X_train_unlabeled = pd.concat(
             [original_X_train_labeled, self.X_train_unlabeled]
         )
+
         self.Y_train_unlabeled = pd.concat(
             [original_Y_train_labeled, self.Y_train_unlabeled]
         )

@@ -33,7 +33,6 @@ class ActiveLearner:
         N_JOBS,
         NR_LEARNING_ITERATIONS,
         NR_QUERIES_PER_ITERATION,
-        WITH_TEST=True,
     ):
         if RANDOM_SEED != -1:
             np.random.seed(RANDOM_SEED)
@@ -65,7 +64,6 @@ class ActiveLearner:
             "all_unlabeled_roc_auc_scores": [],
         }
 
-        self.with_test = WITH_TEST
         self.cluster_strategy = cluster_strategy
         self.data_storage = dataset_storage
         self.amount_of_user_asked_queries = 0
@@ -144,11 +142,11 @@ class ActiveLearner:
 
             self.metrics_per_al_cycle["train_labeled_data_metrics"][i].append(metrics)
 
-            if self.with_test:
+            if len(self.data_storage.X_test) > 0:
                 metrics = classification_report_and_confusion_matrix(
                     clf,
-                    total_unqueried_data_X,
-                    total_unqueried_data_Y,
+                    self.data_storage.X_test,
+                    self.data_storage.Y_test,
                     #  self.dataset_storage.X_test,
                     #  self.dataset_storage.Y_test,
                     self.data_storage.label_encoder,

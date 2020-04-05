@@ -26,17 +26,29 @@ from .experiment_setup_lib import (
 from .sampling_strategies import BoundaryPairSampler, RandomSampler, UncertaintySampler
 
 
-def train_al(X_train, Y_train, X_test, Y_test, label_encoder, hyper_parameters):
-    hyper_parameters["LEN_TRAIN_DATA"] = len(Y_train)
+def train_al(
+    X_labeled,
+    Y_labeled,
+    X_unlabeled,
+    label_encoder,
+    START_SET_SIZE,
+    hyper_parameters,
+    TEST_FRACTION=None,
+    X_test=None,
+    Y_test=None,
+):
+    hyper_parameters["LEN_TRAIN_DATA"] = len(X_labeled)
     dataset_storage = DataStorage(hyper_parameters["RANDOM_SEED"])
     dataset_storage.set_training_data(
-        X_train,
-        Y_train,
-        label_encoder,
-        hyper_parameters["TEST_FRACTION"],
-        hyper_parameters["START_SET_SIZE"],
-        X_test,
-        Y_test,
+        X_labeled,
+        Y_labeled,
+        X_unlabeled=X_unlabeled,
+        START_SET_SIZE=START_SET_SIZE,
+        TEST_FRACTION=TEST_FRACTION,
+        label_encoder=label_encoder,
+        hyper_parameters=hyper_parameters,
+        X_test=X_test,
+        Y_test=Y_test,
     )
 
     if hyper_parameters["CLUSTER"] == "dummy":
@@ -64,7 +76,6 @@ def train_al(X_train, Y_train, X_test, Y_test, label_encoder, hyper_parameters):
         "RANDOM_SEED": hyper_parameters["RANDOM_SEED"],
         "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
         "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
-        "WITH_TEST": True,  # legacy parameter
     }
 
     if hyper_parameters["SAMPLING"] == "random":
@@ -93,6 +104,7 @@ def train_al(X_train, Y_train, X_test, Y_test, label_encoder, hyper_parameters):
 
     return (
         trained_active_clf_list,
+        Y_train,
         end - start,
         metrics_per_al_cycle,
         dataset_storage,
@@ -288,7 +300,7 @@ def train_and_eval_dataset(
         metrics_per_al_cycle,
         dataStorage,
         active_learner,
-    ) = train_al(X_train, Y_train, X_test, Y_test, label_encoder, hyper_parameters)
+    ) = train_al(X_train, Y_train, label_encoder, hyper_parameters, X_test, Y_test)
 
     fit_score = eval_al(
         X_test,
