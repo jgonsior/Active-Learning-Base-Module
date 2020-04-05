@@ -117,12 +117,21 @@ class ActiveLearner:
             self.query_weak_accuracy_list.append(1)
 
     def calculate_post_metrics(self, X_query, Y_query, Y_query_strong=None):
-        total_unqueried_data_X = pd.concat(
-            [self.data_storage.X_test, self.data_storage.X_train_unlabeled], copy=False
-        )
-        total_unqueried_data_Y = pd.concat(
-            [self.data_storage.Y_test, self.data_storage.Y_train_unlabeled], copy=False
-        )
+
+        if self.data_storage.Y_train_unlabeled.shape[0] > 0:
+            # experiment
+            total_unqueried_data_X = pd.concat(
+                [self.data_storage.X_test, self.data_storage.X_train_unlabeled],
+                copy=False,
+            )
+            total_unqueried_data_Y = pd.concat(
+                [self.data_storage.Y_test, self.data_storage.Y_train_unlabeled],
+                copy=False,
+            )
+        else:
+            # real world
+            total_unqueried_data_X = self.data_storage.X_test
+            total_unqueried_data_Y = self.data_storage.Y_test
 
         if Y_query_strong is not None:
             self.metrics_per_al_cycle["query_strong_accuracy_list"].append(
@@ -156,7 +165,8 @@ class ActiveLearner:
             # in case we don't have the metrics just store the train results
             self.metrics_per_al_cycle["test_data_metrics"][i].append(metrics)
 
-            if self.data_storage.X_train_unlabeled.shape[0] != 0:
+            # in an experiment setting we can calculate an accuracy for the labels we already now as well of course
+            if self.data_storage.Y_train_unlabeled.shape[0] > 0:
                 metrics = classification_report_and_confusion_matrix(
                     clf,
                     self.data_storage.X_train_unlabeled,
@@ -491,10 +501,9 @@ class ActiveLearner:
             # calculate new metrics
             self.calculate_post_metrics(X_query, Y_query, Y_query_strong=Y_query_strong)
 
-            if len(self.data_storage.Y_train_unlabeled) != 0:
-                self.calculate_stopping_criteria_accuracy()
-                self.calculate_stopping_criteria_stddev()
-                self.calculate_stopping_criteria_certainty()
+            self.calculate_stopping_criteria_accuracy()
+            self.calculate_stopping_criteria_stddev()
+            self.calculate_stopping_criteria_certainty()
 
             if (
                 "accuracy"
