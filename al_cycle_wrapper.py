@@ -22,6 +22,7 @@ from .experiment_setup_lib import (
     classification_report_and_confusion_matrix,
     get_db,
     get_param_distribution,
+    init_logger,
 )
 from .sampling_strategies import BoundaryPairSampler, RandomSampler, UncertaintySampler
 
@@ -292,17 +293,31 @@ def train_and_eval_dataset(
     Y_test,
     label_encoder_classes,
     hyper_parameters,
+    oracle,
 ):
+    init_logger("log.txt")
     label_encoder = LabelEncoder()
     label_encoder.fit(label_encoder_classes)
 
     (
         trained_active_clf_list,
+        Y_train,
         fit_time,
         metrics_per_al_cycle,
         dataStorage,
         active_learner,
-    ) = train_al(X_train, Y_train, label_encoder, hyper_parameters, X_test, Y_test)
+    ) = train_al(
+        X_train,
+        Y_train,
+        X_unlabeled=None,
+        label_encoder=label_encoder,
+        START_SET_SIZE=hyper_parameters["START_SET_SIZE"],
+        hyper_parameters=hyper_parameters,
+        oracle=oracle,
+        TEST_FRACTION=hyper_parameters["TEST_FRACTION"],
+        X_test=X_test,
+        Y_test=Y_test,
+    )
 
     fit_score = eval_al(
         X_test,

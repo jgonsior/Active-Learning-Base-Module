@@ -54,9 +54,9 @@ class DataStorage:
 
         # check if the minimum amount of labeled data is present in the start set size
         labels_not_in_start_set = set(range(0, len(label_encoder.classes_)))
-
         all_label_in_start_set = False
-        for Y in self.Y_train_labeled:
+
+        for Y in self.Y_train_labeled.to_numpy()[0]:
             if Y in labels_not_in_start_set:
                 labels_not_in_start_set.remove(Y)
             if len(labels_not_in_start_set) == 0:
