@@ -160,18 +160,21 @@ def divide_data(X, Y, test_fraction):
     return X_train, X_test, Y_train, Y_test
 
 
-def standard_config(additional_parameters=None):
+def standard_config(additional_parameters=None, standard_args=True):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--DATASETS_PATH", default="../datasets/")
-    parser.add_argument(
-        "--CLASSIFIER", default="RF", help="Supported types: RF, DTree, NB, SVM, Linear"
-    )
-    parser.add_argument("--N_JOBS", type=int, default=-1)
-    parser.add_argument(
-        "--RANDOM_SEED", type=int, default=42, help="-1 Enables true Randomness"
-    )
-    parser.add_argument("--TEST_FRACTION", type=float, default=0.5)
-    parser.add_argument("--LOG_FILE", type=str, default="log.txt")
+    if standard_args:
+        parser.add_argument("--DATASETS_PATH", default="../datasets/")
+        parser.add_argument(
+            "--CLASSIFIER",
+            default="RF",
+            help="Supported types: RF, DTree, NB, SVM, Linear",
+        )
+        parser.add_argument("--N_JOBS", type=int, default=-1)
+        parser.add_argument(
+            "--RANDOM_SEED", type=int, default=42, help="-1 Enables true Randomness"
+        )
+        parser.add_argument("--TEST_FRACTION", type=float, default=0.5)
+        parser.add_argument("--LOG_FILE", type=str, default="log.txt")
 
     if additional_parameters is not None:
         for additional_parameter in additional_parameters:
