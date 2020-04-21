@@ -295,7 +295,6 @@ def train_and_eval_dataset(
     hyper_parameters,
     oracle,
 ):
-    init_logger("log.txt")
     label_encoder = LabelEncoder()
     label_encoder.fit(label_encoder_classes)
 

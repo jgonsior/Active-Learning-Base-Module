@@ -6,7 +6,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
-from sklearn.cluster import OPTICS, MiniBatchKMeans, cluster_optics_dbscan
+from sklearn.cluster import (
+    OPTICS,
+    MiniBatchKMeans,
+    cluster_optics_dbscan,
+    AgglomerativeClustering,
+)
 
 from ..experiment_setup_lib import log_it
 
@@ -41,18 +46,18 @@ class BaseClusterStrategy:
         self.X_train_combined = X_train_combined
 
         # then cluster it
-        #  self.cluster_model = AgglomerativeClustering(
-        #  n_clusters=int(X_train_combined.shape[1] / 5)
-        #  )  #distance_threshold=0,                                                     n_clusters=None)
+        self.cluster_model = AgglomerativeClustering(
+            n_clusters=int(X_train_combined.shape[1] / 5)
+        )  # distance_threshold=0,                                                     n_clusters=None)
         #  self.plot_cluster()
         #  self.plot_dendrogram()
 
         n_samples, n_features = X_train_combined.shape
 
-        self.cluster_model = MiniBatchKMeans(
-            n_clusters=int(n_samples / 50),
-            batch_size=min(int(n_samples / 100), int(n_features)),
-        )
+        #  self.cluster_model = MiniBatchKMeans(
+        #  n_clusters=int(n_samples / 50),
+        #  batch_size=min(int(n_samples / 100), int(n_features)),
+        #  )
 
         self.Y_train_unlabeled_cluster = self.cluster_model.fit_predict(
             self.data_storage.X_train_unlabeled
@@ -66,7 +71,6 @@ class BaseClusterStrategy:
         #  self.Y_train_unlabeled_cluster = self.cluster_model.labels_[
         #  self.cluster_model.ordering_
         #  ]
-
         counter = Counter(self.Y_train_unlabeled_cluster)
         self.n_clusters = len([1 for _ in counter.most_common()])
 
@@ -83,11 +87,34 @@ class BaseClusterStrategy:
         self.data_storage.X_train_labeled_cluster_indices = defaultdict(lambda: list())
 
         for cluster_index, X_train_index in zip(
-            self.Y_train_unlabeled_cluster, self.data_storage.X_train_unlabeled.index
+            self.Y_train_unlabeled_cluster,
+            #  self.data_storage.Y_train_unlabeled[0]
+            self.data_storage.X_train_unlabeled.index,
         ):
             self.data_storage.X_train_unlabeled_cluster_indices[cluster_index].append(
                 X_train_index
             )
+
+        data = []
+
+        for (
+            cluster_id,
+            cluster_indexes,
+        ) in self.data_storage.X_train_unlabeled_cluster_indices.items():
+            Y_cluster = self.data_storage.Y_train_unlabeled.loc[cluster_indexes][
+                0
+            ].to_list()
+            counter = Counter(Y_cluster)
+            data.append(
+                "{}: {} {}".format(
+                    counter.most_common(1)[0][1] / len(Y_cluster),
+                    counter.most_common(1)[0][0],
+                    Y_cluster,
+                )
+            )
+        print("\n".join(sorted(data)))
+        #  print(self.data_storage.X_train_unlabeled)
+        exit(-1)
 
     @abc.abstractmethod
     def get_cluster_indices(self, **kwargs):

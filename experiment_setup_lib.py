@@ -128,17 +128,20 @@ def init_logger(logfilepath):
 
 
 def log_it(message):
-    #  print(message)
-    with open(logfile_path, "a") as f:
-        f.write(
-            "["
-            + str(threading.get_ident())
-            + "] ["
-            + str(datetime.datetime.now())
-            + "] "
-            + str(message)
-            + "\n"
-        )
+    message = (
+        "["
+        + str(threading.get_ident())
+        + "] ["
+        + str(datetime.datetime.now())
+        + "] "
+        + str(message)
+    )
+
+    if logfile_path == "console":
+        print(message)
+    else:
+        with open(logfile_path, "a") as f:
+            f.write(message + "\n")
 
 
 #  def get_logger():
