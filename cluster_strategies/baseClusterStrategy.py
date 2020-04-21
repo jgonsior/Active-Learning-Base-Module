@@ -44,22 +44,20 @@ class BaseClusterStrategy:
             [self.data_storage.X_train_labeled, self.data_storage.X_train_unlabeled]
         )
         self.X_train_combined = X_train_combined
+        n_samples, n_features = X_train_combined.shape
 
         # then cluster it
-        #  self.cluster_model = AgglomerativeClustering(
-        #  n_clusters=int(X_train_combined.shape[1] / 5)
-        #  #  distance_threshold=1,
-        #  #  n_clusters=None,
+        self.cluster_model = AgglomerativeClustering(n_clusters=int(n_samples / 8))
+        #  distance_threshold=1,
+        #  n_clusters=None,
         #  )
         #  self.plot_cluster()
         #  self.plot_dendrogram()
 
-        n_samples, n_features = X_train_combined.shape
-
-        self.cluster_model = MiniBatchKMeans(
-            n_clusters=int(n_samples / 10),
-            batch_size=min(int(n_samples / 100), int(n_features)),
-        )
+        #  self.cluster_model = MiniBatchKMeans(
+        #  n_clusters=int(n_samples / 5),
+        #  batch_size=min(int(n_samples / 100), int(n_features)),
+        #  )
 
         self.Y_train_unlabeled_cluster = self.cluster_model.fit_predict(
             self.data_storage.X_train_unlabeled
@@ -99,29 +97,29 @@ class BaseClusterStrategy:
 
         data = []
 
-        for (
-            cluster_id,
-            cluster_indexes,
-        ) in self.data_storage.X_train_unlabeled_cluster_indices.items():
-            Y_cluster = self.data_storage.Y_train_unlabeled.loc[cluster_indexes][
-                0
-            ].to_list()
-            counter = Counter(Y_cluster)
-            if (
-                counter.most_common(1)[0][1] / len(Y_cluster) > 0.9
-                and len(Y_cluster) > 3
-            ):
-                data.append(
-                    "{}: {} {}".format(
-                        counter.most_common(1)[0][1] / len(Y_cluster),
-                        counter.most_common(1)[0][0],
-                        Y_cluster,
-                    )
-                )
-        print("\n".join(sorted(data)))
-        print(len(data))
+        #  for (
+        #  cluster_id,
+        #  cluster_indexes,
+        #  ) in self.data_storage.X_train_unlabeled_cluster_indices.items():
+        #  Y_cluster = self.data_storage.Y_train_unlabeled.loc[cluster_indexes][
+        #  0
+        #  ].to_list()
+        #  counter = Counter(Y_cluster)
+        #  if (
+        #  counter.most_common(1)[0][1] / len(Y_cluster) > 0.0
+        #  and len(Y_cluster) > 5
+        #  ):
+        #  data.append(
+        #  "{}: {} {}".format(
+        #  counter.most_common(1)[0][1] / len(Y_cluster),
+        #  counter.most_common(1)[0][0],
+        #  Y_cluster,
+        #  )
+        #  )
+        #  print("\n".join(sorted(data)))
+        #  print(len(data))
         #  print(self.data_storage.X_train_unlabeled)
-        exit(-1)
+        #  exit(-1)
 
     @abc.abstractmethod
     def get_cluster_indices(self, **kwargs):
