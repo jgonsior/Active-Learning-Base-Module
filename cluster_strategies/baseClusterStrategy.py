@@ -46,18 +46,20 @@ class BaseClusterStrategy:
         self.X_train_combined = X_train_combined
 
         # then cluster it
-        self.cluster_model = AgglomerativeClustering(
-            n_clusters=int(X_train_combined.shape[1] / 5)
-        )  # distance_threshold=0,                                                     n_clusters=None)
+        #  self.cluster_model = AgglomerativeClustering(
+        #  n_clusters=int(X_train_combined.shape[1] / 5)
+        #  #  distance_threshold=1,
+        #  #  n_clusters=None,
+        #  )
         #  self.plot_cluster()
         #  self.plot_dendrogram()
 
         n_samples, n_features = X_train_combined.shape
 
-        #  self.cluster_model = MiniBatchKMeans(
-        #  n_clusters=int(n_samples / 50),
-        #  batch_size=min(int(n_samples / 100), int(n_features)),
-        #  )
+        self.cluster_model = MiniBatchKMeans(
+            n_clusters=int(n_samples / 10),
+            batch_size=min(int(n_samples / 100), int(n_features)),
+        )
 
         self.Y_train_unlabeled_cluster = self.cluster_model.fit_predict(
             self.data_storage.X_train_unlabeled
@@ -105,14 +107,19 @@ class BaseClusterStrategy:
                 0
             ].to_list()
             counter = Counter(Y_cluster)
-            data.append(
-                "{}: {} {}".format(
-                    counter.most_common(1)[0][1] / len(Y_cluster),
-                    counter.most_common(1)[0][0],
-                    Y_cluster,
+            if (
+                counter.most_common(1)[0][1] / len(Y_cluster) > 0.9
+                and len(Y_cluster) > 3
+            ):
+                data.append(
+                    "{}: {} {}".format(
+                        counter.most_common(1)[0][1] / len(Y_cluster),
+                        counter.most_common(1)[0][0],
+                        Y_cluster,
+                    )
                 )
-            )
         print("\n".join(sorted(data)))
+        print(len(data))
         #  print(self.data_storage.X_train_unlabeled)
         exit(-1)
 
