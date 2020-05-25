@@ -561,5 +561,5 @@ class ActiveLearner:
         return (
             self.clf_list,
             self.metrics_per_al_cycle,
-            self.data_storage.Y_train_unlabeled,
+            self.data_storage.Y_train_labeled,
         )
