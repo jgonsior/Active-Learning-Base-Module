@@ -597,17 +597,17 @@ def get_param_distribution(
         "RANDOM_SEED": [RANDOM_SEED],
         "TEST_FRACTION": [TEST_FRACTION],
         "SAMPLING": [
-            "random",
-            "uncertainty_lc",
+            #  "random",
+            #  "uncertainty_lc",
             "uncertainty_max_margin",
-            "uncertainty_entropy",
+            #  "uncertainty_entropy",
         ],
         "CLUSTER": [
             "dummy",
-            "random",
-            "MostUncertain_lc",
-            "MostUncertain_max_margin",
-            "MostUncertain_entropy"
+            #  "random",
+            #  "MostUncertain_lc",
+            #  "MostUncertain_max_margin",
+            #  "MostUncertain_entropy"
             #  'dummy',
         ],
         "NR_LEARNING_ITERATIONS": [NR_LEARNING_ITERATIONS],
@@ -617,9 +617,11 @@ def get_param_distribution(
         "STOPPING_CRITERIA_UNCERTAINTY": [1],  # zero_to_one,
         "STOPPING_CRITERIA_STD": [1],  # zero_to_one,
         "STOPPING_CRITERIA_ACC": [1],  # zero_to_one,
-        "ALLOW_RECOMMENDATIONS_AFTER_STOP": [True, False],
+        "ALLOW_RECOMMENDATIONS_AFTER_STOP": [True],
         # uncertainty_recommendation_grid = {
-        "UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD": half_to_one,
+        "UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD": np.linspace(
+            0.85, 1, num=15 + 1
+        ),  # half_to_one,
         "UNCERTAINTY_RECOMMENDATION_RATIO": [1 / 10, 1 / 100, 1 / 1000, 1 / 10000],
         # snuba_lite_grid = {
         "SNUBA_LITE_MINIMUM_HEURISTIC_ACCURACY": [0],
@@ -627,12 +629,12 @@ def get_param_distribution(
         # cluster_recommendation_grid = {
         "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE": half_to_one,
         "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED": half_to_one,
-        "WITH_UNCERTAINTY_RECOMMENDATION": [True, False],
-        "WITH_CLUSTER_RECOMMENDATION": [True, False],
+        "WITH_UNCERTAINTY_RECOMMENDATION": [True],
+        "WITH_CLUSTER_RECOMMENDATION": [True],
         "WITH_SNUBA_LITE": [False],
         "MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS": half_to_one,
         "DB_NAME_OR_TYPE": [DB_NAME_OR_TYPE],
-        "USER_QUERY_BUDGET_LIMIT": [2000],
+        "USER_QUERY_BUDGET_LIMIT": [200],
     }
 
     return param_distribution

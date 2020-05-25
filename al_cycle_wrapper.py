@@ -137,7 +137,7 @@ def eval_al(
     classification_report_and_confusion_matrix_train = classification_report_and_confusion_matrix(
         trained_active_clf_list[0],
         dataset_storage.X_train_labeled,
-        dataset_storage.Y_train_labeled,
+        dataset_storage.Y_train_labeled[0],
         dataset_storage.label_encoder,
     )
 
@@ -330,4 +330,4 @@ def train_and_eval_dataset(
         hyper_parameters,
         dataset_name,
     )
-    return fit_score
+    return fit_score, Y_train

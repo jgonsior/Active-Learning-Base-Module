@@ -116,7 +116,7 @@ class ActiveLearner:
 
         try:
             self.query_weak_accuracy_list.append(
-                accuracy_score(Y_query, self.clf_list[0].predict(X_query))
+                accuracy_score(Y_query[0], self.clf_list[0].predict(X_query))
             )
         except NotFittedError:
             self.query_weak_accuracy_list.append(1)
@@ -140,7 +140,7 @@ class ActiveLearner:
 
         if Y_query_strong is not None:
             self.metrics_per_al_cycle["query_strong_accuracy_list"].append(
-                accuracy_score(Y_query_strong, Y_query)
+                accuracy_score(Y_query_strong, Y_query[0])
             )
         else:
             self.metrics_per_al_cycle["query_strong_accuracy_list"].append(float("NaN"))
@@ -149,7 +149,7 @@ class ActiveLearner:
             metrics = classification_report_and_confusion_matrix(
                 clf,
                 self.data_storage.X_train_labeled,
-                self.data_storage.Y_train_labeled,
+                self.data_storage.Y_train_labeled[0],
                 self.data_storage.label_encoder,
                 output_dict=True,
             )
@@ -485,6 +485,11 @@ class ActiveLearner:
                     recommendation_value = "A"
                     self.amount_of_user_asked_queries += len(Y_query)
                     Y_query_strong = None
+
+            Y_query = Y_query.assign(source=recommendation_value)
+
+            #  print(Y_query)
+            #  print(Y_query_strong)
 
             self.metrics_per_al_cycle["recommendation"].append(recommendation_value)
             self.metrics_per_al_cycle["query_length"].append(len(Y_query))
