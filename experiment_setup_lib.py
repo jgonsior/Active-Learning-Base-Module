@@ -224,42 +224,6 @@ def get_best_hyper_params(clf):
     return best_hyper_params
 
 
-def load_and_prepare_X_and_Y(dataset_path):
-    # Read in dataset into pandas dataframe
-    df = pd.read_csv(dataset_path, index_col="id")
-
-    # shuffle df
-    df = df.sample(frac=1).reset_index(drop=True)
-
-    # create numpy data
-    Y = df.pop("CLASS").to_numpy()
-
-    label_encoder = LabelEncoder()
-    Y = label_encoder.fit_transform(Y)
-
-    X = df.to_numpy()
-
-    # feature normalization
-    scaler = RobustScaler()
-    X = scaler.fit_transform(X)
-
-    # scale again to [0,1]
-    scaler = MinMaxScaler()
-    X = scaler.fit_transform(X)
-
-    # feature selection
-    #  selector = SelectKBest(chi2, k=200)
-    #  X = selector.fit_transform(X, Y)
-
-    X = pd.DataFrame(X, dtype=float)
-    Y = pd.DataFrame(Y, dtype=int)
-
-    X = X.apply(pd.to_numeric, downcast="float", errors="ignore")
-    Y = Y.apply(pd.to_numeric, downcast="integer", errors="ignore")
-
-    return X, Y, label_encoder
-
-
 def classification_report_and_confusion_matrix(
     clf, X, Y, label_encoder, output_dict=True, training_times=""
 ):
@@ -404,14 +368,14 @@ def prettify_bytes(bytes):
     return str(amount) + suffix
 
 
-def get_dataset(datasets_path, dataset_name, **kwargs):
+def get_dataset(datasets_path, dataset_name, RANDOM_SEED, **kwargs):
     logging.info("Loading " + dataset_name)
 
     if dataset_name == "dwtc":
         df = pd.read_csv(datasets_path + "/dwtc/aft.csv", index_col="id")
 
         # shuffle df
-        df = df.sample(frac=1).reset_index(drop=True)
+        df = df.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
 
         Y_temp = df.pop("CLASS").to_numpy()
 
@@ -440,7 +404,7 @@ def get_dataset(datasets_path, dataset_name, **kwargs):
         )
 
         # shuffle df
-        df = df.sample(frac=1)
+        df = df.sample(frac=1, random_state=RANDOM_SEED)
 
         df = df.replace([np.inf, -np.inf], np.nan)
         df = df.fillna(0)
