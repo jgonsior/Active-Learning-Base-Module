@@ -225,8 +225,8 @@ def eval_al(
     unique_params = ""
     for k in param_distribution.keys():
         unique_params += str(hyper_parameters[k])
-
     param_list_id = hashlib.md5(unique_params.encode("utf-8")).hexdigest()
+    print("unique1:" + param_list_id)
     db = get_db(db_name_or_type=hyper_parameters["DB_NAME_OR_TYPE"])
 
     hyper_parameters["DATASET_NAME"] = dataset_name
