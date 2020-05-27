@@ -52,6 +52,7 @@ class ExperimentResult(BaseModel):
     cluster_recommendation_ratio_labeled_unlabeled = peewee.FloatField(null=True)
     metrics_per_al_cycle = BinaryJSONField()  # json string
     amount_of_user_asked_queries = peewee.IntegerField(index=True)
+    amount_of_all_queries = peewee.IntegerField(index=True, null=True)
     allow_recommendations_after_stop = peewee.BooleanField()
     stopping_criteria_uncertainty = peewee.FloatField()
     stopping_criteria_acc = peewee.FloatField()
@@ -66,6 +67,7 @@ class ExperimentResult(BaseModel):
     classification_report_test = BinaryJSONField()  # json
     acc_train = peewee.FloatField(index=True)
     acc_test = peewee.FloatField(index=True)
+    acc_test_oracle = peewee.FloatField(index=True, null=True)
     fit_score = peewee.FloatField(index=True)
     roc_auc = peewee.FloatField(index=True)
 
@@ -190,7 +192,7 @@ def standard_config(additional_parameters=None, standard_args=True):
         parser.print_help()
         parser.exit()
 
-    if config.RANDOM_SEED != -1:
+    if config.RANDOM_SEED != -1 and config.RANDOM_SEED != -2:
         np.random.seed(config.RANDOM_SEED)
         random.seed(config.RANDOM_SEED)
 

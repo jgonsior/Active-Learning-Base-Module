@@ -1,9 +1,12 @@
+from collections import defaultdict
 import datetime
 import hashlib
 import math
 import operator
 import threading
 from timeit import default_timer as timer
+from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
 
 #  import np.random.distributions as dists
 from json_tricks import dumps
@@ -126,6 +129,9 @@ def eval_al(
     active_learner,
     hyper_parameters,
     dataset_name,
+    Y_train_al,
+    X_train,
+    Y_train,
 ):
     hyper_parameters[
         "amount_of_user_asked_queries"
@@ -220,13 +226,27 @@ def eval_al(
         acc_with_weak_values, acc_with_weak_amount_of_labels_norm, amount_of_labels
     )
 
+    amount_of_all_labels = len(Y_train_al)
+
+    # calculate accuracy for Random Forest only on oracle human expert queries
+
+    active_rf = RandomForestClassifier(random_state=hyper_parameters["RANDOM_SEED"])
+    ys_oracle = Y_train_al.loc[Y_train_al.source == "A"]
+    active_rf.fit(X_train.iloc[ys_oracle.index], ys_oracle[0])
+    acc_test_oracle = accuracy_score(Y_test, active_rf.predict(X_test))
+
+    # save labels
+    #  Y_train_al.to_pickle(
+    #  "pickles/" + str(len(Y_train_al)) + "_" + param_list_id + ".pickle"
+    #  )
+
     # calculate based on params a unique id which should be the same across all similar cross validation splits
     param_distribution = get_param_distribution(**hyper_parameters)
     unique_params = ""
     for k in param_distribution.keys():
         unique_params += str(hyper_parameters[k])
     param_list_id = hashlib.md5(unique_params.encode("utf-8")).hexdigest()
-    print("unique1:" + param_list_id)
+    print("unique1:" + unique_params)
     db = get_db(db_name_or_type=hyper_parameters["DB_NAME_OR_TYPE"])
 
     hyper_parameters["DATASET_NAME"] = dataset_name
@@ -255,6 +275,7 @@ def eval_al(
         ),
         acc_train=classification_report_and_confusion_matrix_train[0]["accuracy"],
         acc_test=classification_report_and_confusion_matrix_test[0]["accuracy"],
+        acc_test_oracle=acc_test_oracle,
         fit_score=score,
         roc_auc=metrics_per_al_cycle["all_unlabeled_roc_auc_scores"][-1],
         param_list_id=param_list_id,
@@ -270,9 +291,11 @@ def eval_al(
         global_score_with_weak_acc_norm=global_score_with_weak_acc_norm,
         global_score_with_weak_roc_auc_old=0,
         global_score_with_weak_roc_auc_norm_old=0,
+        amount_of_all_labels=amount_of_all_labels,
     )
     experiment_result.save()
     db.close()
+
     return score
 
 
@@ -300,7 +323,7 @@ def train_and_eval_dataset(
 
     (
         trained_active_clf_list,
-        Y_train,
+        Y_train_al,
         fit_time,
         metrics_per_al_cycle,
         dataStorage,
@@ -329,5 +352,8 @@ def train_and_eval_dataset(
         active_learner,
         hyper_parameters,
         dataset_name,
+        Y_train_al,
+        X_train,
+        Y_train,
     )
-    return fit_score, Y_train
+    return fit_score, Y_train_al
