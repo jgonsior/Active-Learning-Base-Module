@@ -1,3 +1,4 @@
+from sklearn.metrics import accuracy_score
 import argparse
 import datetime
 import os
@@ -45,49 +46,23 @@ class ExperimentResult(BaseModel):
     with_uncertainty_recommendation = peewee.BooleanField(index=True)
     with_cluster_recommendation = peewee.BooleanField(index=True)
     with_snuba_lite = peewee.BooleanField(index=True)
-    uncertainty_recommendation_certainty_threshold = peewee.FloatField(
-        null=True)
+    uncertainty_recommendation_certainty_threshold = peewee.FloatField(null=True)
     uncertainty_recommendation_ratio = peewee.FloatField(null=True)
     snuba_lite_minimum_heuristic_accuracy = peewee.FloatField(null=True)
-    cluster_recommendation_minimum_cluster_unity_size = peewee.FloatField(
-        null=True)
-    cluster_recommendation_ratio_labeled_unlabeled = peewee.FloatField(
-        null=True)
+    cluster_recommendation_minimum_cluster_unity_size = peewee.FloatField(null=True)
+    cluster_recommendation_ratio_labeled_unlabeled = peewee.FloatField(null=True)
     metrics_per_al_cycle = BinaryJSONField()  # json string
     amount_of_user_asked_queries = peewee.IntegerField(index=True)
     amount_of_all_labels = peewee.IntegerField(index=True)
     allow_recommendations_after_stop = peewee.BooleanField()
-    stopping_criteria_uncertainty = peewee.FloatField()
-    stopping_criteria_acc = peewee.FloatField()
-    stopping_criteria_std = peewee.FloatField()
 
     # information of hyperparam run
     experiment_run_date = peewee.DateTimeField(default=datetime.datetime.now)
     fit_time = peewee.TextField()  # timedelta
-    confusion_matrix_test = BinaryJSONField()  # json
-    confusion_matrix_train = BinaryJSONField()  # json
-    classification_report_train = BinaryJSONField()  # json
-    classification_report_test = BinaryJSONField()  # json
     acc_train = peewee.FloatField(index=True)
     acc_test = peewee.FloatField(index=True)
     acc_test_oracle = peewee.FloatField(index=True)
     fit_score = peewee.FloatField(index=True)
-    roc_auc = peewee.FloatField(index=True)
-
-    global_score_with_weak_roc_auc_old = peewee.FloatField(index=True)
-    global_score_with_weak_roc_auc_norm_old = peewee.FloatField(index=True)
-
-    global_score_no_weak_roc_auc = peewee.FloatField(index=True, null=True)
-    global_score_no_weak_acc = peewee.FloatField(index=True, null=True)
-    global_score_with_weak_roc_auc = peewee.FloatField(index=True, null=True)
-    global_score_with_weak_acc = peewee.FloatField(index=True, null=True)
-
-    global_score_no_weak_roc_auc_norm = peewee.FloatField(index=True,
-                                                          null=True)
-    global_score_no_weak_acc_norm = peewee.FloatField(index=True, null=True)
-    global_score_with_weak_roc_auc_norm = peewee.FloatField(index=True,
-                                                            null=True)
-    global_score_with_weak_acc_norm = peewee.FloatField(index=True, null=True)
 
     param_list_id = peewee.TextField(index=True)
 
@@ -103,11 +78,9 @@ def get_db(db_name_or_type):
     if db_name_or_type == "sqlite":
         db = peewee.SqliteDatabase("experiment_results.db")
     elif db_name_or_type == "tunnel":
-        db = PostgresqlExtDatabase("jg",
-                                   host="localhost",
-                                   port=1111,
-                                   password="test",
-                                   user="jg")
+        db = PostgresqlExtDatabase(
+            "jg", host="localhost", port=1111, password="test", user="jg"
+        )
     else:
         db = PostgresqlExtDatabase(db_name_or_type)
     db.bind([ExperimentResult])
@@ -138,8 +111,14 @@ def init_logger(logfilepath):
 
 
 def log_it(message):
-    message = ("[" + str(threading.get_ident()) + "] [" +
-               str(datetime.datetime.now()) + "] " + str(message))
+    message = (
+        "["
+        + str(threading.get_ident())
+        + "] ["
+        + str(datetime.datetime.now())
+        + "] "
+        + str(message)
+    )
 
     if logfile_path == "console":
         print(message)
@@ -160,12 +139,10 @@ def log_it(message):
 
 def divide_data(X, Y, test_fraction):
     # split data
-    X_train, X_test, Y_train, Y_test = train_test_split(
-        X, Y, test_size=test_fraction)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=test_fraction)
 
     len_test = len(X_test)
-    logging.info("size of test set: %i = %1.2f" %
-                 (len_test, len_test / len_test))
+    logging.info("size of test set: %i = %1.2f" % (len_test, len_test / len_test))
     return X_train, X_test, Y_train, Y_test
 
 
@@ -179,17 +156,15 @@ def standard_config(additional_parameters=None, standard_args=True):
             help="Supported types: RF, DTree, NB, SVM, Linear",
         )
         parser.add_argument("--N_JOBS", type=int, default=-1)
-        parser.add_argument("--RANDOM_SEED",
-                            type=int,
-                            default=42,
-                            help="-1 Enables true Randomness")
+        parser.add_argument(
+            "--RANDOM_SEED", type=int, default=42, help="-1 Enables true Randomness"
+        )
         parser.add_argument("--TEST_FRACTION", type=float, default=0.5)
         parser.add_argument("--LOG_FILE", type=str, default="log.txt")
 
     if additional_parameters is not None:
         for additional_parameter in additional_parameters:
-            parser.add_argument(*additional_parameter[0],
-                                **additional_parameter[1])
+            parser.add_argument(*additional_parameter[0], **additional_parameter[1])
 
     config = parser.parse_args()
 
@@ -232,37 +207,11 @@ def get_best_hyper_params(clf):
     return best_hyper_params
 
 
-def classification_report_and_confusion_matrix(clf,
-                                               X,
-                                               Y,
-                                               label_encoder,
-                                               output_dict=True,
-                                               training_times=""):
+def conf_matrix_and_acc(clf, X, Y_true, label_encoder):
     Y_pred = clf.predict(X)
-    clf_report = classification_report(
-        Y,
-        Y_pred,
-        output_dict=True,
-        zero_division=0,
-        labels=[i for i in range(len(label_encoder.classes_))],
-        target_names=label_encoder.classes_,
-    )
-
-    conf_matrix = confusion_matrix(Y, Y_pred)
-
-    if not output_dict:
-        clf_report_string = classification_report(
-            Y,
-            Y_pred,
-            zero_division=0,
-            labels=[i for i in range(len(label_encoder.classes_))],
-            target_names=label_encoder.classes_,
-        )
-
-        logging.info(clf_report_string)
-        logging.info(conf_matrix)
-    else:
-        return clf_report, conf_matrix
+    conf_matrix = confusion_matrix(Y_true, Y_pred)
+    acc = accuracy_score(Y_true, Y_pred)
+    return conf_matrix, acc
 
 
 class Logger(object):
@@ -301,15 +250,14 @@ class Logger(object):
 
 
 def get_single_al_run_stats_table_header():
-    return "Iteration: {:>3} {:>6} {:>6} {:>6} {:>6} {:>6} {:>6} {:>6} {:>6} {:>6} {:>3} {:>6}".format(
-        "I", "L", "U", "Q", "Te", "L", "U", "SC", "SS", "QW", "CR", "QS")
+    return "Iteration: {:>3} {:>6} {:>6} {:>6} {:>6} {:>6} {:>3}".format(
+        "I", "L", "U", "Q", "Te", "Tr", "R"
+    )
 
 
-def get_single_al_run_stats_row(i,
-                                amount_of_labeled,
-                                amount_of_unlabeled,
-                                metrics_per_al_cycle,
-                                index=-1):
+def get_single_al_run_stats_row(
+    i, amount_of_labeled, amount_of_unlabeled, metrics_per_al_cycle, index=-1
+):
     if amount_of_labeled == None:
         amount_of_labeled = 0
         for query_length in metrics_per_al_cycle["query_length"][:index]:
@@ -319,37 +267,14 @@ def get_single_al_run_stats_row(i,
         for query_length in metrics_per_al_cycle["query_length"][:index]:
             amount_of_unlabeled -= query_length
 
-    if "accuracy" not in metrics_per_al_cycle["test_data_metrics"][0][index][
-            0].keys():
-        test_acc = -1
-    else:
-        test_acc = metrics_per_al_cycle["test_data_metrics"][0][index][0][
-            "accuracy"]
-        #  return "No test accuracy found"
-
-    if ("accuracy" not in metrics_per_al_cycle["train_labeled_data_metrics"][0]
-        [index][0].keys()):
-        return "No train_labeled accuracy found"
-
-    if ("accuracy" not in metrics_per_al_cycle["train_unlabeled_data_metrics"]
-        [0][index][0].keys()):
-        return "No train_unlabeled_data_metrics accuracy found"
-
-    return "Iteration: {:3,d} {:6,d} {:6,d} {:6,d} {:6.1%} {:6.1%} {:6.1%} {:6.1%} {:6.1%} {:6.1%} {:>3} {:6.1%}".format(
+    return "Iteration: {:3,d} {:6,d} {:6,d} {:6,d} {:6.1%} {:6.1%} {:>3}".format(
         i,
         amount_of_labeled,
         amount_of_unlabeled,
         metrics_per_al_cycle["query_length"][index],
-        test_acc,
-        metrics_per_al_cycle["train_labeled_data_metrics"][0][index][0]
-        ["accuracy"],
-        metrics_per_al_cycle["train_unlabeled_data_metrics"][0][index][0]
-        ["accuracy"],
-        metrics_per_al_cycle["stop_certainty_list"][index],
-        metrics_per_al_cycle["stop_stddev_list"][index],
-        metrics_per_al_cycle["stop_query_weak_accuracy_list"][index],
+        metrics_per_al_cycle["test_acc"][index],
+        metrics_per_al_cycle["train_acc"][index],
         metrics_per_al_cycle["recommendation"][index],
-        metrics_per_al_cycle["query_strong_accuracy_list"][index],
     )
 
 
@@ -421,9 +346,9 @@ def get_dataset(datasets_path, dataset_name, RANDOM_SEED, **kwargs):
         df = df.replace([np.inf, -np.inf], np.nan)
         df = df.fillna(0)
 
-        labels = pd.read_csv(datasets_path + "/al_challenge/" + dataset_name +
-                             ".label",
-                             header=None)
+        labels = pd.read_csv(
+            datasets_path + "/al_challenge/" + dataset_name + ".label", header=None
+        )
 
         labels = labels.replace([-1], "A")
         labels = labels.replace([1], "B")
@@ -493,24 +418,28 @@ def calculate_roc_auc(label_encoder, X_test, Y_test, clf):
 
 
 # for details see http://www.causality.inf.ethz.ch/activelearning.php?page=evaluation#cont
-def calculate_global_score(metric_values, amount_of_labels_per_metric_values,
-                           amount_of_labels):
+def calculate_global_score(
+    metric_values, amount_of_labels_per_metric_values, amount_of_labels
+):
     if len(metric_values) > 1:
         rectangles = []
         triangles = []
 
         for (
-                metric_value,
-                amount_of_labels_per_metric_value,
-                past_metric_value,
+            metric_value,
+            amount_of_labels_per_metric_value,
+            past_metric_value,
         ) in zip(
-                metric_values[1:],
-                amount_of_labels_per_metric_values[1:],
-                metric_values[:-1],
+            metric_values[1:],
+            amount_of_labels_per_metric_values[1:],
+            metric_values[:-1],
         ):
             rectangles.append(metric_value * amount_of_labels_per_metric_value)
-            triangles.append(amount_of_labels_per_metric_value *
-                             (past_metric_value - metric_value) / 2)
+            triangles.append(
+                amount_of_labels_per_metric_value
+                * (past_metric_value - metric_value)
+                / 2
+            )
         square = sum(rectangles) + sum(triangles)
     else:
         square = metric_values[0] * amount_of_labels_per_metric_values[0]
@@ -532,15 +461,17 @@ def calculate_global_score(metric_values, amount_of_labels_per_metric_values,
     return global_score
 
 
-def get_param_distribution(hyper_search_type=None,
-                           DATASETS_PATH=None,
-                           CLASSIFIER=None,
-                           N_JOBS=None,
-                           RANDOM_SEED=None,
-                           TEST_FRACTION=None,
-                           NR_LEARNING_ITERATIONS=None,
-                           DB_NAME_OR_TYPE=None,
-                           **kwargs):
+def get_param_distribution(
+    hyper_search_type=None,
+    DATASETS_PATH=None,
+    CLASSIFIER=None,
+    N_JOBS=None,
+    RANDOM_SEED=None,
+    TEST_FRACTION=None,
+    NR_LEARNING_ITERATIONS=None,
+    DB_NAME_OR_TYPE=None,
+    **kwargs
+):
     if hyper_search_type == "random":
         zero_to_one = scipy.stats.uniform(loc=0, scale=1)
         half_to_one = scipy.stats.uniform(loc=0.5, scale=0.5)
@@ -582,17 +513,16 @@ def get_param_distribution(hyper_search_type=None,
         ],
         "NR_LEARNING_ITERATIONS": [NR_LEARNING_ITERATIONS],
         #  "NR_LEARNING_ITERATIONS": [1],
-        "NR_QUERIES_PER_ITERATION":
-        NR_QUERIES_PER_ITERATION,
-        "START_SET_SIZE":
-        START_SET_SIZE,
+        "NR_QUERIES_PER_ITERATION": NR_QUERIES_PER_ITERATION,
+        "START_SET_SIZE": START_SET_SIZE,
         "STOPPING_CRITERIA_UNCERTAINTY": [1],  # zero_to_one,
         "STOPPING_CRITERIA_STD": [1],  # zero_to_one,
         "STOPPING_CRITERIA_ACC": [1],  # zero_to_one,
         "ALLOW_RECOMMENDATIONS_AFTER_STOP": [True],
         # uncertainty_recommendation_grid = {
-        "UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD":
-        np.linspace(0.85, 1, num=15 + 1),  # half_to_one,
+        "UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD": np.linspace(
+            0.85, 1, num=15 + 1
+        ),  # half_to_one,
         "UNCERTAINTY_RECOMMENDATION_RATIO": [
             1 / 100,
             1 / 1000,
@@ -604,15 +534,12 @@ def get_param_distribution(hyper_search_type=None,
         "SNUBA_LITE_MINIMUM_HEURISTIC_ACCURACY": [0],
         #  half_to_one,
         # cluster_recommendation_grid = {
-        "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE":
-        half_to_one,
-        "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED":
-        half_to_one,
+        "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE": half_to_one,
+        "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED": half_to_one,
         "WITH_UNCERTAINTY_RECOMMENDATION": [True, False],
         "WITH_CLUSTER_RECOMMENDATION": [True, False],
         "WITH_SNUBA_LITE": [False],
-        "MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS":
-        half_to_one,
+        "MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS": half_to_one,
         "DB_NAME_OR_TYPE": [DB_NAME_OR_TYPE],
         "USER_QUERY_BUDGET_LIMIT": [200],
     }
