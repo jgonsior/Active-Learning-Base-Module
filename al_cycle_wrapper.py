@@ -73,7 +73,8 @@ def train_al(
     elif hyper_parameters["CLUSTER"] == "RoundRobin":
         cluster_strategy = RoundRobinClusterStrategy()
 
-    cluster_strategy.set_data_storage(dataset_storage, hyper_parameters["N_JOBS"])
+    cluster_strategy.set_data_storage(dataset_storage,
+                                      hyper_parameters["N_JOBS"])
 
     active_learner_params = {
         "dataset_storage": dataset_storage,
@@ -81,7 +82,8 @@ def train_al(
         "N_JOBS": hyper_parameters["N_JOBS"],
         "RANDOM_SEED": hyper_parameters["RANDOM_SEED"],
         "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
-        "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
+        "NR_QUERIES_PER_ITERATION":
+        hyper_parameters["NR_QUERIES_PER_ITERATION"],
         "oracle": oracle,
     }
 
@@ -105,8 +107,7 @@ def train_al(
 
     start = timer()
     trained_active_clf_list, metrics_per_al_cycle, Y_train = active_learner.learn(
-        **hyper_parameters
-    )
+        **hyper_parameters)
     end = timer()
 
     return (
@@ -135,34 +136,28 @@ def eval_al(
     Y_train,
 ):
     hyper_parameters[
-        "amount_of_user_asked_queries"
-    ] = active_learner.amount_of_user_asked_queries
+        "amount_of_user_asked_queries"] = active_learner.amount_of_user_asked_queries
 
     # normalize by start_set_size
     percentage_user_asked_queries = (
-        1
-        - hyper_parameters["amount_of_user_asked_queries"]
-        / hyper_parameters["LEN_TRAIN_DATA"]
-    )
+        1 - hyper_parameters["amount_of_user_asked_queries"] /
+        hyper_parameters["LEN_TRAIN_DATA"])
     test_acc = metrics_per_al_cycle["test_acc"][-1]
 
     # score is harmonic mean
-    score = (
-        2
-        * percentage_user_asked_queries
-        * test_acc
-        / (percentage_user_asked_queries + test_acc)
-    )
+    score = (2 * percentage_user_asked_queries * test_acc /
+             (percentage_user_asked_queries + test_acc))
 
     amount_of_all_labels = len(Y_train_al)
 
     # calculate accuracy for Random Forest only on oracle human expert queries
 
-    active_rf = RandomForestClassifier(random_state=hyper_parameters["RANDOM_SEED"])
+    active_rf = RandomForestClassifier(
+        random_state=hyper_parameters["RANDOM_SEED"])
     ys_oracle_a = Y_train_al.loc[Y_train_al.source == "A"]
     ys_oracle_g = Y_train_al.loc[Y_train_al.source == "G"]
     ys_oracle = pd.concat([ys_oracle_g, ys_oracle_a])
-    print(ys_oracle)
+
     active_rf.fit(X_train.iloc[ys_oracle.index], ys_oracle[0])
     acc_test_oracle = accuracy_score(Y_test, active_rf.predict(X_test))
 

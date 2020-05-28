@@ -505,7 +505,7 @@ def get_param_distribution(hyper_search_type=None,
             "dummy",
             #  "random",
             #  "MostUncertain_lc",
-            "MostUncertain_max_margin",
+            #  "MostUncertain_max_margin",
             #  "MostUncertain_entropy"
             #  'dummy',
         ],
