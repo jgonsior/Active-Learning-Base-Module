@@ -1,3 +1,4 @@
+import pandas as pd
 from collections import defaultdict
 import datetime
 import hashlib
@@ -158,7 +159,10 @@ def eval_al(
     # calculate accuracy for Random Forest only on oracle human expert queries
 
     active_rf = RandomForestClassifier(random_state=hyper_parameters["RANDOM_SEED"])
-    ys_oracle = Y_train_al.loc[Y_train_al.source == "A"]
+    ys_oracle_a = Y_train_al.loc[Y_train_al.source == "A"]
+    ys_oracle_g = Y_train_al.loc[Y_train_al.source == "G"]
+    ys_oracle = pd.concat([ys_oracle_g, ys_oracle_a])
+    print(ys_oracle)
     active_rf.fit(X_train.iloc[ys_oracle.index], ys_oracle[0])
     acc_test_oracle = accuracy_score(Y_test, active_rf.predict(X_test))
 
