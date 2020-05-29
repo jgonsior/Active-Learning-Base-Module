@@ -504,7 +504,7 @@ def get_param_distribution(hyper_search_type=None,
         "CLUSTER": [
             "dummy",
             #  "random",
-            #  "MostUncertain_lc",
+            "MostUncertain_lc",
             #  "MostUncertain_max_margin",
             #  "MostUncertain_entropy"
             #  'dummy',
@@ -543,7 +543,7 @@ def get_param_distribution(hyper_search_type=None,
         "MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS":
         half_to_one,
         "DB_NAME_OR_TYPE": [DB_NAME_OR_TYPE],
-        "USER_QUERY_BUDGET_LIMIT": [200],
+        "USER_QUERY_BUDGET_LIMIT": [1000],
     }
 
     return param_distribution
