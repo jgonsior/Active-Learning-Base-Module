@@ -543,7 +543,7 @@ def get_param_distribution(hyper_search_type=None,
         "MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS":
         half_to_one,
         "DB_NAME_OR_TYPE": [DB_NAME_OR_TYPE],
-        "USER_QUERY_BUDGET_LIMIT": [1000],
+        "USER_QUERY_BUDGET_LIMIT": [2000],
     }
 
     return param_distribution
