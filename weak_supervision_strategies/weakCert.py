@@ -1,56 +1,45 @@
+import numpy as np
 import collections
 import random
+import pandas as pd
 
 from ..activeLearner import ActiveLearner
 from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
 
 
-class WeakClust(BaseWeakSupervisionStrategy):
-    def get_weak_requests(
-        self, MINIMUM_CLUSTER_UNITY_SIZE, MINIMUM_RATIO_LABELED_UNLABELED
-    ):
-        certain_X = recommended_labels = certain_indices = None
-        cluster_found = False
+class WeakCert(BaseWeakSupervisionStrategy):
+    def get_weak_requests(self, CERTAINTY_THRESHOLD, CERTAINTY_RATIO):
+        # calculate certainties for all of X_train_unlabeled
+        certainties = self.clf.predict_proba(
+            self.data_storage.X_train_unlabeled.to_numpy()
+        )
 
-        # check if the most prominent label for one cluster can be propagated over to the rest of it's cluster
-        for (
-            cluster_id,
-            cluster_indices,
-        ) in self.data_storage.X_train_labeled_cluster_indices.items():
-            if (
-                cluster_id
-                not in self.data_storage.X_train_unlabeled_cluster_indices.keys()
-            ):
-                continue
-            if (
-                len(cluster_indices)
-                / len(self.data_storage.X_train_unlabeled_cluster_indices[cluster_id])
-                > MINIMUM_CLUSTER_UNITY_SIZE
-            ):
-                frequencies = collections.Counter(
-                    self.data_storage.Y_train_labeled.loc[cluster_indices][0].tolist()
+        amount_of_certain_labels = np.count_nonzero(
+            np.where(np.max(certainties, 1) > CERTAINTY_THRESHOLD)
+        )
+
+        if (
+            amount_of_certain_labels
+            > len(self.data_storage.X_train_unlabeled) * CERTAINTY_RATIO
+        ):
+
+            # for safety reasons I refrain from explaining the following
+            certain_indices = [
+                j
+                for i, j in enumerate(
+                    self.data_storage.X_train_unlabeled.index.tolist()
                 )
+                if np.max(certainties, 1)[i] > CERTAINTY_THRESHOLD
+            ]
 
-                if (
-                    frequencies.most_common(1)[0][1]
-                    > len(cluster_indices) * MINIMUM_RATIO_LABELED_UNLABELED
-                ):
-                    certain_indices = self.data_storage.X_train_unlabeled_cluster_indices[
-                        cluster_id
-                    ]
+            certain_X = self.data_storage.X_train_unlabeled.loc[certain_indices]
 
-                    certain_X = self.data_storage.X_train_unlabeled.loc[certain_indices]
-                    recommended_labels = [
-                        frequencies.most_common(1)[0][0] for _ in certain_indices
-                    ]
-                    recommended_labels = pd.DataFrame(
-                        recommended_labels, index=certain_X.index
-                    )
-                    #  log_it("Cluster ", cluster_id, certain_indices)
-                    cluster_found = True
-                    break
+            recommended_labels = self.clf.predict(certain_X.to_numpy())
+            # add indices to recommended_labels, could be maybe useful later on?
+            recommended_labels = pd.DataFrame(recommended_labels, index=certain_X.index)
 
-        # delete this cluster from the list of possible cluster for the next round
-        if cluster_found:
-            self.data_storage.X_train_labeled_cluster_indices.pop(cluster_id)
+            return certain_X, recommended_labels, certain_indices
+        else:
+            return None, None, None
+
         return certain_X, recommended_labels, certain_indices
