@@ -1,3 +1,5 @@
+import csv
+from pathlib import Path
 import pandas as pd
 from collections import defaultdict
 import datetime
@@ -219,9 +221,34 @@ def eval_al(
 
     # lower case all parameters for nice values in database
     hyper_parameters = {k.lower(): v for k, v in hyper_parameters.items()}
+    hyper_parameters["fit_time"] = fit_time
+    hyper_parameters["metrics_per_al_cycle"] = dumps(
+        metrics_per_al_cycle, allow_nan=True
+    )
+    hyper_parameters["acc_train"] = metrics_per_al_cycle["train_acc"][-1]
+    hyper_parameters["acc_test"] = metrics_per_al_cycle["test_acc"][-1]
+    hyper_parameters["acc_test_oracle"] = acc_test_oracle
+    hyper_parameters["fit_score"] = score
+    hyper_parameters["param_list_id"] = param_list_id
+    hyper_parameters["thread_id"] = threading.get_ident()
+    hyper_parameters["end_time"] = datetime.datetime.now()
+    hyper_parameters["amount_of_all_labels"] = amount_of_all_labels
 
-    #  experiment_result = ExperimentResult(
-    #      **hyper_parameters,
+    # save hyper parameter results in csv file
+    output_hyper_parameter_file = Path(
+        hyper_parameters["output_directory"] + "/hyper_parameters.csv"
+    )
+    if not output_hyper_parameter_file.is_file():
+        output_hyper_parameter_file.touch()
+        with output_hyper_parameter_file.open("a") as f:
+            csv_writer = csv.DictWriter(f, fieldnames=hyper_parameters.keys())
+            csv_writer.writeheader()
+
+    with output_hyper_parameter_file.open("a") as f:
+        csv_writer = csv.DictWriter(f, fieldnames=hyper_parameters.keys())
+        csv_writer.writerow(hyper_parameters)
+
+    # save metrics_per_al_cycle in pickle file
     #      metrics_per_al_cycle=dumps(metrics_per_al_cycle, allow_nan=True),
     #      fit_time=str(fit_time),
     #      acc_train=metrics_per_al_cycle["train_acc"][-1],
