@@ -75,27 +75,34 @@ def train_al(
 
     cluster_strategy.set_data_storage(dataset_storage, hyper_parameters["N_JOBS"])
 
+    classifier = RandomForestClassifier(
+        n_jobs=hyper_parameters["N_JOBS"], random_state=hyper_parameters["RANDOM_SEED"]
+    )
+
     weak_supervision_label_sources = []
 
-    #  if hyper_parameters["WITH_CLUSTER_RECOMMENDATION"]:
-    #      weak_supervision_label_sources.append(
-    #          WeakClust(
-    #              dataset_storage,
-    #              MINIMUM_CLUSTER_UNITY_SIZE=hyper_parameters[
-    #                  "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE"
-    #              ],
-    #              MINIMUM_RATIO_LABELED_UNLABELED=hyper_parameters[
-    #                  "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"
-    #              ],
-    #          )
-    #      )
+    if hyper_parameters["WITH_CLUSTER_RECOMMENDATION"]:
+        weak_supervision_label_sources.append(
+            WeakClust(
+                dataset_storage,
+                MINIMUM_CLUSTER_UNITY_SIZE=hyper_parameters[
+                    "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE"
+                ],
+                MINIMUM_RATIO_LABELED_UNLABELED=hyper_parameters[
+                    "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"
+                ],
+            )
+        )
 
     if hyper_parameters["WITH_UNCERTAINTY_RECOMMENDATION"]:
         weak_supervision_label_sources.append(
             WeakCert(
                 dataset_storage,
-                CERTAINTY_THRESHOLD=hyper_parameters["CERTAINTY_THRESHOLD"],
-                CERTAINTY_RATIO=hyper_parameters["CERTAINTY_RATIO"],
+                CERTAINTY_THRESHOLD=hyper_parameters[
+                    "UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD"
+                ],
+                CERTAINTY_RATIO=hyper_parameters["UNCERTAINTY_RECOMMENDATION_RATIO"],
+                clf=classifier,
             )
         )
 
@@ -107,6 +114,7 @@ def train_al(
         "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
         "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
         "oracle": oracle,
+        "clf": classifier,
         "weak_supervision_label_sources": weak_supervision_label_sources,
     }
 

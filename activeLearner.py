@@ -33,22 +33,13 @@ class ActiveLearner:
         NR_LEARNING_ITERATIONS,
         NR_QUERIES_PER_ITERATION,
         oracle,
+        clf,
         weak_supervision_label_sources=[],
     ):
-        if RANDOM_SEED != -1:
-            np.random.seed(RANDOM_SEED)
-            random.seed(RANDOM_SEED)
-
-            self.best_hyper_parameters = {"random_state": RANDOM_SEED, "n_jobs": N_JOBS}
-        else:
-            self.best_hyper_parameters = {"n_jobs": N_JOBS}
-
         self.data_storage = dataset_storage
         self.NR_LEARNING_ITERATIONS = NR_LEARNING_ITERATIONS
         self.nr_queries_per_iteration = NR_QUERIES_PER_ITERATION
-
-        # it's a list because of committee (in all other cases it's just one CLASSIFIER)
-        self.clf = RandomForestClassifier(**self.best_hyper_parameters)
+        self.clf = clf
 
         self.metrics_per_al_cycle = {
             "test_acc": [],

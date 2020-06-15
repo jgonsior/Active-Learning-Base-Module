@@ -9,7 +9,7 @@ from .baseWeakSupervision import BaseWeakSupervision
 
 class WeakCert(BaseWeakSupervision):
     # threshold param
-    CERTAINTY_THRESHOLD = None
+    CERTAINTY_THRESHOLD = CERTAINTY_RATIO = None
 
     def get_labeled_samples(self):
         # calculate certainties for all of X_train_unlabeled
@@ -41,8 +41,6 @@ class WeakCert(BaseWeakSupervision):
             # add indices to recommended_labels, could be maybe useful later on?
             recommended_labels = pd.DataFrame(recommended_labels, index=certain_X.index)
 
-            return certain_X, recommended_labels, certain_indices
+            return certain_X, recommended_labels, certain_indices, "U"
         else:
             return None, None, None, None
-
-        return certain_X, recommended_labels, certain_indices, "U"
