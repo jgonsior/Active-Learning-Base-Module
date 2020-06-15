@@ -6,9 +6,10 @@ from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
 
 
 class WeakClust(BaseWeakSupervisionStrategy):
-    def get_weak_requests(
-        self, MINIMUM_CLUSTER_UNITY_SIZE, MINIMUM_RATIO_LABELED_UNLABELED
-    ):
+    # threshold params
+    MINIMUM_CLUSTER_UNITY_SIZE = MINIMUM_RATIO_LABELED_UNLABELED = None
+
+    def get_weak_requests(self):
         certain_X = recommended_labels = certain_indices = None
         cluster_found = False
 
@@ -25,7 +26,7 @@ class WeakClust(BaseWeakSupervisionStrategy):
             if (
                 len(cluster_indices)
                 / len(self.data_storage.X_train_unlabeled_cluster_indices[cluster_id])
-                > MINIMUM_CLUSTER_UNITY_SIZE
+                > self.MINIMUM_CLUSTER_UNITY_SIZE
             ):
                 frequencies = collections.Counter(
                     self.data_storage.Y_train_labeled.loc[cluster_indices][0].tolist()
@@ -33,7 +34,7 @@ class WeakClust(BaseWeakSupervisionStrategy):
 
                 if (
                     frequencies.most_common(1)[0][1]
-                    > len(cluster_indices) * MINIMUM_RATIO_LABELED_UNLABELED
+                    > len(cluster_indices) * self.MINIMUM_RATIO_LABELED_UNLABELED
                 ):
                     certain_indices = self.data_storage.X_train_unlabeled_cluster_indices[
                         cluster_id

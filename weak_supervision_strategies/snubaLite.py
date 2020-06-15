@@ -1,6 +1,7 @@
 import itertools
 import collections
 import random
+import numpy as np
 
 from ..activeLearner import ActiveLearner
 from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
@@ -10,7 +11,7 @@ from sklearn.metrics import accuracy_score
 
 
 class SnubaLite(BaseWeakSupervisionStrategy):
-    def get_weak_requests(self, MINIMUM_HEURISTIC_ACCURACY):
+    def get_weak_requests(self):
         X_weak = Y_weak = weak_indices = None
         # @todo prevent snuba_lite from relearning based on itself (so only "strong" labels are being used for weak labeling)
         # for each label and each feature (or feature combination) generate small shallow decision tree -> is it a good idea to limit the amount of used features?!
@@ -60,7 +61,7 @@ class SnubaLite(BaseWeakSupervisionStrategy):
                     best_class = clf_class
 
         # if accuracy of decision tree is high enough -> take recommendation
-        if highest_accuracy > MINIMUM_HEURISTIC_ACCURACY:
+        if highest_accuracy > self.MINIMUM_HEURISTIC_ACCURACY:
             probabilities = best_heuristic.predict_proba(
                 self.data_storage.X_train_unlabeled.loc[:, best_combination].to_numpy()
             )
@@ -71,7 +72,7 @@ class SnubaLite(BaseWeakSupervisionStrategy):
                 for index, proba in zip(
                     self.data_storage.X_train_unlabeled.index, probabilities
                 )
-                if np.max(proba) > MINIMUM_HEURISTIC_ACCURACY
+                if np.max(proba) > self.MINIMUM_HEURISTIC_ACCURACY
             ]
 
             if len(weak_indices) > 0:

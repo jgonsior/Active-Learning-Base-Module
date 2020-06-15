@@ -33,6 +33,7 @@ class ActiveLearner:
         NR_LEARNING_ITERATIONS,
         NR_QUERIES_PER_ITERATION,
         oracle,
+        weak_supervision_recommendators=[],
     ):
         if RANDOM_SEED != -1:
             np.random.seed(RANDOM_SEED)
@@ -62,6 +63,7 @@ class ActiveLearner:
         self.cluster_strategy = cluster_strategy
         self.amount_of_user_asked_queries = 0
         self.oracle = oracle
+        self.weak_supervision_recommendators = []
 
     @abc.abstractmethod
     def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices, *args):
@@ -124,9 +126,6 @@ class ActiveLearner:
     def learn(
         self,
         MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS,
-        WITH_CLUSTER_RECOMMENDATION,
-        WITH_UNCERTAINTY_RECOMMENDATION,
-        WITH_SNUBA_LITE,
         ALLOW_RECOMMENDATIONS_AFTER_STOP,
         USER_QUERY_BUDGET_LIMIT,
         **kwargs,
