@@ -1,19 +1,56 @@
+import collections
 import random
 
 from ..activeLearner import ActiveLearner
 from .baseClusterStrategy import BaseClusterStrategy
 
 
-class RandomSampler(ActiveLearner):
-    def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices):
-        # we only take the first cluster into consideration and take a random sample from it, could be extended to work with multiple clusters as well
-        random_cluster = X_train_unlabeled_cluster_indices[
-            list(X_train_unlabeled_cluster_indices.keys())[0]
-        ]
+class WeakClust(BaseClusterStrategy):
+    def get_weak_requests(
+        self, MINIMUM_CLUSTER_UNITY_SIZE, MINIMUM_RATIO_LABELED_UNLABELED
+    ):
+        certain_X = recommended_labels = certain_indices = None
+        cluster_found = False
 
-        size_of_random_sample = self.nr_queries_per_iteration
-        length_X_train_unlabled = len(random_cluster)
-        if size_of_random_sample > length_X_train_unlabled:
-            size_of_random_sample = length_X_train_unlabled
+        # check if the most prominent label for one cluster can be propagated over to the rest of it's cluster
+        for (
+            cluster_id,
+            cluster_indices,
+        ) in self.data_storage.X_train_labeled_cluster_indices.items():
+            if (
+                cluster_id
+                not in self.data_storage.X_train_unlabeled_cluster_indices.keys()
+            ):
+                continue
+            if (
+                len(cluster_indices)
+                / len(self.data_storage.X_train_unlabeled_cluster_indices[cluster_id])
+                > MINIMUM_CLUSTER_UNITY_SIZE
+            ):
+                frequencies = collections.Counter(
+                    self.data_storage.Y_train_labeled.loc[cluster_indices][0].tolist()
+                )
 
-        return random.sample(random_cluster, size_of_random_sample)
+                if (
+                    frequencies.most_common(1)[0][1]
+                    > len(cluster_indices) * MINIMUM_RATIO_LABELED_UNLABELED
+                ):
+                    certain_indices = self.data_storage.X_train_unlabeled_cluster_indices[
+                        cluster_id
+                    ]
+
+                    certain_X = self.data_storage.X_train_unlabeled.loc[certain_indices]
+                    recommended_labels = [
+                        frequencies.most_common(1)[0][0] for _ in certain_indices
+                    ]
+                    recommended_labels = pd.DataFrame(
+                        recommended_labels, index=certain_X.index
+                    )
+                    #  log_it("Cluster ", cluster_id, certain_indices)
+                    cluster_found = True
+                    break
+
+        # delete this cluster from the list of possible cluster for the next round
+        if cluster_found:
+            self.data_storage.X_train_labeled_cluster_indices.pop(cluster_id)
+        return certain_X, recommended_labels, certain_indices
