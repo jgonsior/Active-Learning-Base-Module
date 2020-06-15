@@ -33,7 +33,7 @@ class ActiveLearner:
         NR_LEARNING_ITERATIONS,
         NR_QUERIES_PER_ITERATION,
         oracle,
-        weak_supervision_recommendators=[],
+        label_sources=[],
     ):
         if RANDOM_SEED != -1:
             np.random.seed(RANDOM_SEED)
@@ -63,7 +63,7 @@ class ActiveLearner:
         self.cluster_strategy = cluster_strategy
         self.amount_of_user_asked_queries = 0
         self.oracle = oracle
-        self.weak_supervision_recommendators = []
+        self.label_source = label_sources
 
     @abc.abstractmethod
     def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices, *args):
@@ -167,33 +167,17 @@ class ActiveLearner:
                     self.metrics_per_al_cycle["test_acc"][-1]
                     > MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS
                 ):
-                    if X_query is None and WITH_CLUSTER_RECOMMENDATION:
-                        X_query, Y_query, query_indices = self.cluster_recommendation(
-                            kwargs["CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE"],
-                            kwargs["CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"],
-                        )
-                        recommendation_value = "C"
-
-                    if X_query is None and WITH_UNCERTAINTY_RECOMMENDATION:
+                    # iterate over existing WS sources
+                    for labelSource in self.label_sources:
                         (
                             X_query,
                             Y_query,
                             query_indices,
-                        ) = self.uncertainty_recommendation(
-                            kwargs["UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD"],
-                            kwargs["UNCERTAINTY_RECOMMENDATION_RATIO"],
-                        )
-                        recommendation_value = "U"
+                            recommendation_value,
+                        ) = labelSource.get_labeled_samples()
 
-                    if X_query is None and WITH_SNUBA_LITE:
-                        (
-                            X_query,
-                            Y_query,
-                            query_indices,
-                        ) = self.snuba_lite_recommendation(
-                            kwargs["SNUBA_LITE_MINIMUM_HEURISTIC_ACCURACY"]
-                        )
-                        recommendation_value = "S"
+                        if X_query is not None:
+                            break
 
                 if early_stop_reached and X_query is None:
                     break

@@ -4,14 +4,13 @@ import random
 import numpy as np
 
 from ..activeLearner import ActiveLearner
-from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 
 
-class SnubaLite(BaseWeakSupervisionStrategy):
-    def get_weak_requests(self):
+class SnubaLite(BaseLabelSource):
+    def get_labeled_samples(self):
         X_weak = Y_weak = weak_indices = None
         # @todo prevent snuba_lite from relearning based on itself (so only "strong" labels are being used for weak labeling)
         # for each label and each feature (or feature combination) generate small shallow decision tree -> is it a good idea to limit the amount of used features?!
@@ -86,4 +85,4 @@ class SnubaLite(BaseWeakSupervisionStrategy):
             else:
                 weak_indices = None
 
-        return X_weak, Y_weak, weak_indices
+        return X_weak, Y_weak, weak_indices, "S"

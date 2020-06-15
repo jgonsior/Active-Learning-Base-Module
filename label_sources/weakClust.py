@@ -2,14 +2,13 @@ import collections
 import random
 import pandas as pd
 from ..activeLearner import ActiveLearner
-from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
 
 
-class WeakClust(BaseWeakSupervisionStrategy):
+class WeakClust(BaseLabelSource):
     # threshold params
     MINIMUM_CLUSTER_UNITY_SIZE = MINIMUM_RATIO_LABELED_UNLABELED = None
 
-    def get_weak_requests(self):
+    def get_labeled_samples(self):
         certain_X = recommended_labels = certain_indices = None
         cluster_found = False
 
@@ -54,4 +53,4 @@ class WeakClust(BaseWeakSupervisionStrategy):
         # delete this cluster from the list of possible cluster for the next round
         if cluster_found:
             self.data_storage.X_train_labeled_cluster_indices.pop(cluster_id)
-        return certain_X, recommended_labels, certain_indices
+        return certain_X, recommended_labels, certain_indices, "C"

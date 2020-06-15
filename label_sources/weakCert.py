@@ -4,14 +4,13 @@ import random
 import pandas as pd
 
 from ..activeLearner import ActiveLearner
-from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
 
 
-class WeakCert(BaseWeakSupervisionStrategy):
+class WeakCert(BaseLabelSource):
     # threshold param
     CERTAINTY_THRESHOLD = None
 
-    def get_weak_requests(self):
+    def get_labeled_samples(self):
         # calculate certainties for all of X_train_unlabeled
         certainties = self.clf.predict_proba(
             self.data_storage.X_train_unlabeled.to_numpy()
@@ -43,6 +42,6 @@ class WeakCert(BaseWeakSupervisionStrategy):
 
             return certain_X, recommended_labels, certain_indices
         else:
-            return None, None, None
+            return None, None, None, None
 
-        return certain_X, recommended_labels, certain_indices
+        return certain_X, recommended_labels, certain_indices, "U"
