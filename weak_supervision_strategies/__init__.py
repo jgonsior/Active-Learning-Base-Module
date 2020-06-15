@@ -1,3 +1,4 @@
-from .weak_clust import *
-from .weak_cert import *
-from .snuba_lite import *
+from .weakClust import *
+from .weakCert import *
+from .snubaLite import *
+from .baseWeakSupervisionStrategy import *

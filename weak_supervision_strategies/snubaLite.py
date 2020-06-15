@@ -2,10 +2,10 @@ import collections
 import random
 
 from ..activeLearner import ActiveLearner
-from .baseClusterStrategy import BaseClusterStrategy
+from .baseWeakSupervisionStrategy import BaseWeakSupervisionStrategy
 
 
-class WeakClust(BaseClusterStrategy):
+class WeakClust(BaseWeakSupervisionStrategy):
     def get_weak_requests(
         self, MINIMUM_CLUSTER_UNITY_SIZE, MINIMUM_RATIO_LABELED_UNLABELED
     ):
