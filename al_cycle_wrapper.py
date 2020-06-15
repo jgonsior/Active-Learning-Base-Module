@@ -75,6 +75,30 @@ def train_al(
 
     cluster_strategy.set_data_storage(dataset_storage, hyper_parameters["N_JOBS"])
 
+    weak_supervision_label_sources = []
+
+    #  if hyper_parameters["WITH_CLUSTER_RECOMMENDATION"]:
+    #      weak_supervision_label_sources.append(
+    #          WeakClust(
+    #              dataset_storage,
+    #              MINIMUM_CLUSTER_UNITY_SIZE=hyper_parameters[
+    #                  "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE"
+    #              ],
+    #              MINIMUM_RATIO_LABELED_UNLABELED=hyper_parameters[
+    #                  "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"
+    #              ],
+    #          )
+    #      )
+
+    if hyper_parameters["WITH_UNCERTAINTY_RECOMMENDATION"]:
+        weak_supervision_label_sources.append(
+            WeakCert(
+                dataset_storage,
+                CERTAINTY_THRESHOLD=hyper_parameters["CERTAINTY_THRESHOLD"],
+                CERTAINTY_RATIO=hyper_parameters["CERTAINTY_RATIO"],
+            )
+        )
+
     active_learner_params = {
         "dataset_storage": dataset_storage,
         "cluster_strategy": cluster_strategy,
@@ -83,6 +107,7 @@ def train_al(
         "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
         "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
         "oracle": oracle,
+        "weak_supervision_label_sources": weak_supervision_label_sources,
     }
 
     if hyper_parameters["SAMPLING"] == "random":
@@ -102,26 +127,6 @@ def train_al(
     #  active_learner = CommitteeSampler(hyper_parameters['RANDOM_SEED, hyper_parameters.N_JOBS, hyper_parameters.NR_LEARNING_ITERATIONS)
     else:
         ("No Active Learning Strategy specified")
-
-    weak_supervision_label_source = []
-
-    if hyper_parameters["WITH_CLUSTER_RECOMMENDATION"]:
-        weak_supervision_label_source.append(
-            WeakClust(
-                dataset_storage,
-                hyper_parameters["CLUSTER_RECOMMENDATION_MINIMUM_CLUSTEr_UNITY_SIZE"],
-                hyper_parameters["CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"],
-            )
-        )
-
-    if hyper_parameters["WITH_UNCERTAINTY_RECOMMENDATION"]:
-        weak_supervision_label_source.append(
-            WeakCert(
-                dataset_storage,
-                hyper_parameters["CERTAINTY_THRESHOLD"],
-                hyper_parameters["CERTAINTY_RATIO"],
-            )
-        )
 
     start = timer()
     trained_active_clf_list, metrics_per_al_cycle, Y_train = active_learner.learn(

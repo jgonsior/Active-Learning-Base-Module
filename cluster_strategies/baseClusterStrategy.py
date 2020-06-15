@@ -74,12 +74,12 @@ class BaseClusterStrategy:
         counter = Counter(self.Y_train_unlabeled_cluster)
         self.n_clusters = len([1 for _ in counter.most_common()])
 
-        log_it(
-            "Clustering into "
-            + str(self.n_clusters)
-            + " :  "
-            + str(counter.most_common())
-        )
+        #  log_it(
+        #      "Clustering into "
+        #      + str(self.n_clusters)
+        #      + " :  "
+        #      + str(counter.most_common())
+        #  )
 
         self.data_storage.X_train_unlabeled_cluster_indices = defaultdict(
             lambda: list()

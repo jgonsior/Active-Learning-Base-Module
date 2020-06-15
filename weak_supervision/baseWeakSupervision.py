@@ -2,10 +2,10 @@ import abc
 
 
 class BaseWeakSupervision:
-    def _init(self, data_storage, **THRESHOLDS):
+    def __init__(self, data_storage, **THRESHOLDS):
         self.data_storage = data_storage
 
-        for THRESHOLD in THRESHOLDS:
+        for k, v in THRESHOLDS.items():
             setattr(self, k, v)
 
     @abc.abstractmethod

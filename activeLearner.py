@@ -33,7 +33,7 @@ class ActiveLearner:
         NR_LEARNING_ITERATIONS,
         NR_QUERIES_PER_ITERATION,
         oracle,
-        label_sources=[],
+        weak_supervision_label_sources=[],
     ):
         if RANDOM_SEED != -1:
             np.random.seed(RANDOM_SEED)
@@ -63,7 +63,7 @@ class ActiveLearner:
         self.cluster_strategy = cluster_strategy
         self.amount_of_user_asked_queries = 0
         self.oracle = oracle
-        self.label_source = label_sources
+        self.weak_supervision_label_sources = weak_supervision_label_sources
 
     @abc.abstractmethod
     def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices, *args):
@@ -168,7 +168,7 @@ class ActiveLearner:
                     > MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS
                 ):
                     # iterate over existing WS sources
-                    for labelSource in self.label_sources:
+                    for labelSource in self.weak_supervision_label_sources:
                         (
                             X_query,
                             Y_query,
