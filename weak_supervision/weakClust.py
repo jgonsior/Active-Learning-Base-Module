@@ -4,7 +4,7 @@ import pandas as pd
 from ..activeLearner import ActiveLearner
 
 
-class WeakClust(BaseLabelSource):
+class WeakClust(BaseWeakSupervision):
     # threshold params
     MINIMUM_CLUSTER_UNITY_SIZE = MINIMUM_RATIO_LABELED_UNLABELED = None
 

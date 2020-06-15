@@ -21,14 +21,14 @@ from .cluster_strategies import (
 )
 from .dataStorage import DataStorage
 from .experiment_setup_lib import (
-    ExperimentResult,
     calculate_global_score,
     conf_matrix_and_acc,
-    get_db,
     get_param_distribution,
     init_logger,
 )
 from .sampling_strategies import BoundaryPairSampler, RandomSampler, UncertaintySampler
+
+from .weak_supervision import WeakCert, WeakClust
 
 
 def train_al(
@@ -73,8 +73,7 @@ def train_al(
     elif hyper_parameters["CLUSTER"] == "RoundRobin":
         cluster_strategy = RoundRobinClusterStrategy()
 
-    cluster_strategy.set_data_storage(dataset_storage,
-                                      hyper_parameters["N_JOBS"])
+    cluster_strategy.set_data_storage(dataset_storage, hyper_parameters["N_JOBS"])
 
     active_learner_params = {
         "dataset_storage": dataset_storage,
@@ -82,8 +81,7 @@ def train_al(
         "N_JOBS": hyper_parameters["N_JOBS"],
         "RANDOM_SEED": hyper_parameters["RANDOM_SEED"],
         "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
-        "NR_QUERIES_PER_ITERATION":
-        hyper_parameters["NR_QUERIES_PER_ITERATION"],
+        "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
         "oracle": oracle,
     }
 
@@ -105,9 +103,30 @@ def train_al(
     else:
         ("No Active Learning Strategy specified")
 
+    weak_supervision_label_source = []
+
+    if hyper_parameters["WITH_CLUSTER_RECOMMENDATION"]:
+        weak_supervision_label_source.append(
+            WeakClust(
+                dataset_storage,
+                hyper_parameters["CLUSTER_RECOMMENDATION_MINIMUM_CLUSTEr_UNITY_SIZE"],
+                hyper_parameters["CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"],
+            )
+        )
+
+    if hyper_parameters["WITH_UNCERTAINTY_RECOMMENDATION"]:
+        weak_supervision_label_source.append(
+            WeakCert(
+                dataset_storage,
+                hyper_parameters["CERTAINTY_THRESHOLD"],
+                hyper_parameters["CERTAINTY_RATIO"],
+            )
+        )
+
     start = timer()
     trained_active_clf_list, metrics_per_al_cycle, Y_train = active_learner.learn(
-        **hyper_parameters)
+        **hyper_parameters
+    )
     end = timer()
 
     return (
@@ -136,24 +155,30 @@ def eval_al(
     Y_train,
 ):
     hyper_parameters[
-        "amount_of_user_asked_queries"] = active_learner.amount_of_user_asked_queries
+        "amount_of_user_asked_queries"
+    ] = active_learner.amount_of_user_asked_queries
 
     # normalize by start_set_size
     percentage_user_asked_queries = (
-        1 - hyper_parameters["amount_of_user_asked_queries"] /
-        hyper_parameters["LEN_TRAIN_DATA"])
+        1
+        - hyper_parameters["amount_of_user_asked_queries"]
+        / hyper_parameters["LEN_TRAIN_DATA"]
+    )
     test_acc = metrics_per_al_cycle["test_acc"][-1]
 
     # score is harmonic mean
-    score = (2 * percentage_user_asked_queries * test_acc /
-             (percentage_user_asked_queries + test_acc))
+    score = (
+        2
+        * percentage_user_asked_queries
+        * test_acc
+        / (percentage_user_asked_queries + test_acc)
+    )
 
     amount_of_all_labels = len(Y_train_al)
 
     # calculate accuracy for Random Forest only on oracle human expert queries
 
-    active_rf = RandomForestClassifier(
-        random_state=hyper_parameters["RANDOM_SEED"])
+    active_rf = RandomForestClassifier(random_state=hyper_parameters["RANDOM_SEED"])
     ys_oracle_a = Y_train_al.loc[Y_train_al.source == "A"]
     ys_oracle_g = Y_train_al.loc[Y_train_al.source == "G"]
     ys_oracle = pd.concat([ys_oracle_g, ys_oracle_a])
@@ -172,7 +197,7 @@ def eval_al(
     for k in param_distribution.keys():
         unique_params += str(hyper_parameters[k])
     param_list_id = hashlib.md5(unique_params.encode("utf-8")).hexdigest()
-    db = get_db(db_name_or_type=hyper_parameters["DB_NAME_OR_TYPE"])
+    #  db = get_db(db_name_or_type=hyper_parameters["DB_NAME_OR_TYPE"])
 
     hyper_parameters["DATASET_NAME"] = dataset_name
     print(hyper_parameters.keys())
@@ -182,21 +207,21 @@ def eval_al(
     # lower case all parameters for nice values in database
     hyper_parameters = {k.lower(): v for k, v in hyper_parameters.items()}
 
-    experiment_result = ExperimentResult(
-        **hyper_parameters,
-        metrics_per_al_cycle=dumps(metrics_per_al_cycle, allow_nan=True),
-        fit_time=str(fit_time),
-        acc_train=metrics_per_al_cycle["train_acc"][-1],
-        acc_test=metrics_per_al_cycle["test_acc"][-1],
-        acc_test_oracle=acc_test_oracle,
-        fit_score=score,
-        param_list_id=param_list_id,
-        thread_id=threading.get_ident(),
-        end_time=datetime.datetime.now(),
-        amount_of_all_labels=amount_of_all_labels,
-    )
-    experiment_result.save()
-    db.close()
+    #  experiment_result = ExperimentResult(
+    #      **hyper_parameters,
+    #      metrics_per_al_cycle=dumps(metrics_per_al_cycle, allow_nan=True),
+    #      fit_time=str(fit_time),
+    #      acc_train=metrics_per_al_cycle["train_acc"][-1],
+    #      acc_test=metrics_per_al_cycle["test_acc"][-1],
+    #      acc_test_oracle=acc_test_oracle,
+    #      fit_score=score,
+    #      param_list_id=param_list_id,
+    #      thread_id=threading.get_ident(),
+    #      end_time=datetime.datetime.now(),
+    #      amount_of_all_labels=amount_of_all_labels,
+    #  )
+    #  experiment_result.save()
+    #  db.close()
 
     return score
 

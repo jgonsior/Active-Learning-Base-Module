@@ -19,76 +19,76 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_auc_sco
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
-db = peewee.DatabaseProxy()
-
-
-class BaseModel(peewee.Model):
-    class Meta:
-        database = db
-
-
-class ExperimentResult(BaseModel):
-    id_field = peewee.AutoField()
-
-    # hyper params
-    datasets_path = peewee.TextField()
-    dataset_name = peewee.TextField()
-    db_name_or_type = peewee.TextField()
-    classifier = peewee.TextField(index=True)
-    cores = peewee.IntegerField()
-    test_fraction = peewee.FloatField()
-    sampling = peewee.TextField(index=True)
-    random_seed = peewee.IntegerField()
-    cluster = peewee.TextField(index=True)
-    nr_learning_iterations = peewee.IntegerField()
-    nr_queries_per_iteration = peewee.IntegerField(index=True)
-    start_set_size = peewee.FloatField(index=True)
-    with_uncertainty_recommendation = peewee.BooleanField(index=True)
-    with_cluster_recommendation = peewee.BooleanField(index=True)
-    with_snuba_lite = peewee.BooleanField(index=True)
-    uncertainty_recommendation_certainty_threshold = peewee.FloatField(null=True)
-    uncertainty_recommendation_ratio = peewee.FloatField(null=True)
-    snuba_lite_minimum_heuristic_accuracy = peewee.FloatField(null=True)
-    cluster_recommendation_minimum_cluster_unity_size = peewee.FloatField(null=True)
-    cluster_recommendation_ratio_labeled_unlabeled = peewee.FloatField(null=True)
-    metrics_per_al_cycle = BinaryJSONField()  # json string
-    amount_of_user_asked_queries = peewee.IntegerField(index=True)
-    amount_of_all_labels = peewee.IntegerField(index=True)
-    allow_recommendations_after_stop = peewee.BooleanField()
-
-    # information of hyperparam run
-    experiment_run_date = peewee.DateTimeField(default=datetime.datetime.now)
-    fit_time = peewee.TextField()  # timedelta
-    acc_train = peewee.FloatField(index=True)
-    acc_test = peewee.FloatField(index=True)
-    acc_test_oracle = peewee.FloatField(index=True)
-    fit_score = peewee.FloatField(index=True)
-
-    param_list_id = peewee.TextField(index=True)
-
-    cv_fit_score_mean = peewee.FloatField(null=True)
-    cv_fit_score_std = peewee.FloatField(null=True)
-
-    thread_id = peewee.BigIntegerField(index=True)
-    end_time = peewee.DateTimeField(index=True)
-
-
-def get_db(db_name_or_type):
-    # create databases for storing the results
-    if db_name_or_type == "sqlite":
-        db = peewee.SqliteDatabase("experiment_results.db")
-    elif db_name_or_type == "tunnel":
-        db = PostgresqlExtDatabase(
-            "jg", host="localhost", port=1111, password="test", user="jg"
-        )
-    else:
-        db = PostgresqlExtDatabase(db_name_or_type)
-    db.bind([ExperimentResult])
-    db.create_tables([ExperimentResult])
-    #  db.connect()
-
-    return db
-
+#  db = peewee.DatabaseProxy()
+#
+#
+#  class BaseModel(peewee.Model):
+#      class Meta:
+#          database = db
+#
+#
+#  class ExperimentResult(BaseModel):
+#      id_field = peewee.AutoField()
+#
+#      # hyper params
+#      datasets_path = peewee.TextField()
+#      dataset_name = peewee.TextField()
+#      db_name_or_type = peewee.TextField()
+#      classifier = peewee.TextField(index=True)
+#      cores = peewee.IntegerField()
+#      test_fraction = peewee.FloatField()
+#      sampling = peewee.TextField(index=True)
+#      random_seed = peewee.IntegerField()
+#      cluster = peewee.TextField(index=True)
+#      nr_learning_iterations = peewee.IntegerField()
+#      nr_queries_per_iteration = peewee.IntegerField(index=True)
+#      start_set_size = peewee.FloatField(index=True)
+#      with_uncertainty_recommendation = peewee.BooleanField(index=True)
+#      with_cluster_recommendation = peewee.BooleanField(index=True)
+#      with_snuba_lite = peewee.BooleanField(index=True)
+#      uncertainty_recommendation_certainty_threshold = peewee.FloatField(null=True)
+#      uncertainty_recommendation_ratio = peewee.FloatField(null=True)
+#      snuba_lite_minimum_heuristic_accuracy = peewee.FloatField(null=True)
+#      cluster_recommendation_minimum_cluster_unity_size = peewee.FloatField(null=True)
+#      cluster_recommendation_ratio_labeled_unlabeled = peewee.FloatField(null=True)
+#      metrics_per_al_cycle = BinaryJSONField()  # json string
+#      amount_of_user_asked_queries = peewee.IntegerField(index=True)
+#      amount_of_all_labels = peewee.IntegerField(index=True)
+#      allow_recommendations_after_stop = peewee.BooleanField()
+#
+#      # information of hyperparam run
+#      experiment_run_date = peewee.DateTimeField(default=datetime.datetime.now)
+#      fit_time = peewee.TextField()  # timedelta
+#      acc_train = peewee.FloatField(index=True)
+#      acc_test = peewee.FloatField(index=True)
+#      acc_test_oracle = peewee.FloatField(index=True)
+#      fit_score = peewee.FloatField(index=True)
+#
+#      param_list_id = peewee.TextField(index=True)
+#
+#      cv_fit_score_mean = peewee.FloatField(null=True)
+#      cv_fit_score_std = peewee.FloatField(null=True)
+#
+#      thread_id = peewee.BigIntegerField(index=True)
+#      end_time = peewee.DateTimeField(index=True)
+#
+#
+#  def get_db(db_name_or_type):
+#      # create databases for storing the results
+#      if db_name_or_type == "sqlite":
+#          db = peewee.SqliteDatabase("experiment_results.db")
+#      elif db_name_or_type == "tunnel":
+#          db = PostgresqlExtDatabase(
+#              "jg", host="localhost", port=1111, password="test", user="jg"
+#          )
+#      else:
+#          db = PostgresqlExtDatabase(db_name_or_type)
+#      db.bind([ExperimentResult])
+#      db.create_tables([ExperimentResult])
+#      #  db.connect()
+#
+#      return db
+#
 
 #  def init_logging(output_dir, level=logging.INFO):
 #  logging_file_name = output_dir + "/" + str(

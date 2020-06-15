@@ -9,7 +9,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 
 
-class SnubaLite(BaseLabelSource):
+class SnubaLite(BaseWeakSupervision):
     def get_labeled_samples(self):
         X_weak = Y_weak = weak_indices = None
         # @todo prevent snuba_lite from relearning based on itself (so only "strong" labels are being used for weak labeling)

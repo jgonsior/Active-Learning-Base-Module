@@ -1,7 +1,7 @@
 import abc
 
 
-class BaseLabelSource:
+class BaseWeakSupervision:
     def _init(self, data_storage, **THRESHOLDS):
         self.data_storage = data_storage
 

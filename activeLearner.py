@@ -120,7 +120,7 @@ class ActiveLearner:
         X_query = self.data_storage.X_train_unlabeled.loc[query_indices]
 
         # ask oracle for new query
-        Y_query = self.oracle.get_labels(query_indices, self.data_storage)
+        Y_query = self.oracle.get_labeled_samples(query_indices, self.data_storage)
         return X_query, Y_query, query_indices
 
     def learn(

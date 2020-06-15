@@ -6,7 +6,7 @@ import pandas as pd
 from ..activeLearner import ActiveLearner
 
 
-class WeakCert(BaseLabelSource):
+class WeakCert(BaseWeakSupervision):
     # threshold param
     CERTAINTY_THRESHOLD = None
 
