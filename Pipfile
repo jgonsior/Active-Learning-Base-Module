@@ -25,6 +25,7 @@ altair-viewer = "*"
 tabulate = "*"
 jupyter = "*"
 nb-black = "*"
+keras = "*"
 
 [requires]
 python_version = "3"
