@@ -16,11 +16,10 @@ class DataStorage:
     def __init__(
         self,
         RANDOM_SEED,
-        DATASET_NAME,
-        DATASETS_PATH,
-        START_SET_SIZE,
-        TEST_FRACTION,
         hyper_parameters,
+        df=None,
+        DATASET_NAME=None,
+        DATASETS_PATH=None,
         **kwargs
     ):
         if RANDOM_SEED != -1:
@@ -30,12 +29,14 @@ class DataStorage:
 
         log_it("Loading " + DATASET_NAME)
 
-        if DATASET_NAME == "dwtc":
-            df = self._load_dwtc(DATASETS_PATH)
-        elif DATASET_NAME == "synthetic":
-            df = self._load_synthetic(**kwargs)
-        else:
-            df = self._load_alc(DATASET_NAME, DATASETS_PATH)
+        if df == None:
+            if DATASET_NAME == "dwtc":
+                df = self._load_dwtc(DATASETS_PATH)
+            elif DATASET_NAME == "synthetic":
+                df = self._load_synthetic(**kwargs)
+            else:
+                df = self._load_alc(DATASET_NAME, DATASETS_PATH)
+
         self.label_encoder = LabelEncoder()
         df["label"] = self.label_encoder.fit_transform(df["label"])
 
@@ -78,34 +79,32 @@ class DataStorage:
         
         """
         # separate X_labeled into start_set and labeled _rest
-        if START_SET_SIZE >= len(self.train_labeled_Y):
+        # check if the minimum amount of labeled data is present in the start set size
+        labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))
+        all_label_in_start_set = False
 
-            # check if the minimum amount of labeled data is present in the start set size
-            labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))
-            all_label_in_start_set = False
+        for Y in self.train_labeled_Y:
+            if Y in labels_not_in_start_set:
+                labels_not_in_start_set.remove(Y)
+            if len(labels_not_in_start_set) == 0:
+                all_label_in_start_set = True
+                break
 
-            for Y in self.train_labeled_Y:
-                if Y in labels_not_in_start_set:
-                    labels_not_in_start_set.remove(Y)
-                if len(labels_not_in_start_set) == 0:
-                    all_label_in_start_set = True
-                    break
+        if not all_label_in_start_set:
+            #  if len(self.train_labeled_data) == 0:
+            #      print("Please specify at least one labeled example of each class")
+            #      exit(-1)
 
-            if not all_label_in_start_set:
-                #  if len(self.train_labeled_data) == 0:
-                #      print("Please specify at least one labeled example of each class")
-                #      exit(-1)
+            # move more data here from the classes not present
+            for label in labels_not_in_start_set:
+                # select a random sample which is NOT yet labeled
+                selected_index = (
+                    self.train_unlabeled_Y[self.train_unlabeled_Y["label"] == label]
+                    .iloc[0:1]
+                    .index
+                )
 
-                # move more data here from the classes not present
-                for label in labels_not_in_start_set:
-                    # select a random sample which is NOT yet labeled
-                    selected_index = (
-                        self.train_unlabeled_Y[self.train_unlabeled_Y["label"] == label]
-                        .iloc[0:1]
-                        .index
-                    )
-
-                    self._label_samples_without_clusters(selected_index, [label], "G")
+                self._label_samples_without_clusters(selected_index, [label], "G")
 
         len_train_labeled = len(self.train_labeled_Y)
         len_train_unlabeled = len(self.train_unlabeled_Y)

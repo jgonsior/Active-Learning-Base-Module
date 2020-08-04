@@ -30,21 +30,13 @@ from .sampling_strategies import (
 from .weak_supervision import WeakCert, WeakClust
 
 
-def train_al(
-    DATASETS_NAME,
-    DATASETS_PATH,
-    START_SET_SIZE,
-    hyper_parameters,
-    oracle,
-    TEST_FRACTION=None,
-):
+def train_al(hyper_parameters, oracle, df=None, DATASETS_NAME=None, DATASETS_PATH=None):
     data_storage = DataStorage(
         hyper_parameters["RANDOM_SEED"],
-        DATASETS_NAME,
-        DATASETS_PATH,
-        START_SET_SIZE,
-        TEST_FRACTION,
         hyper_parameters,
+        df=df,
+        DATASET_NAME=DATASETS_NAME,
+        DATASETS_PATH=DATASETS_PATH,
     )
     hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.train_unlabeled_Y) + len(
         data_storage.train_labeled_Y
@@ -278,7 +270,7 @@ Takes a dataset_path, X, Y, label_encoder and does the following steps:
 
 
 def train_and_eval_dataset(
-    DATASETS_NAME, DATASETS_PATH, hyper_parameters, oracle,
+    hyper_parameters, oracle, df=None, DATASETS_NAME=None, DATASETS_PATH=None,
 ):
     (
         trained_active_clf_list,
@@ -287,12 +279,11 @@ def train_and_eval_dataset(
         data_storage,
         active_learner,
     ) = train_al(
-        DATASETS_NAME,
-        DATASETS_PATH,
-        START_SET_SIZE=hyper_parameters["START_SET_SIZE"],
+        df=df,
+        DATASETS_NAME=DATASETS_NAME,
+        DATASETS_PATH=DATASETS_PATH,
         hyper_parameters=hyper_parameters,
         oracle=oracle,
-        TEST_FRACTION=hyper_parameters["TEST_FRACTION"],
     )
 
     fit_score = eval_al(
