@@ -69,6 +69,7 @@ class DataStorage:
             train_data = df[self.amount_of_training_samples :].copy()
             self.train_labeled_X = train_data[~train_data["label"].isnull()]
             self.train_labeled_Y = pd.DataFrame(self.train_labeled_X["label"])
+            self.train_labeled_Y["source"] = "G"
             del self.train_labeled_X["label"]
 
             self.train_unlabeled_X = train_data[train_data["label"].isnull()]
@@ -129,13 +130,7 @@ class DataStorage:
                     )
 
                     self._label_samples_without_clusters(selected_index, [label], "G")
-        print("test_X")
-        print(self.test_X)
-        print("train_labeled_X")
-        print(self.train_labeled_X)
-        print(self.train_labeled_Y)
-        print("train_unlabeled_X")
-        print(self.train_unlabeled_X)
+
         len_train_labeled = len(self.train_labeled_Y)
         len_train_unlabeled = len(self.train_unlabeled_Y)
         #  len_test = len(self.X_test)
@@ -264,6 +259,10 @@ class DataStorage:
         return df
 
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
+        print(Y_query)
+        print(query_indices)
+        print(source)
+        -> something's is off with how Y_query looks like
         Y_query = pd.DataFrame(
             {"label": Y_query, "source": [source for _ in Y_query]},
             index=query_indices,
