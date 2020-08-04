@@ -30,12 +30,12 @@ from .sampling_strategies import (
 from .weak_supervision import WeakCert, WeakClust
 
 
-def train_al(hyper_parameters, oracle, df=None, DATASETS_NAME=None, DATASETS_PATH=None):
+def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH=None):
     data_storage = DataStorage(
         hyper_parameters["RANDOM_SEED"],
         hyper_parameters,
         df=df,
-        DATASET_NAME=DATASETS_NAME,
+        DATASET_NAME=DATASET_NAME,
         DATASETS_PATH=DATASETS_PATH,
     )
     hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.train_unlabeled_Y) + len(
@@ -270,7 +270,7 @@ Takes a dataset_path, X, Y, label_encoder and does the following steps:
 
 
 def train_and_eval_dataset(
-    hyper_parameters, oracle, df=None, DATASETS_NAME=None, DATASETS_PATH=None,
+    hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH=None,
 ):
     (
         trained_active_clf_list,
@@ -280,7 +280,7 @@ def train_and_eval_dataset(
         active_learner,
     ) = train_al(
         df=df,
-        DATASETS_NAME=DATASETS_NAME,
+        DATASET_NAME=DATASET_NAME,
         DATASETS_PATH=DATASETS_PATH,
         hyper_parameters=hyper_parameters,
         oracle=oracle,
