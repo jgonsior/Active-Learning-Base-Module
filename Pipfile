@@ -25,7 +25,17 @@ altair-viewer = "*"
 tabulate = "*"
 jupyter = "*"
 nb-black = "*"
+jupyterlab = "*"
+altair-saver = "*"
+vega-datasets = "*"
+seaborn = "*"
 keras = "*"
+tensorflow = "*"
+statsmodels = "*"
+tensorflow-ranking = "*"
+scikeras = "*"
+dill = "*"
+
 
 [requires]
 python_version = "3"

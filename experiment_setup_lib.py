@@ -1,3 +1,4 @@
+import math
 from sklearn.metrics import accuracy_score
 import argparse
 import datetime
@@ -168,7 +169,7 @@ def get_single_al_run_stats_row(
         metrics_per_al_cycle["query_length"][index],
         metrics_per_al_cycle["test_acc"][index],
         metrics_per_al_cycle["train_acc"][index],
-        metrics_per_al_cycle["recommendation"][index],
+        metrics_per_al_cycle["source"][index],
     )
 
 
@@ -197,97 +198,6 @@ def prettify_bytes(bytes):
         else:
             suffix = multiple
     return str(amount) + suffix
-
-
-def get_dataset(datasets_path, dataset_name, RANDOM_SEED, **kwargs):
-    log_it("Loading " + dataset_name)
-
-    if dataset_name == "dwtc":
-        df = pd.read_csv(datasets_path + "/dwtc/aft.csv", index_col="id")
-
-        # shuffle df
-        df = df.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
-
-        Y_temp = df.pop("CLASS").to_numpy()
-
-        # replace labels with strings
-        #  Y_temp = Y_temp.astype("str")
-        #  for i in range(0, 40):
-        #  np.place(Y_temp, Y_temp == str(i), chr(65 + i))
-    elif dataset_name == "synthetic":
-        X_data, Y_temp = make_classification(**kwargs)
-        df = pd.DataFrame(X_data)
-
-        # replace labels with strings
-        Y_temp = Y_temp.astype("str")
-        for i in range(0, kwargs["n_classes"]):
-            np.place(Y_temp, Y_temp == str(i), chr(65 + i))
-
-    elif dataset_name == "forest_covtype":
-        X, Y_temp = fetch_covtype(data_home=datasets_path, return_X_y=True)
-        train_num = int(len(labels) / 2)
-        df = pd.DataFrame(X)
-    else:
-        df = pd.read_csv(
-            datasets_path + "/al_challenge/" + dataset_name + ".data",
-            header=None,
-            sep=" ",
-        )
-
-        # shuffle df
-        df = df.sample(frac=1, random_state=RANDOM_SEED)
-
-        df = df.replace([np.inf, -np.inf], np.nan)
-        df = df.fillna(0)
-
-        labels = pd.read_csv(
-            datasets_path + "/al_challenge/" + dataset_name + ".label", header=None
-        )
-
-        labels = labels.replace([-1], "A")
-        labels = labels.replace([1], "B")
-        Y_temp = labels[0].to_numpy()
-
-    train_indices = {
-        "ibn_sina": 10361,
-        "hiva": 21339,
-        "nova": 9733,
-        "orange": 25000,
-        "sylva": 72626,
-        "zebra": 30744,
-    }
-
-    if dataset_name in train_indices:
-        train_num = train_indices[dataset_name]
-    else:
-        train_num = int(len(Y_temp) * 0.5)
-
-    label_encoder = LabelEncoder()
-    Y_temp = label_encoder.fit_transform(Y_temp)
-    X_temp = df.to_numpy().astype(np.float)
-
-    # feature normalization
-    scaler = RobustScaler()
-    X_temp = scaler.fit_transform(X_temp)
-
-    # scale back to [0,1]
-    scaler = MinMaxScaler()
-    X_temp = scaler.fit_transform(X_temp)
-
-    X_temp = pd.DataFrame(X_temp, dtype=float)
-    Y_temp = pd.DataFrame(Y_temp, dtype=int)
-
-    X_temp = X_temp.apply(pd.to_numeric, downcast="float", errors="ignore")
-    Y_temp = Y_temp.apply(pd.to_numeric, downcast="integer", errors="ignore")
-
-    X_train = X_temp[:train_num]
-    X_test = X_temp[train_num:]
-
-    Y_train = Y_temp[:train_num]
-    Y_test = Y_temp[train_num:]
-
-    log_it("Loaded " + dataset_name)
-    return X_train, X_test, Y_train, Y_test, label_encoder.classes_
 
 
 def calculate_roc_auc(label_encoder, X_test, Y_test, clf):

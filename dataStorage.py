@@ -1,3 +1,6 @@
+import math
+from sklearn.datasets import make_classification
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 import random
 from collections import Counter
 
@@ -7,25 +10,66 @@ from sklearn.model_selection import train_test_split
 
 from .experiment_setup_lib import log_it
 
+# refactoring: dataset wird ein pandas dataframe:
+# id, feature_columns, label (-1 heißt gibt's noch nie, kann auch weak sein), true_label, dataset (train, test, val?), label_source
+
 
 class DataStorage:
-    def __init__(self, random_seed):
-        if random_seed != -1:
-            np.random.seed(random_seed)
-            random.seed(random_seed)
-
-    def set_training_data(
+    def __init__(
         self,
-        X_labeled,
-        Y_labeled,
-        X_unlabeled=None,
-        START_SET_SIZE=None,
-        TEST_FRACTION=None,
-        label_encoder=None,
-        hyper_parameters=None,
-        X_test=None,
-        Y_test=None,
+        RANDOM_SEED,
+        DATASET_NAME,
+        DATASETS_PATH,
+        START_SET_SIZE,
+        TEST_FRACTION,
+        hyper_parameters,
+        **kwargs
     ):
+        if RANDOM_SEED != -1:
+            np.random.seed(RANDOM_SEED)
+            random.seed(RANDOM_SEED)
+            self.RANDOM_SEED = RANDOM_SEED
+
+        log_it("Loading " + DATASET_NAME)
+
+        if DATASET_NAME == "dwtc":
+            df = self._load_dwtc(DATASETS_PATH)
+        elif DATASET_NAME == "synthetic":
+            df = self._load_synthetic(**kwargs)
+        else:
+            df = self._load_alc(DATASET_NAME, DATASETS_PATH)
+        self.label_encoder = LabelEncoder()
+        df["label"] = self.label_encoder.fit_transform(df["label"])
+
+        # feature normalization
+        scaler = RobustScaler()
+        df[self.feature_columns] = scaler.fit_transform(df[self.feature_columns])
+
+        # scale back to [0,1]
+        scaler = MinMaxScaler()
+        df[self.feature_columns] = scaler.fit_transform(df[self.feature_columns])
+
+        # split dataframe into test, train_labeled, train_unlabeled
+        self.test_X = df[self.amount_of_training_samples :].copy()
+        self.test_Y = pd.DataFrame(
+            data=self.test_X["label"], columns=["label"], index=self.test_X.index
+        )
+        del self.test_X["label"]
+
+        train_data = df[: self.amount_of_training_samples].copy()
+        train_labeled_data = pd.DataFrame(data=None, columns=train_data.columns)
+        self.train_labeled_X = train_labeled_data
+        self.train_labeled_Y = pd.DataFrame(
+            data=None, columns=["label"], index=self.train_labeled_X.index
+        )
+        del self.train_labeled_X["label"]
+
+        self.train_unlabeled_X = train_data
+        self.train_unlabeled_Y = pd.DataFrame(
+            data=train_data["label"], columns=["label"], index=train_data.index
+        )
+        del self.train_unlabeled_X["label"]
+
         """ 
         1. get start_set from X_labeled
         2. if X_unlabeled is None : experiment!
@@ -35,123 +79,38 @@ class DataStorage:
            X_unlabeled wird X_unlabeled, rest von X_labeled wird X_train_unlabeled_
         
         """
-
         # separate X_labeled into start_set and labeled _rest
+        if START_SET_SIZE >= len(self.train_labeled_Y):
 
-        if START_SET_SIZE == len(X_labeled):
-            X_labeled_rest = None
-            self.X_train_labeled = X_labeled
-            Y_labeled_rest = None
-            self.Y_train_labeled = Y_labeled
+            # check if the minimum amount of labeled data is present in the start set size
+            labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))
+            all_label_in_start_set = False
 
-        else:
-            (
-                X_labeled_rest,
-                self.X_train_labeled,
-                Y_labeled_rest,
-                self.Y_train_labeled,
-            ) = train_test_split(X_labeled, Y_labeled, test_size=START_SET_SIZE)
+            for Y in self.train_labeled_Y:
+                if Y in labels_not_in_start_set:
+                    labels_not_in_start_set.remove(Y)
+                if len(labels_not_in_start_set) == 0:
+                    all_label_in_start_set = True
+                    break
 
-        # check if the minimum amount of labeled data is present in the start set size
-        labels_not_in_start_set = set(range(0, len(label_encoder.classes_)))
-        all_label_in_start_set = False
+            if not all_label_in_start_set:
+                #  if len(self.train_labeled_data) == 0:
+                #      print("Please specify at least one labeled example of each class")
+                #      exit(-1)
 
-        for Y in self.Y_train_labeled.to_numpy()[0]:
-            if Y in labels_not_in_start_set:
-                labels_not_in_start_set.remove(Y)
-            if len(labels_not_in_start_set) == 0:
-                all_label_in_start_set = True
-                break
+                # move more data here from the classes not present
+                for label in labels_not_in_start_set:
+                    # select a random sample which is NOT yet labeled
+                    selected_index = (
+                        self.train_unlabeled_Y[self.train_unlabeled_Y["label"] == label]
+                        .iloc[0:1]
+                        .index
+                    )
 
-        if not all_label_in_start_set:
-            if X_labeled_rest is None:
-                print("Please specify at least one labeled example of each class")
-                exit(-1)
+                    self._label_samples_without_clusters(selected_index, [label], "G")
 
-            # move more data here from the classes not present
-            for label in labels_not_in_start_set:
-                Y_not_present = Y_labeled_rest[Y_labeled_rest[0] == label].iloc[0:1]
-
-                # iloc not loc because we use the index from numpy
-                X_not_present = X_labeled_rest.loc[Y_not_present.index]
-
-                self.X_train_labeled = self.X_train_labeled.append(X_not_present)
-                X_labeled_rest = X_labeled_rest.drop(X_not_present.index)
-
-                self.Y_train_labeled = self.Y_train_labeled.append(Y_not_present)
-                Y_labeled_rest = Y_labeled_rest.drop(Y_not_present.index)
-
-        if X_unlabeled is not None:
-            self.X_train_unlabeled = X_unlabeled
-            self.Y_train_unlabeled = pd.DataFrame(
-                columns=Y_labeled_rest.columns, dtype=int
-            )
-
-            self.X_test = X_labeled_rest
-            self.Y_test = Y_labeled_rest
-        else:
-            # experiment setting!
-            # create some fake unlabeled data
-
-            if X_test is not None:
-                self.X_train_unlabeled = X_labeled_rest
-                self.Y_train_unlabeled = Y_labeled_rest
-                self.X_test = X_test
-                self.Y_test = Y_test
-            else:
-                # further split labeled rest for train_test
-                (
-                    self.X_train_unlabeled,
-                    self.X_test,
-                    self.Y_train_unlabeled,
-                    self.Y_test,
-                ) = train_test_split(X_labeled_rest, Y_labeled_rest, TEST_FRACTION)
-
-        Y_train_labeled_set = set(self.Y_train_labeled[0].to_numpy())
-
-        self._print_data_segmentation()
-
-        self.X_train_unlabeled_cluster_indices = {}
-
-        # remove the labeled data from X_train_labeled and merge it with the unlabeled data
-        # while preserving the labels
-        # and storing the indics of the labeled data
-        # so that the first iteration can be a "fake iteration zero" of the AL cycle
-        # (metrics will than automatically be calculated for this one too)
-        self.prepare_fake_iteration_zero()
-        log_it(self.X_train_labeled.shape)
-        self.label_encoder = label_encoder
-
-    def prepare_fake_iteration_zero(self):
-        # fake iteration zero where we add the given ground truth labels all at once
-        original_X_train_labeled = self.X_train_labeled
-        original_Y_train_labeled = self.Y_train_labeled
-
-        self.X_train_labeled = pd.DataFrame(
-            columns=original_X_train_labeled.columns, dtype=float
-        )
-
-        if self.X_train_labeled is not None:
-            self.Y_train_labeled = pd.DataFrame(
-                columns=original_Y_train_labeled.columns, dtype=int
-            )
-
-        # this one is a bit tricky:
-        # we merge both back together here -> but solely for the purpose of using them as the first oracle query down below
-        self.X_train_unlabeled = pd.concat(
-            [original_X_train_labeled, self.X_train_unlabeled]
-        )
-
-        self.Y_train_unlabeled = pd.concat(
-            [original_Y_train_labeled, self.Y_train_unlabeled]
-        )
-        self.ground_truth_indices = original_X_train_labeled.index.tolist()
-
-        self.Y_train_strong_labels = pd.DataFrame.copy(original_Y_train_labeled)
-
-    def _print_data_segmentation(self):
-        len_train_labeled = len(self.X_train_labeled)
-        len_train_unlabeled = len(self.X_train_unlabeled)
+        len_train_labeled = len(self.train_labeled_Y)
+        len_train_unlabeled = len(self.train_unlabeled_Y)
         #  len_test = len(self.X_test)
 
         len_total = len_train_unlabeled + len_train_labeled  # + len_test
@@ -165,40 +124,155 @@ class DataStorage:
             % (len_train_unlabeled, len_train_unlabeled / len_total)
         )
 
-    def move_labeled_queries(self, X_query, Y_query, query_indices):
-        # move new queries from unlabeled to labeled dataset
-        self.X_train_labeled = self.X_train_labeled.append(X_query)
-        self.X_train_unlabeled = self.X_train_unlabeled.drop(query_indices)
+        log_it("Loaded " + DATASET_NAME)
 
-        try:
-            self.Y_train_strong_labels = self.Y_train_strong_labels.append(
-                self.Y_train_unlabeled.loc[query_indices]
+    def _load_dwtc(self, DATASETS_PATH):
+        df = pd.read_csv(DATASETS_PATH + "/dwtc/aft.csv", index_col="id")
+
+        # shuffle df
+        df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
+
+        self.feature_columns = df.columns.to_list()
+        self.feature_columns.remove("CLASS")
+        df.rename({"CLASS": "label"}, axis="columns", inplace=True)
+
+        self.amount_of_training_samples = int(len(df) * 0.5)
+        return df
+
+    def _load_synthetic(self, **kwargs):
+        no_valid_synthetic_arguments_found = True
+        # randomly generate synthetic arguments
+        while no_valid_synthetic_arguments_found:
+            N_SAMPLES = random.randint(500, 20000)
+            N_FEATURES = random.randint(10, 100)
+            N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
+                int(N_FEATURES * i)
+                for i in np.random.dirichlet(np.ones(3), size=1).tolist()[0]
+            ]
+
+            N_CLASSES = random.randint(2, 10)
+            N_CLUSTERS_PER_CLASS = random.randint(
+                1, min(max(1, int(2 ** N_INFORMATIVE / N_CLASSES)), 10)
             )
-        except KeyError:
-            # in a non experiment setting an error will be thrown because self.Y_train_unlabeled of course doesn't contains the labels
-            for query_index in query_indices:
-                self.Y_train_strong_labels.loc[query_index] = [-1]
 
-        self.Y_train_labeled = self.Y_train_labeled.append(Y_query)
-        self.Y_train_unlabeled = self.Y_train_unlabeled.drop(
-            query_indices, errors="ignore"
+            if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
+                continue
+            no_valid_synthetic_arguments_found = False
+
+            WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
+                0
+            ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
+            FLIP_Y = (
+                np.random.pareto(2.0) + 1
+            ) * 0.01  # amount of noise, larger values make it harder
+            CLASS_SEP = random.uniform(
+                0, 10
+            )  # larger values spread out the clusters and make it easier
+            HYPERCUBE = True  # if false random polytope
+            SCALE = 0.01  # features should be between 0 and 1 now
+
+            synthetic_creation_args = {
+                "n_samples": N_SAMPLES,
+                "n_features": N_FEATURES,
+                "n_informative": N_INFORMATIVE,
+                "n_redundant": N_REDUNDANT,
+                "n_repeated": N_REPEATED,
+                "n_classes": N_CLASSES,
+                "n_clusters_per_class": N_CLUSTERS_PER_CLASS,
+                "weights": WEIGHTS,
+                "flip_y": FLIP_Y,
+                "class_sep": CLASS_SEP,
+                "hypercube": HYPERCUBE,
+                "scale": SCALE,
+            }
+            for _ in range(0, 5):
+                print(synthetic_creation_args)
+            self.synthetic_creation_args = synthetic_creation_args
+
+        X_data, Y_temp = make_classification(**synthetic_creation_args)
+        df = pd.DataFrame(X_data)
+
+        # replace labels with strings
+        Y_temp = Y_temp.astype("str")
+        for i in range(0, synthetic_creation_args["n_classes"]):
+            np.place(Y_temp, Y_temp == str(i), chr(65 + i))
+
+        # feature_columns fehlt
+        self.feature_columns = df.columns.to_list()
+        self.amount_of_training_samples = int(len(df) * 0.5)
+
+        df["label"] = Y_temp
+
+        return df
+
+    def _load_alc(self, DATASET_NAME, DATASETS_PATH):
+        df = pd.read_csv(
+            DATASETS_PATH + "/al_challenge/" + DATASET_NAME + ".data",
+            header=None,
+            sep=" ",
+        )
+        # feature_columns fehlt
+
+        # shuffle df
+        df = df.sample(frac=1, random_state=RANDOM_SEED)
+
+        df = df.replace([np.inf, -np.inf], -1)
+        df = df.fillna(0)
+
+        labels = pd.read_csv(
+            DATASETS_PATH + "/al_challenge/" + DATASET_NAME + ".label", header=None
         )
 
+        labels = labels.replace([-1], "A")
+        labels = labels.replace([1], "B")
+        df["label"] = labels[0]
+        #  Y_temp = labels[0].to_numpy()
+        train_indices = {
+            "ibn_sina": 10361,
+            "hiva": 21339,
+            "nova": 9733,
+            "orange": 25000,
+            "sylva": 72626,
+            "zebra": 30744,
+        }
+        self.amount_of_training_samples = train_indices[DATASET_NAME]
+
+        return df
+
+    def _label_samples_without_clusters(self, query_indices, Y_query, source):
+        Y_query = pd.DataFrame(
+            {"label": Y_query, "source": [source for _ in Y_query]},
+            index=query_indices,
+        )
+
+        # @todo: liber .loc[index_location] verwenden, bessere performance als append
+        self.train_labeled_X = self.train_labeled_X.append(
+            self.train_unlabeled_X.loc[query_indices]
+        )
+        self.train_labeled_Y = self.train_labeled_Y.append(Y_query)
+        self.train_unlabeled_X = self.train_unlabeled_X.drop(query_indices)
+        self.train_unlabeled_Y = self.train_unlabeled_Y.drop(query_indices)
+
+    def label_samples(self, query_indices, Y_query, source):
+        # remove from train_unlabeled_data and add to train_labeled_data
+        self._label_samples_without_clusters(query_indices, Y_query, source)
+
         # remove indices from all clusters in unlabeled and add to labeled
-        for cluster_id in self.X_train_unlabeled_cluster_indices.keys():
+        for cluster_id in self.train_unlabeled_cluster_indices.keys():
             list_to_be_removed_and_appended = []
             for indice in query_indices:
-                if indice in self.X_train_unlabeled_cluster_indices[cluster_id]:
+                if indice in self.train_unlabeled_cluster_indices[cluster_id]:
                     list_to_be_removed_and_appended.append(indice)
 
             # don't change a list you're iterating over!
             for indice in list_to_be_removed_and_appended:
-                self.X_train_unlabeled_cluster_indices[cluster_id].remove(indice)
-                self.X_train_labeled_cluster_indices[cluster_id].append(indice)
+                self.train_unlabeled_cluster_indices[cluster_id].remove(indice)
+                self.train_labeled_cluster_indices[cluster_id].append(indice)
 
         # remove possible empty clusters
-        self.X_train_unlabeled_cluster_indices = {
-            k: v
-            for k, v in self.X_train_unlabeled_cluster_indices.items()
-            if len(v) != 0
+        self.train_unlabeled_cluster_indices = {
+            k: v for k, v in self.train_unlabeled_cluster_indices.items() if len(v) != 0
         }
+
+    def get_true_label(self, query_indice):
+        return self.train_unlabeled_Y.loc[query_indice, "label"]

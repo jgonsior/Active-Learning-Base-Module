@@ -18,10 +18,10 @@ class MostUncertainClusterStrategy(BaseClusterStrategy):
         for (
             cluster_id,
             cluster_indices,
-        ) in self.data_storage.X_train_unlabeled_cluster_indices.items():
+        ) in self.data_storage.train_unlabeled_cluster_indices.items():
             # calculate most uncertainty per
             Y_temp_proba = clf.predict_proba(
-                self.data_storage.X_train_unlabeled.loc[cluster_indices]
+                self.data_storage.train_unlabeled_X.loc[cluster_indices]
             )
 
             if self.strategy == "least_confident":

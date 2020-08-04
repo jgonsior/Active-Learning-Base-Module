@@ -6,3 +6,6 @@ from .sheetBasedCommitteeSampling import *
 from .sheetBasedRandomSampling import *
 from .sheetBasedUncertaintySampling import *
 from .uncertaintySampling import *
+from .optimalForecastSampling import *
+from .imitationLearningSampling import *
+from .trained_nn import *
