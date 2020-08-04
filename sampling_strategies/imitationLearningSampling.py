@@ -1,20 +1,14 @@
-import dill
-from scipy.stats import spearmanr, kendalltau
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from joblib import Parallel, delayed, parallel_backend
+import copy
 import random
 from itertools import chain
-import copy
+
 import numpy as np
-from scipy.stats import entropy
-from sklearn.metrics import accuracy_score, mean_squared_error
+import pandas as pd
+from joblib import Parallel, delayed, parallel_backend
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import MinMaxScaler
+
 from ..activeLearner import ActiveLearner
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-import os
 
 
 def _future_peak(

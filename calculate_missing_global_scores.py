@@ -3,18 +3,17 @@ import math
 import operator
 
 import altair as alt
-import peewee
-from json_tricks import loads
-from playhouse.migrate import *
-from playhouse.postgres_ext import *
-
 import experiment_setup_lib
+import peewee
 from experiment_setup_lib import (
     BaseModel,
     calculate_global_score,
     get_db,
     standard_config,
 )
+from json_tricks import loads
+from playhouse.migrate import *
+from playhouse.postgres_ext import *
 
 alt.renderers.enable("altair_viewer")
 #  alt.renderers.enable('vegascope')

@@ -1,19 +1,16 @@
 import csv
-from pathlib import Path
-import pandas as pd
-from collections import defaultdict
 import datetime
 import hashlib
-import math
-import operator
 import threading
+from pathlib import Path
 from timeit import default_timer as timer
-from sklearn.metrics import accuracy_score
-from sklearn.ensemble import RandomForestClassifier
+
+import pandas as pd
 
 #  import np.random.distributions as dists
 from json_tricks import dumps
-from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
 from .cluster_strategies import (
     DummyClusterStrategy,
@@ -22,12 +19,7 @@ from .cluster_strategies import (
     RoundRobinClusterStrategy,
 )
 from .dataStorage import DataStorage
-from .experiment_setup_lib import (
-    calculate_global_score,
-    conf_matrix_and_acc,
-    get_param_distribution,
-    init_logger,
-)
+from .experiment_setup_lib import get_param_distribution
 from .sampling_strategies import (
     BoundaryPairSampler,
     RandomSampler,
@@ -35,7 +27,6 @@ from .sampling_strategies import (
     OptimalForecastSampler,
     TrainedNNLearner,
 )
-
 from .weak_supervision import WeakCert, WeakClust
 
 

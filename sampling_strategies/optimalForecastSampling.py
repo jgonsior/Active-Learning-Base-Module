@@ -1,11 +1,11 @@
-import pandas as pd
-from joblib import Parallel, delayed, parallel_backend
+import copy
 import random
 from itertools import chain
-import copy
-import numpy as np
-from scipy.stats import entropy
+
+import pandas as pd
+from joblib import Parallel, delayed, parallel_backend
 from sklearn.metrics import accuracy_score
+
 from ..activeLearner import ActiveLearner
 
 

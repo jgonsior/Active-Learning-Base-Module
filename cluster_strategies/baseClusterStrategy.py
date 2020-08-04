@@ -2,18 +2,9 @@ import abc
 from collections import Counter, defaultdict
 from math import e, log
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import dendrogram
-from sklearn.cluster import (
-    OPTICS,
-    MiniBatchKMeans,
-    cluster_optics_dbscan,
-    AgglomerativeClustering,
-)
-
-from ..experiment_setup_lib import log_it
+from sklearn.cluster import AgglomerativeClustering
 
 
 class BaseClusterStrategy:

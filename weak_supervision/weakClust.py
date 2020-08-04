@@ -1,7 +1,5 @@
 import collections
-import random
-import pandas as pd
-from ..activeLearner import ActiveLearner
+
 from .baseWeakSupervision import BaseWeakSupervision
 
 

@@ -1,5 +1,3 @@
-import math
-from sklearn.metrics import accuracy_score
 import argparse
 import datetime
 import os
@@ -11,12 +9,10 @@ import numpy as np
 
 #  import np.random.distributions as dists
 import numpy.random
-import pandas as pd
 import scipy
-from sklearn.datasets import fetch_covtype, make_classification
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, roc_auc_score
+
 
 # really dirty hack to provide logging as functions instead of objects
 def init_logger(logfilepath):

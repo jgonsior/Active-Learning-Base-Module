@@ -1,12 +1,10 @@
 import itertools
-import collections
-import random
-import numpy as np
 
-from ..activeLearner import ActiveLearner
+import numpy as np
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score
+
 from .baseWeakSupervision import BaseWeakSupervision
 
 

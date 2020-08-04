@@ -1,21 +1,11 @@
-import dill
-from scipy.stats import spearmanr, kendalltau
-from scikeras.wrappers import KerasClassifier, KerasRegressor
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from joblib import Parallel, delayed, parallel_backend
+import os
 import random
 from itertools import chain
-import copy
+
+import dill
 import numpy as np
-from scipy.stats import entropy
-from sklearn.metrics import accuracy_score, mean_squared_error
+
 from ..activeLearner import ActiveLearner
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-import os
 
 
 class TrainedNNLearner(ActiveLearner):
