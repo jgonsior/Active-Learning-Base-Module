@@ -66,7 +66,6 @@ class DataStorage:
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if df.label.isnull().values.any():
             # real data
-            print("exp" * 1000)
             train_data = df[self.amount_of_training_samples :].copy()
             self.train_labeled_X = train_data[~train_data["label"].isnull()]
             self.train_labeled_Y = pd.DataFrame(self.train_labeled_X["label"])
@@ -80,7 +79,6 @@ class DataStorage:
             del self.train_unlabeled_X["label"]
 
         else:
-            print("nooo" * 1000)
             # experiment setting apparently
             train_data = df[self.amount_of_training_samples :].copy()
             train_labeled_data = pd.DataFrame(data=None, columns=train_data.columns)
@@ -261,10 +259,6 @@ class DataStorage:
         return df
 
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
-        print(Y_query)
-        print(query_indices)
-        print(source)
-        #  -> something's is off with how Y_query looks like
         Y_query = pd.DataFrame(
             {"label": Y_query, "source": [source for _ in Y_query]},
             index=query_indices,
