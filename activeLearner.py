@@ -86,18 +86,21 @@ class ActiveLearner:
         pass
 
     def calculate_post_metrics(self, X_query, Y_query):
-
-        conf_matrix, acc = conf_matrix_and_acc(
-            self.clf,
-            self.data_storage.test_X,
-            self.data_storage.test_Y["label"].to_list(),
-            self.data_storage.label_encoder,
-        )
+        if len(self.data_storage.test_X) > 0:
+            # experiment
+            conf_matrix, acc = conf_matrix_and_acc(
+                self.clf,
+                self.data_storage.test_X,
+                self.data_storage.test_Y["label"].to_list(),
+                self.data_storage.label_encoder,
+            )
+        else:
+            conf_matrix, acc = None, 0
 
         self.metrics_per_al_cycle["test_conf_matrix"].append(conf_matrix)
         self.metrics_per_al_cycle["test_acc"].append(acc)
 
-        if len(self.data_storage.train_unlabeled_X) > 0:
+        if not self.data_storage.train_unlabeled_Y.label.isnull().values.any():
             # experiment
             conf_matrix, acc = conf_matrix_and_acc(
                 self.clf,
