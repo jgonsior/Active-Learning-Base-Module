@@ -126,7 +126,10 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
         ]
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         active_learner = TrainedNNLearner(**active_learner_params)
-        active_learner.init_sampling_classifier(hyper_parameters["NN_BINARY"])
+        active_learner.init_sampling_classifier(
+            hyper_parameters["NN_BINARY"],
+            hyper_parameters["AMOUNT_OF_RANDOM_QUERY_SETS"],
+        )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"
         ]

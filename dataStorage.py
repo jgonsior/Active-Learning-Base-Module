@@ -182,8 +182,6 @@ class DataStorage:
                 "hypercube": HYPERCUBE,
                 "scale": SCALE,
             }
-            for _ in range(0, 5):
-                print(synthetic_creation_args)
             self.synthetic_creation_args = synthetic_creation_args
 
         X_data, Y_temp = make_classification(**synthetic_creation_args)
