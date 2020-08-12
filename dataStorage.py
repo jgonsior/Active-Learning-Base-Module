@@ -165,7 +165,7 @@ class DataStorage:
         # randomly generate synthetic arguments
         while no_valid_synthetic_arguments_found:
             N_SAMPLES = 500  # random.randint(500, 2000)
-            N_FEATURES = 2  # random.randint(5, 30)
+            N_FEATURES = 3  # random.randint(5, 30)
             N_REDUNDANT = N_REPEATED = 0
             N_INFORMATIVE = N_FEATURES
 
