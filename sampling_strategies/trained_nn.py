@@ -6,6 +6,7 @@ import dill
 import numpy as np
 
 from ..activeLearner import ActiveLearner
+from .imitationLearningSampling import calculate_state
 
 
 class TrainedNNLearner(ActiveLearner):
@@ -34,16 +35,14 @@ class TrainedNNLearner(ActiveLearner):
                 : self.sampling_classifier.n_outputs_
             ]
 
-            possible_samples_probas = self.clf.predict_proba(
-                self.data_storage.train_unlabeled_X.loc[possible_samples_indices]
+            X_state = calculate_state(
+                self.data_storage.train_unlabeled_X.loc[possible_samples_indices],
+                self.data_storage,
+                self.clf,
+                old=True,
             )
-
-            sorted_probas = -np.sort(-possible_samples_probas, axis=1)
-            argmax_probas = sorted_probas[:, 0]
-            argsecond_probas = sorted_probas[:, 1]
-
-            X_state = np.array([*argmax_probas, *argsecond_probas])
             X_state = np.reshape(X_state, (1, len(X_state)))
+
             Y_pred = self.sampling_classifier.predict(X_state)
 
             sorting = Y_pred

@@ -66,6 +66,40 @@ def _future_peak(
     return accuracy_with_that_label
 
 
+def calculate_state(X_query, data_storage, clf, old=False):
+    possible_samples_probas = clf.predict_proba(X_query)
+
+    sorted_probas = -np.sort(-possible_samples_probas, axis=1)
+    argmax_probas = sorted_probas[:, 0]
+    argsecond_probas = sorted_probas[:, 1]
+
+    if old:
+        return np.array([*argmax_probas, *argsecond_probas])
+
+    arg_diff_probas = argmax_probas - argsecond_probas
+
+    # calculate average distance to labeled and average distance to unlabeled samples
+    average_distance_labeled = np.sum(
+        pairwise_distances(data_storage.train_labeled_X, X_query), axis=0,
+    ) / len(data_storage.train_labeled_X)
+    average_distance_unlabeled = np.sum(
+        pairwise_distances(data_storage.train_unlabeled_X, X_query), axis=0,
+    ) / len(data_storage.train_unlabeled_X)
+    #  print(average_distance_unlabeled)
+    #  print(average_distance_labeled)
+    #  print(possible_samples_X)
+
+    X_state = np.array(
+        [
+            *argmax_probas,
+            *arg_diff_probas,
+            *average_distance_labeled,
+            *average_distance_unlabeled,
+        ]
+    )
+    return X_state
+
+
 class ImitationLearner(ActiveLearner):
     def set_amount_of_peaked_objects(self, amount_of_peaked_objects):
         self.amount_of_peaked_objects = amount_of_peaked_objects
@@ -178,34 +212,8 @@ class ImitationLearner(ActiveLearner):
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
 
-        possible_samples_probas = self.clf.predict_proba(possible_samples_X)
+        X_state = calculate_state(possible_samples_X, self.data_storage, self.clf)
 
-        sorted_probas = -np.sort(-possible_samples_probas, axis=1)
-        argmax_probas = sorted_probas[:, 0]
-        argsecond_probas = sorted_probas[:, 1]
-        arg_diff_probas = argmax_probas - argsecond_probas
-
-        # calculate average distance to labeled and average distance to unlabeled samples
-        average_distance_labeled = np.sum(
-            pairwise_distances(self.data_storage.train_labeled_X, possible_samples_X),
-            axis=0,
-        ) / len(self.data_storage.train_labeled_X)
-        average_distance_unlabeled = np.sum(
-            pairwise_distances(self.data_storage.train_unlabeled_X, possible_samples_X),
-            axis=0,
-        ) / len(self.data_storage.train_unlabeled_X)
-        print(average_distance_unlabeled)
-        print(average_distance_labeled)
-        #  print(possible_samples_X)
-
-        X_state = np.array(
-            [
-                *argmax_probas,
-                *arg_diff_probas,
-                *average_distance_labeled,
-                *average_distance_unlabeled,
-            ]
-        )
         # take first and second most examples from possible_samples_probas and append them then to states
         self.states = self.states.append(
             pd.Series(dict(zip(self.states.columns, X_state))), ignore_index=True,

@@ -164,17 +164,19 @@ class DataStorage:
         no_valid_synthetic_arguments_found = True
         # randomly generate synthetic arguments
         while no_valid_synthetic_arguments_found:
-            N_SAMPLES = random.randint(500, 2000)
-            N_FEATURES = random.randint(5, 30)
+            N_SAMPLES = 500  # random.randint(500, 2000)
+            N_FEATURES = 2  # random.randint(5, 30)
             N_REDUNDANT = N_REPEATED = 0
             N_INFORMATIVE = N_FEATURES
 
-            N_CLASSES = random.randint(2, 10)
+            N_CLASSES = random.randint(2, min(10, 2 ** N_INFORMATIVE))
             N_CLUSTERS_PER_CLASS = random.randint(
-                1, min(max(1, int(2 ** N_INFORMATIVE / N_CLASSES)), 10)
+                1, int(2 ** N_INFORMATIVE / N_CLASSES)
             )
 
+            #  )
             if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
+                print("ui")
                 continue
             no_valid_synthetic_arguments_found = False
 
@@ -190,6 +192,7 @@ class DataStorage:
                 0, 10
             )  # larger values spread out the clusters and make it easier
 
+            #  HYPERCUBE = True  # if false a random polytope is selected instead
             HYPERCUBE = False  # if false a random polytope is selected instead
             SCALE = 0.01  # features should be between 0 and 1 now
 
@@ -212,13 +215,24 @@ class DataStorage:
 
         print(synthetic_creation_args)
         X_data, Y_temp = make_classification(**synthetic_creation_args)
+
         df = pd.DataFrame(X_data)
         #  df["label"] = Y_temp
-        #  print(df)
+        #
+        #  #  print(df)
         #  fig = plt.figure()
-        #  ax = fig.add_subplot(111, projection="3d")
-        #  ax.scatter(xs=df.a, ys=df.b, zs=df.c, c=df.label, cmap="viridis")
-        #  plt.show()
+        #  ax = fig.add_subplot(111)  # , projection="3d")
+        #  ax.scatter(
+        #      x=df.iloc[:, 0],
+        #      y=df.iloc[:, 1],
+        #      #  zs=df.iloc[:, 2],
+        #      c=df.label,
+        #      cmap="viridis",
+        #  )
+        #  if HYPERCUBE:
+        #      plt.savefig("hypercube/" + str(kwargs["RANDOM_SEED"]) + ".png")
+        #  else:
+        #      plt.savefig("polytope_hard/" + str(kwargs["RANDOM_SEED"]) + ".png")
         #  exit(-1)
 
         # replace labels with strings
