@@ -75,9 +75,17 @@ class ImitationLearner(ActiveLearner):
         self.states = pd.DataFrame(
             data=None,
             columns=[
-                str(i) + "_proba_0" for i in range(0, self.amount_of_peaked_objects)
+                str(i) + "_proba_max" for i in range(0, self.amount_of_peaked_objects)
             ]
-            + [str(i) + "_proba_1" for i in range(0, self.amount_of_peaked_objects)],
+            + [str(i) + "_proba_diff" for i in range(0, self.amount_of_peaked_objects)]
+            + [
+                str(i) + "_avg_dist_lab"
+                for i in range(0, self.amount_of_peaked_objects)
+            ]
+            + [
+                str(i) + "_avg_dist_unlab"
+                for i in range(0, self.amount_of_peaked_objects)
+            ],
         )
         self.optimal_policies = pd.DataFrame(
             data=None,
@@ -175,6 +183,7 @@ class ImitationLearner(ActiveLearner):
         sorted_probas = -np.sort(-possible_samples_probas, axis=1)
         argmax_probas = sorted_probas[:, 0]
         argsecond_probas = sorted_probas[:, 1]
+        arg_diff_probas = argmax_probas - argsecond_probas
 
         # calculate average distance to labeled and average distance to unlabeled samples
         average_distance_labeled = np.sum(
@@ -185,13 +194,18 @@ class ImitationLearner(ActiveLearner):
             pairwise_distances(self.data_storage.train_unlabeled_X, possible_samples_X),
             axis=0,
         ) / len(self.data_storage.train_unlabeled_X)
-        #  print(average_distance_unlabeled)
-        #  print(np.shape(average_distance_unlabeled))
-        #  print(average_distance_labeled)
-        #  print(np.shape(average_distance_labeled))
+        print(average_distance_unlabeled)
+        print(average_distance_labeled)
         #  print(possible_samples_X)
 
-        X_state = np.array([*argmax_probas, *argsecond_probas])
+        X_state = np.array(
+            [
+                *argmax_probas,
+                *arg_diff_probas,
+                *average_distance_labeled,
+                *average_distance_unlabeled,
+            ]
+        )
         # take first and second most examples from possible_samples_probas and append them then to states
         self.states = self.states.append(
             pd.Series(dict(zip(self.states.columns, X_state))), ignore_index=True,
