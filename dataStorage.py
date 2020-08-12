@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import random
 
 import numpy as np
@@ -32,7 +33,7 @@ class DataStorage:
             if DATASET_NAME == "dwtc":
                 df = self._load_dwtc(DATASETS_PATH)
             elif DATASET_NAME == "synthetic":
-                df = self._load_synthetic(**kwargs)
+                df = self._load_synthetic(RANDOM_SEED=RANDOM_SEED, **kwargs)
             else:
                 df = self._load_alc(DATASET_NAME, DATASETS_PATH)
         else:
@@ -163,12 +164,10 @@ class DataStorage:
         no_valid_synthetic_arguments_found = True
         # randomly generate synthetic arguments
         while no_valid_synthetic_arguments_found:
-            N_SAMPLES = random.randint(500, 20000)
-            N_FEATURES = random.randint(10, 100)
-            N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
-                int(N_FEATURES * i)
-                for i in np.random.dirichlet(np.ones(3), size=1).tolist()[0]
-            ]
+            N_SAMPLES = random.randint(500, 2000)
+            N_FEATURES = random.randint(5, 30)
+            N_REDUNDANT = N_REPEATED = 0
+            N_INFORMATIVE = N_FEATURES
 
             N_CLASSES = random.randint(2, 10)
             N_CLUSTERS_PER_CLASS = random.randint(
@@ -182,13 +181,16 @@ class DataStorage:
             WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
                 0
             ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
+
             FLIP_Y = (
                 np.random.pareto(2.0) + 1
             ) * 0.01  # amount of noise, larger values make it harder
+
             CLASS_SEP = random.uniform(
                 0, 10
             )  # larger values spread out the clusters and make it easier
-            HYPERCUBE = True  # if false random polytope
+
+            HYPERCUBE = False  # if false a random polytope is selected instead
             SCALE = 0.01  # features should be between 0 and 1 now
 
             synthetic_creation_args = {
@@ -204,11 +206,20 @@ class DataStorage:
                 "class_sep": CLASS_SEP,
                 "hypercube": HYPERCUBE,
                 "scale": SCALE,
+                "random_state": kwargs["RANDOM_SEED"],
             }
             self.synthetic_creation_args = synthetic_creation_args
 
+        print(synthetic_creation_args)
         X_data, Y_temp = make_classification(**synthetic_creation_args)
         df = pd.DataFrame(X_data)
+        #  df["label"] = Y_temp
+        #  print(df)
+        #  fig = plt.figure()
+        #  ax = fig.add_subplot(111, projection="3d")
+        #  ax.scatter(xs=df.a, ys=df.b, zs=df.c, c=df.label, cmap="viridis")
+        #  plt.show()
+        #  exit(-1)
 
         # replace labels with strings
         Y_temp = Y_temp.astype("str")
