@@ -215,7 +215,9 @@ class ImitationLearner(ActiveLearner):
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
 
-        X_state = calculate_state(possible_samples_X, self.data_storage, self.clf)
+        X_state = calculate_state(
+            possible_samples_X, self.data_storage, self.clf, old=True
+        )
 
         # take first and second most examples from possible_samples_probas and append them then to states
         self.states = self.states.append(
