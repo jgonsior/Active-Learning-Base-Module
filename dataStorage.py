@@ -200,8 +200,8 @@ class DataStorage:
                 0, 10
             )  # larger values spread out the clusters and make it easier
 
-            #  HYPERCUBE = True  # if false a random polytope is selected instead
-            HYPERCUBE = False  # if false a random polytope is selected instead
+            HYPERCUBE = True  # if false a random polytope is selected instead
+            #  HYPERCUBE = False  # if false a random polytope is selected instead
             SCALE = 0.01  # features should be between 0 and 1 now
 
             synthetic_creation_args = {
@@ -291,98 +291,100 @@ class DataStorage:
 
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
         if self.PLOT_EVOLUTION and source != "P":
-            fig, (ax1, ax2) = plt.subplots(1, 2)
+            if len(self.train_labeled_Y_predicted) == 0:
+                self.i += 1
+            else:
+                fig, (ax1, ax2) = plt.subplots(1, 2)
 
-            x = pd.concat(
-                [self.train_labeled_X.iloc[:, 0], self.train_unlabeled_X.iloc[:, 0]]
-            )
-
-            y = pd.concat(
-                [self.train_labeled_X.iloc[:, 1], self.train_unlabeled_X.iloc[:, 1]]
-            )
-
-            c = pd.concat(
-                [self.train_labeled_Y.iloc[:, 0], self.train_unlabeled_Y.iloc[:, 0]]
-            ).to_numpy()
-
-            c2 = np.concatenate(
-                [self.train_labeled_Y_predicted, self.train_unlabeled_Y_predicted]
-            )
-
-            areas = []
-
-            for s in self.train_labeled_Y["source"]:
-                if s == "G":
-                    areas.append(1000)
-                else:
-                    areas.append(100)
-
-            for ix, _ in self.train_unlabeled_Y.iterrows():
-
-                if ix == query_indices[0]:
-                    areas.append(1000)
-                else:
-                    areas.append(10)
-
-            ax1.scatter(
-                x=x,
-                y=y,
-                #  zs=df.iloc[:, 2],
-                c=c,
-                cmap="viridis",
-                alpha=0.5,
-                s=areas,
-            )
-            ax2.scatter(
-                x=x,
-                y=y,
-                #  zs=df.iloc[:, 2],
-                c=c2,
-                cmap="viridis",
-                alpha=0.5,
-                s=areas,
-            )
-
-            for peaked_sample in self.possible_samples_indices:
-                ax1.add_artist(
-                    plt.Circle(
-                        (self.train_unlabeled_X.loc[peaked_sample]),
-                        0.01,
-                        fill=False,
-                        color="red",
-                    )
-                )
-                ax2.add_artist(
-                    plt.Circle(
-                        (self.train_unlabeled_X.loc[peaked_sample]),
-                        0.01,
-                        fill=False,
-                        color="red",
-                    )
+                x = pd.concat(
+                    [self.train_labeled_X.iloc[:, 0], self.train_unlabeled_X.iloc[:, 0]]
                 )
 
-            current_sample = plt.Circle(
-                (self.train_unlabeled_X.loc[query_indices]),
-                0.1,
-                fill=False,
-                color="green",
-            )
+                y = pd.concat(
+                    [self.train_labeled_X.iloc[:, 1], self.train_unlabeled_X.iloc[:, 1]]
+                )
 
-            ax1.add_artist(current_sample)
-            ax2.add_artist(
-                plt.Circle(
+                c = pd.concat(
+                    [self.train_labeled_Y.iloc[:, 0], self.train_unlabeled_Y.iloc[:, 0]]
+                ).to_numpy()
+
+                c2 = np.concatenate(
+                    [self.train_labeled_Y_predicted, self.train_unlabeled_Y_predicted]
+                )
+
+                areas = []
+
+                for s in self.train_labeled_Y["source"]:
+                    if s == "G":
+                        areas.append(1000)
+                    else:
+                        areas.append(100)
+
+                for ix, _ in self.train_unlabeled_Y.iterrows():
+
+                    if ix == query_indices[0]:
+                        areas.append(1000)
+                    else:
+                        areas.append(10)
+
+                ax1.scatter(
+                    x=x,
+                    y=y,
+                    #  zs=df.iloc[:, 2],
+                    c=c,
+                    cmap="viridis",
+                    alpha=0.5,
+                    s=areas,
+                )
+                ax2.scatter(
+                    x=x,
+                    y=y,
+                    #  zs=df.iloc[:, 2],
+                    c=c2,
+                    cmap="viridis",
+                    alpha=0.5,
+                    s=areas,
+                )
+
+                for peaked_sample in self.possible_samples_indices:
+                    ax1.add_artist(
+                        plt.Circle(
+                            (self.train_unlabeled_X.loc[peaked_sample]),
+                            0.01,
+                            fill=False,
+                            color="red",
+                        )
+                    )
+                    ax2.add_artist(
+                        plt.Circle(
+                            (self.train_unlabeled_X.loc[peaked_sample]),
+                            0.01,
+                            fill=False,
+                            color="red",
+                        )
+                    )
+
+                current_sample = plt.Circle(
                     (self.train_unlabeled_X.loc[query_indices]),
                     0.1,
                     fill=False,
                     color="green",
                 )
-            )
 
-            #  plt.show()
-            plt.savefig(
-                "hypercube/" + str(self.RANDOM_SEED) + "_" + str(self.i) + ".png"
-            )
-            self.i += 1
+                ax1.add_artist(current_sample)
+                ax2.add_artist(
+                    plt.Circle(
+                        (self.train_unlabeled_X.loc[query_indices]),
+                        0.1,
+                        fill=False,
+                        color="green",
+                    )
+                )
+
+                plt.savefig(
+                    "hypercube/" + str(self.RANDOM_SEED) + "_" + str(self.i) + ".png"
+                )
+                self.i += 1
 
         Y_query = pd.DataFrame(
             {"label": Y_query, "source": [source for _ in Y_query]},
