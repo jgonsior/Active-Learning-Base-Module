@@ -209,6 +209,15 @@ class ImitationLearner(ActiveLearner):
                 for unlabeled_sample_indice in possible_samples_indices
             )
 
+        if self.data_storage.PLOT_EVOLUTION:
+            self.data_storage.possible_samples_indices = possible_samples_indices
+            self.data_storage.train_unlabeled_Y_predicted = self.clf.predict(
+                self.data_storage.train_unlabeled_X
+            )
+            self.data_storage.train_labeled_Y_predicted = self.clf.predict(
+                self.data_storage.train_labeled_X
+            )
+
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
 

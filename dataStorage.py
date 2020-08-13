@@ -21,12 +21,20 @@ class DataStorage:
         df=None,
         DATASET_NAME=None,
         DATASETS_PATH=None,
+        PLOT_EVOLUTION=False,
         **kwargs
     ):
         if RANDOM_SEED != -1:
             np.random.seed(RANDOM_SEED)
             random.seed(RANDOM_SEED)
             self.RANDOM_SEED = RANDOM_SEED
+        self.PLOT_EVOLUTION = PLOT_EVOLUTION
+
+        if PLOT_EVOLUTION:
+            self.possible_samples_indices = []
+            self.train_labeled_Y_predicted = []
+            self.train_unlabeled_Y_predicted = []
+            self.i = 0
 
         if df is None:
             log_it("Loading " + DATASET_NAME)
@@ -85,7 +93,7 @@ class DataStorage:
             train_labeled_data = pd.DataFrame(data=None, columns=train_data.columns)
             self.train_labeled_X = train_labeled_data
             self.train_labeled_Y = pd.DataFrame(
-                data=None, columns=["label"], index=self.train_labeled_X.index
+                data=None, columns=["label", "source"], index=self.train_labeled_X.index
             )
             del self.train_labeled_X["label"]
 
@@ -165,7 +173,7 @@ class DataStorage:
         # randomly generate synthetic arguments
         while no_valid_synthetic_arguments_found:
             N_SAMPLES = 500  # random.randint(500, 2000)
-            N_FEATURES = 3  # random.randint(5, 30)
+            N_FEATURES = 2  # random.randint(5, 30)
             N_REDUNDANT = N_REPEATED = 0
             N_INFORMATIVE = N_FEATURES
 
@@ -234,7 +242,7 @@ class DataStorage:
         #  else:
         #      plt.savefig("polytope_hard/" + str(kwargs["RANDOM_SEED"]) + ".png")
         #  exit(-1)
-
+        #
         # replace labels with strings
         Y_temp = Y_temp.astype("str")
         for i in range(0, synthetic_creation_args["n_classes"]):
@@ -282,6 +290,100 @@ class DataStorage:
         return df
 
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
+        if self.PLOT_EVOLUTION and source != "P":
+            fig, (ax1, ax2) = plt.subplots(1, 2)
+
+            x = pd.concat(
+                [self.train_labeled_X.iloc[:, 0], self.train_unlabeled_X.iloc[:, 0]]
+            )
+
+            y = pd.concat(
+                [self.train_labeled_X.iloc[:, 1], self.train_unlabeled_X.iloc[:, 1]]
+            )
+
+            c = pd.concat(
+                [self.train_labeled_Y.iloc[:, 0], self.train_unlabeled_Y.iloc[:, 0]]
+            ).to_numpy()
+
+            c2 = np.concatenate(
+                [self.train_labeled_Y_predicted, self.train_unlabeled_Y_predicted]
+            )
+
+            areas = []
+
+            for s in self.train_labeled_Y["source"]:
+                if s == "G":
+                    areas.append(1000)
+                else:
+                    areas.append(100)
+
+            for ix, _ in self.train_unlabeled_Y.iterrows():
+
+                if ix == query_indices[0]:
+                    areas.append(1000)
+                else:
+                    areas.append(10)
+
+            ax1.scatter(
+                x=x,
+                y=y,
+                #  zs=df.iloc[:, 2],
+                c=c,
+                cmap="viridis",
+                alpha=0.5,
+                s=areas,
+            )
+            ax2.scatter(
+                x=x,
+                y=y,
+                #  zs=df.iloc[:, 2],
+                c=c2,
+                cmap="viridis",
+                alpha=0.5,
+                s=areas,
+            )
+
+            for peaked_sample in self.possible_samples_indices:
+                ax1.add_artist(
+                    plt.Circle(
+                        (self.train_unlabeled_X.loc[peaked_sample]),
+                        0.01,
+                        fill=False,
+                        color="red",
+                    )
+                )
+                ax2.add_artist(
+                    plt.Circle(
+                        (self.train_unlabeled_X.loc[peaked_sample]),
+                        0.01,
+                        fill=False,
+                        color="red",
+                    )
+                )
+
+            current_sample = plt.Circle(
+                (self.train_unlabeled_X.loc[query_indices]),
+                0.1,
+                fill=False,
+                color="green",
+            )
+
+            ax1.add_artist(current_sample)
+            ax2.add_artist(
+                plt.Circle(
+                    (self.train_unlabeled_X.loc[query_indices]),
+                    0.1,
+                    fill=False,
+                    color="green",
+                )
+            )
+
+            #  plt.show()
+            plt.savefig(
+                "hypercube/" + str(self.RANDOM_SEED) + "_" + str(self.i) + ".png"
+            )
+            self.i += 1
+
         Y_query = pd.DataFrame(
             {"label": Y_query, "source": [source for _ in Y_query]},
             index=query_indices,
