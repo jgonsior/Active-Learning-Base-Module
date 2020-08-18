@@ -170,39 +170,81 @@ class DataStorage:
 
     def _load_synthetic(self, **kwargs):
         no_valid_synthetic_arguments_found = True
-        # randomly generate synthetic arguments
         while no_valid_synthetic_arguments_found:
-            N_SAMPLES = 1000  # random.randint(500, 2000)
-            N_FEATURES = 2  # random.randint(5, 30)
-            N_REDUNDANT = N_REPEATED = 0
-            N_INFORMATIVE = N_FEATURES
+            if kwargs["OLD_SYNTHETIC_PARAMS"]:
+                if kwargs["VARIABLE_INPUT_SIZE"]:
+                    N_SAMPLES = random.randint(500, 20000)
+                else:
+                    N_SAMPLES = 1000
+                if kwargs["AMOUNT_OF_FEATURES"] > 0:
+                    N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
+                else:
+                    N_FEATURES = random.randint(10, 100)
 
-            N_CLASSES = random.randint(2, min(10, 2 ** N_INFORMATIVE))
-            N_CLUSTERS_PER_CLASS = random.randint(
-                1, int(2 ** N_INFORMATIVE / N_CLASSES)
-            )
+                N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
+                    int(N_FEATURES * i)
+                    for i in np.random.dirichlet(np.ones(3), size=1).tolist()[0]
+                ]
 
-            #  )
-            if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
-                print("ui")
-                continue
-            no_valid_synthetic_arguments_found = False
+                N_CLASSES = random.randint(2, 10)
+                N_CLUSTERS_PER_CLASS = random.randint(
+                    1, min(max(1, int(2 ** N_INFORMATIVE / N_CLASSES)), 10)
+                )
 
-            WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
-                0
-            ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
+                if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
+                    continue
+                no_valid_synthetic_arguments_found = False
 
-            FLIP_Y = (
-                np.random.pareto(2.0) + 1
-            ) * 0.01  # amount of noise, larger values make it harder
+                WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
+                    0
+                ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
+                FLIP_Y = (
+                    np.random.pareto(2.0) + 1
+                ) * 0.01  # amount of noise, larger values make it harder
+                CLASS_SEP = random.uniform(
+                    0, 10
+                )  # larger values spread out the clusters and make it easier
+                HYPERCUBE = kwargs["HYPERCUBE"]  # if false random polytope
+                SCALE = 0.01  # features should be between 0 and 1 now
+            else:
+                if kwargs["VARIABLE_INPUT_SIZE"]:
+                    N_SAMPLES = random.randint(500, 2000)
+                else:
+                    N_SAMPLES = 1000
+                if kwargs["AMOUNT_OF_FEATURES"] > 0:
+                    N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
+                else:
+                    N_FEATURES = random.randint(2, 20)
+                N_REDUNDANT = N_REPEATED = 0
+                N_INFORMATIVE = N_FEATURES
 
-            CLASS_SEP = random.uniform(
-                0, 10
-            )  # larger values spread out the clusters and make it easier
+                N_CLASSES = random.randint(2, min(10, 2 ** N_INFORMATIVE))
+                N_CLUSTERS_PER_CLASS = random.randint(
+                    1, int(2 ** N_INFORMATIVE / N_CLASSES)
+                )
 
-            HYPERCUBE = True  # if false a random polytope is selected instead
-            #  HYPERCUBE = False  # if false a random polytope is selected instead
-            SCALE = 0.01  # features should be between 0 and 1 now
+                if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
+                    print("ui")
+                    continue
+                no_valid_synthetic_arguments_found = False
+
+                WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
+                    0
+                ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
+
+                FLIP_Y = (
+                    np.random.pareto(2.0) + 1
+                ) * 0.01  # amount of noise, larger values make it harder
+
+                CLASS_SEP = random.uniform(
+                    0, 10
+                )  # larger values spread out the clusters and make it easier
+
+                #  HYPERCUBE = True  # if false a random polytope is selected instead
+                HYPERCUBE = kwargs[
+                    "HYPERCUBE"
+                ]  # if false a random polytope is selected instead
+                SCALE = 0.01  # features should be between 0 and 1 now
 
             synthetic_creation_args = {
                 "n_samples": N_SAMPLES,
