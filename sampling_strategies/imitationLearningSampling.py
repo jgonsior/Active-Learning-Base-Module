@@ -112,14 +112,14 @@ class ImitationLearner(ActiveLearner):
                 str(i) + "_proba_max" for i in range(0, self.amount_of_peaked_objects)
             ]
             + [str(i) + "_proba_diff" for i in range(0, self.amount_of_peaked_objects)]
-            + [
-                str(i) + "_avg_dist_lab"
-                for i in range(0, self.amount_of_peaked_objects)
-            ]
-            + [
-                str(i) + "_avg_dist_unlab"
-                for i in range(0, self.amount_of_peaked_objects)
-            ],
+            #  + [
+            #      str(i) + "_avg_dist_lab"
+            #      for i in range(0, self.amount_of_peaked_objects)
+            #  ]
+            #  + [
+            #      str(i) + "_avg_dist_unlab"
+            #      for i in range(0, self.amount_of_peaked_objects)
+            #  ],
         )
         self.optimal_policies = pd.DataFrame(
             data=None,

@@ -238,7 +238,7 @@ def eval_al(
 
     # save hyper parameter results in csv file
     output_hyper_parameter_file = Path(
-        hyper_parameters["output_directory"] + "/dataset_creation.csv"
+        hyper_parameters["output_directory"]  # + "/dataset_creation.csv"
     )
     if not output_hyper_parameter_file.is_file():
         output_hyper_parameter_file.touch()

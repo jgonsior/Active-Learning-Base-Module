@@ -42,7 +42,8 @@ class TrainedNNLearner(ActiveLearner):
                 old=True,
             )
             X_state = np.reshape(X_state, (1, len(X_state)))
-
+            print(X_state)
+            #  exit(-1)
             Y_pred = self.sampling_classifier.predict(X_state)
 
             sorting = Y_pred
