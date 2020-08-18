@@ -1,3 +1,4 @@
+from sklearn.metrics import pairwise_distances
 import copy
 import random
 from itertools import chain
@@ -57,12 +58,46 @@ def _future_peak(
         Y_pred, copy_of_data_storage.train_unlabeled_Y["label"].to_list()
     )
 
-    print(
-        "Testing out : {}, train acc: {}".format(
-            unlabeled_sample_indice, accuracy_with_that_label
-        )
-    )
+    #  print(
+    #      "Testing out : {}, train acc: {}".format(
+    #          unlabeled_sample_indice, accuracy_with_that_label
+    #      )
+    #  )
     return accuracy_with_that_label
+
+
+def calculate_state(X_query, data_storage, clf, old=False):
+    possible_samples_probas = clf.predict_proba(X_query)
+
+    sorted_probas = -np.sort(-possible_samples_probas, axis=1)
+    argmax_probas = sorted_probas[:, 0]
+    argsecond_probas = sorted_probas[:, 1]
+
+    if old:
+        return np.array([*argmax_probas, *argsecond_probas])
+
+    arg_diff_probas = argmax_probas - argsecond_probas
+
+    # calculate average distance to labeled and average distance to unlabeled samples
+    average_distance_labeled = np.sum(
+        pairwise_distances(data_storage.train_labeled_X, X_query), axis=0,
+    ) / len(data_storage.train_labeled_X)
+    average_distance_unlabeled = np.sum(
+        pairwise_distances(data_storage.train_unlabeled_X, X_query), axis=0,
+    ) / len(data_storage.train_unlabeled_X)
+    #  print(average_distance_unlabeled)
+    #  print(average_distance_labeled)
+    #  print(possible_samples_X)
+
+    X_state = np.array(
+        [
+            *argmax_probas,
+            *arg_diff_probas,
+            *average_distance_labeled,
+            *average_distance_unlabeled,
+        ]
+    )
+    return X_state
 
 
 class ImitationLearner(ActiveLearner):
@@ -74,9 +109,17 @@ class ImitationLearner(ActiveLearner):
         self.states = pd.DataFrame(
             data=None,
             columns=[
-                str(i) + "_proba_0" for i in range(0, self.amount_of_peaked_objects)
+                str(i) + "_proba_max" for i in range(0, self.amount_of_peaked_objects)
             ]
-            + [str(i) + "_proba_1" for i in range(0, self.amount_of_peaked_objects)],
+            + [str(i) + "_proba_diff" for i in range(0, self.amount_of_peaked_objects)]
+            #  + [
+            #      str(i) + "_avg_dist_lab"
+            #      for i in range(0, self.amount_of_peaked_objects)
+            #  ]
+            #  + [
+            #      str(i) + "_avg_dist_unlab"
+            #      for i in range(0, self.amount_of_peaked_objects)
+            #  ],
         )
         self.optimal_policies = pd.DataFrame(
             data=None,
@@ -149,6 +192,10 @@ class ImitationLearner(ActiveLearner):
             : self.amount_of_peaked_objects
         ]
 
+        possible_samples_X = self.data_storage.train_unlabeled_X.loc[
+            possible_samples_indices
+        ]
+
         # parallelisieren
         with parallel_backend("loky", n_jobs=self.N_JOBS):
             future_peak_acc = Parallel()(
@@ -162,18 +209,16 @@ class ImitationLearner(ActiveLearner):
                 for unlabeled_sample_indice in possible_samples_indices
             )
 
+        #  if self.data_storage.PLOT_EVOLUTION:
+        #  self.data_storage.possible_samples_indices = possible_samples_indices
+
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
 
-        possible_samples_probas = self.clf.predict_proba(
-            self.data_storage.train_unlabeled_X.loc[possible_samples_indices]
+        X_state = calculate_state(
+            possible_samples_X, self.data_storage, self.clf, old=True
         )
 
-        sorted_probas = -np.sort(-possible_samples_probas, axis=1)
-        argmax_probas = sorted_probas[:, 0]
-        argsecond_probas = sorted_probas[:, 1]
-
-        X_state = np.array([*argmax_probas, *argsecond_probas])
         # take first and second most examples from possible_samples_probas and append them then to states
         self.states = self.states.append(
             pd.Series(dict(zip(self.states.columns, X_state))), ignore_index=True,
