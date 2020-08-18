@@ -114,6 +114,14 @@ class ActiveLearner:
         self.metrics_per_al_cycle["train_conf_matrix"].append(conf_matrix)
         self.metrics_per_al_cycle["train_acc"].append(acc)
 
+        if self.data_storage.PLOT_EVOLUTION:
+            self.data_storage.train_unlabeled_Y_predicted = self.clf.predict(
+                self.data_storage.train_unlabeled_X
+            )
+            self.data_storage.train_labeled_Y_predicted = self.clf.predict(
+                self.data_storage.train_labeled_X
+            )
+
     def get_newly_labeled_data(self):
         X_train_unlabeled_cluster_indices = self.cluster_strategy.get_cluster_indices(
             clf=self.clf, nr_queries_per_iteration=self.nr_queries_per_iteration
