@@ -209,8 +209,8 @@ class ImitationLearner(ActiveLearner):
                 for unlabeled_sample_indice in possible_samples_indices
             )
 
-        #  if self.data_storage.PLOT_EVOLUTION:
-        #  self.data_storage.possible_samples_indices = possible_samples_indices
+        if self.data_storage.PLOT_EVOLUTION:
+            self.data_storage.possible_samples_indices = possible_samples_indices
 
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage

@@ -207,10 +207,47 @@ class DataStorage:
                 CLASS_SEP = random.uniform(
                     0, 10
                 )  # larger values spread out the clusters and make it easier
-                HYPERCUBE = kwargs = ["HYPERCUBE"]  # if false random polytope
+                HYPERCUBE = kwargs["HYPERCUBE"]  # if false random polytope
                 SCALE = 0.01  # features should be between 0 and 1 now
             else:
-                pass
+                if kwargs["VARIABLE_INPUT_SIZE"]:
+                    N_SAMPLES = random.randint(500, 2000)
+                else:
+                    N_SAMPLES = 1000
+                if kwargs["AMOUNT_OF_FEATURES"] > 0:
+                    N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
+                else:
+                    N_FEATURES = random.randint(2, 20)
+                N_REDUNDANT = N_REPEATED = 0
+                N_INFORMATIVE = N_FEATURES
+
+                N_CLASSES = random.randint(2, min(10, 2 ** N_INFORMATIVE))
+                N_CLUSTERS_PER_CLASS = random.randint(
+                    1, int(2 ** N_INFORMATIVE / N_CLASSES)
+                )
+
+                if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
+                    print("ui")
+                    continue
+                no_valid_synthetic_arguments_found = False
+
+                WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
+                    0
+                ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
+
+                FLIP_Y = (
+                    np.random.pareto(2.0) + 1
+                ) * 0.01  # amount of noise, larger values make it harder
+
+                CLASS_SEP = random.uniform(
+                    0, 10
+                )  # larger values spread out the clusters and make it easier
+
+                #  HYPERCUBE = True  # if false a random polytope is selected instead
+                HYPERCUBE = kwargs[
+                    "HYPERCUBE"
+                ]  # if false a random polytope is selected instead
+                SCALE = 0.01  # features should be between 0 and 1 now
 
             synthetic_creation_args = {
                 "n_samples": N_SAMPLES,
