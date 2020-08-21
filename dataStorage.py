@@ -341,6 +341,8 @@ class DataStorage:
             else:
                 fig, (ax1, ax2) = plt.subplots(1, 2)
 
+                fig.set_size_inches(18.5, 10.5)
+
                 x = pd.concat(
                     [self.train_labeled_X.iloc[:, 0], self.train_unlabeled_X.iloc[:, 0]]
                 )
