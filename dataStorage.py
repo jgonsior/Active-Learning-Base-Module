@@ -172,7 +172,7 @@ class DataStorage:
         no_valid_synthetic_arguments_found = True
         while no_valid_synthetic_arguments_found:
             print(kwargs)
-            if kwargs["OLD_SYNTHETIC_PARAMS"]:
+            if not kwargs["NEW_SYNTHETIC_PARAMS"]:
                 if kwargs["VARIABLE_INPUT_SIZE"]:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
