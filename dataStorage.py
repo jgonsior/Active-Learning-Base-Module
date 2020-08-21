@@ -49,6 +49,7 @@ class DataStorage:
 
         self.feature_columns = df.columns.to_list()
         self.feature_columns.remove("label")
+        self.hyper_parameters = hyper_parameters
 
         self.label_encoder = LabelEncoder()
 
@@ -426,7 +427,12 @@ class DataStorage:
                 )
 
                 plt.savefig(
-                    "hypercube/" + str(self.RANDOM_SEED) + "_" + str(self.i) + ".png"
+                    self.hyper_parameters["OUTPUT_DIRECTORY"]
+                    + "/"
+                    + str(self.RANDOM_SEED)
+                    + "_"
+                    + str(self.i)
+                    + ".png"
                 )
                 self.i += 1
 
