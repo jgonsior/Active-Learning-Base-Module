@@ -168,14 +168,16 @@ class DataStorage:
         self.amount_of_training_samples = int(len(df) * 0.5)
         return df
 
-    def _load_synthetic(self, **kwargs):
+    def _load_synthetic(self, RANDOM_SEED, **kwargs):
         no_valid_synthetic_arguments_found = True
         while no_valid_synthetic_arguments_found:
+            print(kwargs)
             if kwargs["OLD_SYNTHETIC_PARAMS"]:
                 if kwargs["VARIABLE_INPUT_SIZE"]:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
                     N_SAMPLES = 1000
+
                 if kwargs["AMOUNT_OF_FEATURES"] > 0:
                     N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
                 else:
@@ -259,7 +261,7 @@ class DataStorage:
                 "class_sep": CLASS_SEP,
                 "hypercube": HYPERCUBE,
                 "scale": SCALE,
-                "random_state": kwargs["RANDOM_SEED"],
+                "random_state": RANDOM_SEED,
             }
             self.synthetic_creation_args = synthetic_creation_args
 
