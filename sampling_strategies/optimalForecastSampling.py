@@ -95,11 +95,11 @@ class OptimalForecastSampler(ActiveLearner):
             Y_pred, copy_of_data_storage.train_unlabeled_Y["label"].to_list()
         )
 
-        print(
-            "Testing out : {}, acc: {}".format(
-                unlabeled_sample_indice, accuracy_with_that_label
-            )
-        )
+        #  print(
+        #      "Testing out : {}, acc: {}".format(
+        #          unlabeled_sample_indice, accuracy_with_that_label
+        #      )
+        #  )
         return unlabeled_sample_indice, accuracy_with_that_label
 
     """
