@@ -12,7 +12,9 @@ from sklearn.preprocessing import MinMaxScaler
 from ..activeLearner import ActiveLearner
 
 
-def sample_unlabeled_X(train_unlabeled_X, sample_size, CONVEX_HULL_SAMPLING):
+def sample_unlabeled_X(
+    train_unlabeled_X, train_labeled_X, sample_size, CONVEX_HULL_SAMPLING
+):
     if CONVEX_HULL_SAMPLING:
         max_sum = 0
         for i in range(0, 100):
@@ -20,6 +22,10 @@ def sample_unlabeled_X(train_unlabeled_X, sample_size, CONVEX_HULL_SAMPLING):
 
             # calculate distance to each other
             total_distance = np.sum(pairwise_distances(random_sample, random_sample))
+            total_distance += np.sum(
+                pairwise_distances(random_sample, train_unlabeled_X)
+            )
+            total_distance += np.sum(pairwise_distances(random_sample, train_labeled_X))
             if total_distance > max_sum:
                 max_sum = total_distance
                 X_query = random_sample
@@ -200,6 +206,7 @@ class ImitationLearner(ActiveLearner):
         random.shuffle(train_unlabeled_X_indices)
         possible_samples_X = sample_unlabeled_X(
             self.data_storage.train_unlabeled_X,
+            self.data_storage.train_labeled_X,
             self.amount_of_peaked_objects,
             self.CONVEX_HULL_SAMPLING,
         )

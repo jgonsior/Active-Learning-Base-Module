@@ -177,7 +177,7 @@ class DataStorage:
                 if kwargs["VARIABLE_INPUT_SIZE"]:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
-                    N_SAMPLES = 1000
+                    N_SAMPLES = random.randint(100, 5000)
 
                 if kwargs["AMOUNT_OF_FEATURES"] > 0:
                     N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
@@ -211,9 +211,10 @@ class DataStorage:
                 SCALE = 0.01  # features should be between 0 and 1 now
             else:
                 if kwargs["VARIABLE_INPUT_SIZE"]:
-                    N_SAMPLES = random.randint(500, 2000)
+                    N_SAMPLES = random.randint(500, 20000)
                 else:
-                    N_SAMPLES = 1000
+                    N_SAMPLES = random.randint(100, 5000)
+                    #  N_SAMPLES = 1000
                 if kwargs["AMOUNT_OF_FEATURES"] > 0:
                     N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
                 else:

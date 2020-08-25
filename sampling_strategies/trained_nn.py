@@ -41,6 +41,7 @@ class TrainedNNLearner(ActiveLearner):
         for _ in range(0, self.AMOUNT_OF_RANDOM_QUERY_SETS):
             X_query = sample_unlabeled_X(
                 self.data_storage.train_unlabeled_X,
+                self.data_storage.train_labeled_X,
                 self.sampling_classifier.n_outputs_,
                 self.CONVEX_HULL_SAMPLING,
             )
