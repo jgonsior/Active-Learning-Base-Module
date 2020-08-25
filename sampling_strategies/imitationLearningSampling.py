@@ -1,4 +1,3 @@
-from sklearn.metrics import pairwise_distances
 import copy
 import random
 from itertools import chain
@@ -7,6 +6,7 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import MinMaxScaler
 
 from ..activeLearner import ActiveLearner

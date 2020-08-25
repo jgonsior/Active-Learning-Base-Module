@@ -5,8 +5,8 @@ from itertools import chain
 import dill
 import numpy as np
 
-from ..activeLearner import ActiveLearner
 from .imitationLearningSampling import calculate_state
+from ..activeLearner import ActiveLearner
 
 
 class TrainedNNLearner(ActiveLearner):

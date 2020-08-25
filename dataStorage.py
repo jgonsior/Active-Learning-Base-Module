@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
 import random
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.datasets import make_classification

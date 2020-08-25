@@ -6,7 +6,6 @@ import sys
 import threading
 
 import numpy as np
-
 #  import np.random.distributions as dists
 import numpy.random
 import scipy
