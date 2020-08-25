@@ -12,6 +12,24 @@ from sklearn.preprocessing import MinMaxScaler
 from ..activeLearner import ActiveLearner
 
 
+def sample_unlabeled_X(train_unlabeled_X, sample_size, CONVEX_HULL_SAMPLING):
+    if CONVEX_HULL_SAMPLING:
+        max_sum = 0
+        for i in range(0, 100):
+            random_sample = train_unlabeled_X.sample(n=sample_size)
+
+            # calculate distance to each other
+            total_distance = np.sum(pairwise_distances(random_sample, random_sample))
+            if total_distance > max_sum:
+                max_sum = total_distance
+                X_query = random_sample
+        possible_samples_indices = X_query.index
+
+    else:
+        X_query = train_unlabeled_X.sample(n=sample_size)
+    return X_query
+
+
 def _future_peak(
     unlabeled_sample_indice,
     weak_supervision_label_sources,
@@ -106,23 +124,10 @@ class ImitationLearner(ActiveLearner):
     def set_amount_of_peaked_objects(self, amount_of_peaked_objects):
         self.amount_of_peaked_objects = amount_of_peaked_objects
 
-    def init_sampling_classifier(self, DATA_PATH, REPRESENTATIVE_FEATURES):
-        # check if states and optimal policies file got provided or if we need to create a new one
-        self.states = pd.DataFrame(
-            data=None,
-            #  columns=[
-            #      str(i) + "_proba_max" for i in range(0, self.amount_of_peaked_objects)
-            #  ]
-            #  + [str(i) + "_proba_diff" for i in range(0, self.amount_of_peaked_objects)]
-            #  + [
-            #      str(i) + "_avg_dist_lab"
-            #      for i in range(0, self.amount_of_peaked_objects)
-            #  ]
-            #  + [
-            #      str(i) + "_avg_dist_unlab"
-            #      for i in range(0, self.amount_of_peaked_objects)
-            #  ],
-        )
+    def init_sampling_classifier(
+        self, DATA_PATH, REPRESENTATIVE_FEATURES, CONVEX_HULL_SAMPLING
+    ):
+        self.states = pd.DataFrame(data=None,)
         self.optimal_policies = pd.DataFrame(
             data=None,
             columns=[
@@ -132,6 +137,7 @@ class ImitationLearner(ActiveLearner):
         )
 
         self.REPRESENTATIVE_FEATURES = REPRESENTATIVE_FEATURES
+        self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
 
     def move_labeled_queries(self, X_query, Y_query, query_indices):
         # move new queries from unlabeled to labeled dataset
@@ -192,13 +198,19 @@ class ImitationLearner(ActiveLearner):
         future_peak_acc = []
 
         random.shuffle(train_unlabeled_X_indices)
-        possible_samples_indices = train_unlabeled_X_indices[
-            : self.amount_of_peaked_objects
-        ]
-
-        possible_samples_X = self.data_storage.train_unlabeled_X.loc[
-            possible_samples_indices
-        ]
+        possible_samples_X = sample_unlabeled_X(
+            self.data_storage.train_unlabeled_X,
+            self.amount_of_peaked_objects,
+            self.CONVEX_HULL_SAMPLING,
+        )
+        possible_samples_indices = possible_samples_X.index
+        #  possible_samples_indices = train_unlabeled_X_indices[
+        #      : self.amount_of_peaked_objects
+        #  ]
+        #
+        #  possible_samples_X = self.data_storage.train_unlabeled_X.loc[
+        #      possible_samples_indices
+        #  ]
 
         # parallelisieren
         with parallel_backend("loky", n_jobs=self.N_JOBS):

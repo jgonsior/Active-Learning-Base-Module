@@ -6,6 +6,7 @@ from pathlib import Path
 from timeit import default_timer as timer
 
 import pandas as pd
+
 #  import np.random.distributions as dists
 from json_tricks import dumps
 from sklearn.ensemble import RandomForestClassifier
@@ -134,6 +135,7 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
             hyper_parameters["NN_BINARY"],
             hyper_parameters["AMOUNT_OF_RANDOM_QUERY_SETS"],
             hyper_parameters["REPRESENTATIVE_FEATURES"],
+            hyper_parameters["CONVEX_HULL_SAMPLING"],
         )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"
