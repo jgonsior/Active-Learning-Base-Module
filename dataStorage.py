@@ -217,7 +217,7 @@ class DataStorage:
                 if kwargs["AMOUNT_OF_FEATURES"] > 0:
                     N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
                 else:
-                    N_FEATURES = random.randint(2, 20)
+                    N_FEATURES = random.randint(2, 10)
                 N_REDUNDANT = N_REPEATED = 0
                 N_INFORMATIVE = N_FEATURES
 
@@ -243,7 +243,6 @@ class DataStorage:
                     0, 10
                 )  # larger values spread out the clusters and make it easier
 
-                #  HYPERCUBE = True  # if false a random polytope is selected instead
                 HYPERCUBE = kwargs[
                     "HYPERCUBE"
                 ]  # if false a random polytope is selected instead
