@@ -91,8 +91,10 @@ def calculate_state(X_query, data_storage, clf, old=False):
 
     X_state = np.array(
         [
-            *argmax_probas,
-            *arg_diff_probas,
+            #  *argmax_probas,
+            #  *arg_diff_probas,
+            *average_distance_labeled,
+            *average_distance_unlabeled,
             *average_distance_labeled,
             *average_distance_unlabeled,
         ]
@@ -104,14 +106,14 @@ class ImitationLearner(ActiveLearner):
     def set_amount_of_peaked_objects(self, amount_of_peaked_objects):
         self.amount_of_peaked_objects = amount_of_peaked_objects
 
-    def init_sampling_classifier(self, DATA_PATH):
+    def init_sampling_classifier(self, DATA_PATH, REPRESENTATIVE_FEATURES):
         # check if states and optimal policies file got provided or if we need to create a new one
         self.states = pd.DataFrame(
             data=None,
-            columns=[
-                str(i) + "_proba_max" for i in range(0, self.amount_of_peaked_objects)
-            ]
-            + [str(i) + "_proba_diff" for i in range(0, self.amount_of_peaked_objects)]
+            #  columns=[
+            #      str(i) + "_proba_max" for i in range(0, self.amount_of_peaked_objects)
+            #  ]
+            #  + [str(i) + "_proba_diff" for i in range(0, self.amount_of_peaked_objects)]
             #  + [
             #      str(i) + "_avg_dist_lab"
             #      for i in range(0, self.amount_of_peaked_objects)
@@ -128,6 +130,8 @@ class ImitationLearner(ActiveLearner):
                 for i in range(0, self.amount_of_peaked_objects)
             ],
         )
+
+        self.REPRESENTATIVE_FEATURES = REPRESENTATIVE_FEATURES
 
     def move_labeled_queries(self, X_query, Y_query, query_indices):
         # move new queries from unlabeled to labeled dataset
@@ -216,12 +220,17 @@ class ImitationLearner(ActiveLearner):
             labelSource.data_storage = self.data_storage
 
         X_state = calculate_state(
-            possible_samples_X, self.data_storage, self.clf, old=True
+            possible_samples_X,
+            self.data_storage,
+            self.clf,
+            old=not self.REPRESENTATIVE_FEATURES,
         )
 
         # take first and second most examples from possible_samples_probas and append them then to states
         self.states = self.states.append(
-            pd.Series(dict(zip(self.states.columns, X_state))), ignore_index=True,
+            pd.Series(X_state),
+            ignore_index=True
+            #  pd.Series(dict(zip(self.states.columns, X_state))), ignore_index=True,
         )
 
         # the output of the net is one neuron per possible unlabeled sample, and the output should be:

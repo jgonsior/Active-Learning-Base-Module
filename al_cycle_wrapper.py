@@ -134,6 +134,7 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
         active_learner.init_sampling_classifier(
             hyper_parameters["NN_BINARY"],
             hyper_parameters["AMOUNT_OF_RANDOM_QUERY_SETS"],
+            hyper_parameters["REPRESENTATIVE_FEATURES"],
         )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"
@@ -242,9 +243,13 @@ def eval_al(
         hyper_parameters = {**hyper_parameters, **data_storage.synthetic_creation_args}
 
     # save hyper parameter results in csv file
-    output_hyper_parameter_file = Path(
-        hyper_parameters["output_directory"]  # + "/dataset_creation.csv"
-    )
+    if hyper_parameters["output_directory"].endswith(".csv"):
+        output_hyper_parameter_file = Path(hyper_parameters["output_directory"])
+    else:
+        output_hyper_parameter_file = Path(
+            hyper_parameters["output_directory"] + "/dataset_creation.csv"
+        )
+
     if not output_hyper_parameter_file.is_file():
         output_hyper_parameter_file.touch()
         with output_hyper_parameter_file.open("a") as f:
