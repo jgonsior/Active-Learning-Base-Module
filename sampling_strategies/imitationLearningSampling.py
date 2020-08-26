@@ -1,3 +1,4 @@
+import statistics
 import copy
 import random
 from itertools import chain
@@ -76,17 +77,23 @@ def _future_peak(
             copy_of_data_storage.train_labeled_Y["label"].to_list(),
         )
 
-    Y_pred = copy_of_classifier.predict(copy_of_data_storage.train_unlabeled_X)
-
-    accuracy_with_that_label = accuracy_score(
-        Y_pred, copy_of_data_storage.train_unlabeled_Y["label"].to_list()
+    Y_pred_train_unlabeled = copy_of_classifier.predict(
+        copy_of_data_storage.train_unlabeled_X
+    )
+    Y_pred_test = copy_of_classifier.predict(copy_of_data_storage.test_X)
+    Y_pred = np.concatenate((Y_pred_train_unlabeled, Y_pred_test))
+    Y_true = (
+        copy_of_data_storage.train_unlabeled_Y["label"].to_list()
+        + copy_of_data_storage.test_Y["label"].to_list()
     )
 
-    #  print(
-    #      "Testing out : {}, train acc: {}".format(
-    #          unlabeled_sample_indice, accuracy_with_that_label
-    #      )
-    #  )
+    accuracy_with_that_label = accuracy_score(Y_pred, Y_true)
+
+    print(
+        "Testing out : {}, train acc: {}".format(
+            unlabeled_sample_indice, accuracy_with_that_label
+        )
+    )
     return accuracy_with_that_label
 
 
@@ -197,40 +204,62 @@ class ImitationLearner(ActiveLearner):
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         # merge indices from all clusters together and take the n most uncertain ones from them
-        train_unlabeled_X_indices = list(
-            chain(*list(train_unlabeled_X_cluster_indices.values()))
-        )
+        #  train_unlabeled_X_indices = list(
+        #      chain(*list(train_unlabeled_X_cluster_indices.values()))
+        #  )
 
         future_peak_acc = []
 
-        random.shuffle(train_unlabeled_X_indices)
-        possible_samples_X = sample_unlabeled_X(
-            self.data_storage.train_unlabeled_X,
-            self.data_storage.train_labeled_X,
-            self.amount_of_peaked_objects,
-            self.CONVEX_HULL_SAMPLING,
-        )
-        possible_samples_indices = possible_samples_X.index
-        #  possible_samples_indices = train_unlabeled_X_indices[
-        #      : self.amount_of_peaked_objects
-        #  ]
-        #
-        #  possible_samples_X = self.data_storage.train_unlabeled_X.loc[
-        #      possible_samples_indices
-        #  ]
+        #  random.shuffle(train_unlabeled_X_indices)
+        good_sample_found = False
+        hard_kill_count = 0
+        best_largest_stdev = 0
+        best_future_peak_acc = None
+        best_possible_samples_X = None
+        best_possible_sample_indices = None
 
-        # parallelisieren
-        with parallel_backend("loky", n_jobs=self.N_JOBS):
-            future_peak_acc = Parallel()(
-                delayed(_future_peak)(
-                    unlabeled_sample_indice,
-                    self.weak_supervision_label_sources,
-                    self.data_storage,
-                    self.clf,
-                    self.MAX_AMOUNT_OF_WS_PEAKS,
-                )
-                for unlabeled_sample_indice in possible_samples_indices
+        while not good_sample_found and hard_kill_count < 5:
+            possible_samples_X = sample_unlabeled_X(
+                self.data_storage.train_unlabeled_X,
+                self.data_storage.train_labeled_X,
+                self.amount_of_peaked_objects,
+                self.CONVEX_HULL_SAMPLING,
             )
+            possible_samples_indices = possible_samples_X.index
+
+            # parallelisieren
+            with parallel_backend("loky", n_jobs=self.N_JOBS):
+                future_peak_acc = Parallel()(
+                    delayed(_future_peak)(
+                        unlabeled_sample_indice,
+                        self.weak_supervision_label_sources,
+                        self.data_storage,
+                        self.clf,
+                        self.MAX_AMOUNT_OF_WS_PEAKS,
+                    )
+                    for unlabeled_sample_indice in possible_samples_indices
+                )
+            if statistics.stdev(future_peak_acc) > best_largest_stdev:
+                best_future_peak_acc = future_peak_acc
+                best_possible_sample_indices = possible_samples_indices
+                best_possible_samples_X = possible_samples_X
+
+            if statistics.stdev(future_peak_acc) > 0.03:
+                good_sample_found = True
+            else:
+                hard_kill_count += 1
+
+        if hard_kill_count == 5:
+            future_peak_acc = best_future_peak_acc
+            possible_sample_indices = best_possible_sample_indices
+            possible_samples_X = best_possible_samples_X
+
+        print(max(future_peak_acc))
+        print(statistics.stdev(future_peak_acc))
+        #  print(statistics.pstdev(future_peak_acc))
+        print(statistics.variance(future_peak_acc))
+        #  print(statistics.pvariance(future_peak_acc))
+        print(self.metrics_per_al_cycle["test_acc"][-1])
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices
@@ -258,8 +287,8 @@ class ImitationLearner(ActiveLearner):
         future_peak_accs = [[b] for b in future_peak_acc]
 
         # min max scaling of output
-        scaler = MinMaxScaler()
-        future_peak_accs = [a[0] for a in scaler.fit_transform(future_peak_accs)]
+        #  scaler = MinMaxScaler()
+        #  future_peak_accs = [a[0] for a in scaler.fit_transform(future_peak_accs)]
 
         # save the indices of the n_best possible states, order doesn't matter
         self.optimal_policies = self.optimal_policies.append(
