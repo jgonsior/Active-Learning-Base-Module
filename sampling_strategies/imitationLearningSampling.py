@@ -87,13 +87,16 @@ def _future_peak(
         + copy_of_data_storage.test_Y["label"].to_list()
     )
 
+    Y_pred = Y_pred_test
+    Y_true = copy_of_data_storage.test_Y["label"].to_list()
+
     accuracy_with_that_label = accuracy_score(Y_pred, Y_true)
 
-    print(
-        "Testing out : {}, train acc: {}".format(
-            unlabeled_sample_indice, accuracy_with_that_label
-        )
-    )
+    #  print(
+    #      "Testing out : {}, train acc: {}".format(
+    #          unlabeled_sample_indice, accuracy_with_that_label
+    #      )
+    #  )
     return accuracy_with_that_label
 
 
@@ -240,7 +243,7 @@ class ImitationLearner(ActiveLearner):
                     )
                     for unlabeled_sample_indice in possible_samples_indices
                 )
-            if statistics.stdev(future_peak_acc) > best_largest_stdev:
+            if max(future_peak_acc) > best_largest_stdev:
                 best_future_peak_acc = future_peak_acc
                 best_possible_sample_indices = possible_samples_indices
                 best_possible_samples_X = possible_samples_X
@@ -255,12 +258,13 @@ class ImitationLearner(ActiveLearner):
             possible_sample_indices = best_possible_sample_indices
             possible_samples_X = best_possible_samples_X
 
-        print(max(future_peak_acc))
-        print(statistics.stdev(future_peak_acc))
+        print("Max", max(future_peak_acc))
+        print("std", statistics.stdev(future_peak_acc))
         #  print(statistics.pstdev(future_peak_acc))
-        print(statistics.variance(future_peak_acc))
+        #  print(statistics.variance(future_peak_acc))
         #  print(statistics.pvariance(future_peak_acc))
-        print(self.metrics_per_al_cycle["test_acc"][-1])
+        print("tes", self.metrics_per_al_cycle["test_acc"][-1])
+        print()
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices
@@ -285,8 +289,8 @@ class ImitationLearner(ActiveLearner):
         # the output of the net is one neuron per possible unlabeled sample, and the output should be:
         # a) 0 for label this, do not label that (how to determine how many, how to forbid how many labeled samples are allowed?)
         # b) predict accuracy gain by labeling sample x -> I can compare it directly to the values I could predict -> normalize values as 0 -> smallest possible gain, 1 -> highest possible gain
-        future_peak_accs = [[b] for b in future_peak_acc]
-
+        #  future_peak_accs = [[b] for b in future_peak_acc]
+        future_peak_accs = future_peak_acc
         # min max scaling of output
         #  scaler = MinMaxScaler()
         #  future_peak_accs = [a[0] for a in scaler.fit_transform(future_peak_accs)]
