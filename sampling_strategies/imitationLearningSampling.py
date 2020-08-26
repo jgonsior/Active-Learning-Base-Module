@@ -138,7 +138,7 @@ class ImitationLearner(ActiveLearner):
         self.amount_of_peaked_objects = amount_of_peaked_objects
 
     def init_sampling_classifier(
-        self, DATA_PATH, REPRESENTATIVE_FEATURES, CONVEX_HULL_SAMPLING
+        self, DATA_PATH, REPRESENTATIVE_FEATURES, CONVEX_HULL_SAMPLING, VARIANCE_BOUND
     ):
         self.states = pd.DataFrame(data=None,)
         self.optimal_policies = pd.DataFrame(
@@ -151,6 +151,7 @@ class ImitationLearner(ActiveLearner):
 
         self.REPRESENTATIVE_FEATURES = REPRESENTATIVE_FEATURES
         self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
+        self.VARIANCE_BOUND = VARIANCE_BOUND
 
     def move_labeled_queries(self, X_query, Y_query, query_indices):
         # move new queries from unlabeled to labeled dataset
@@ -218,7 +219,7 @@ class ImitationLearner(ActiveLearner):
         best_possible_samples_X = None
         best_possible_sample_indices = None
 
-        while not good_sample_found and hard_kill_count < 5:
+        while not good_sample_found and hard_kill_count < VARIANCE_BOUND:
             possible_samples_X = sample_unlabeled_X(
                 self.data_storage.train_unlabeled_X,
                 self.data_storage.train_labeled_X,
@@ -249,7 +250,7 @@ class ImitationLearner(ActiveLearner):
             else:
                 hard_kill_count += 1
 
-        if hard_kill_count == 5:
+        if hard_kill_count == VARIANCE_BOUND:
             future_peak_acc = best_future_peak_acc
             possible_sample_indices = best_possible_sample_indices
             possible_samples_X = best_possible_samples_X
