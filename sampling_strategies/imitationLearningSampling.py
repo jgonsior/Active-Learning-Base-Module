@@ -207,6 +207,13 @@ class ImitationLearner(ActiveLearner):
     """
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
+        if len(self.metrics_per_al_cycle["test_acc"]) > 1:
+            if (
+                self.metrics_per_al_cycle["test_acc"][-2]
+                > self.metrics_per_al_cycle["test_acc"][-1]
+            ):
+                self.states = self.states.head(-1)
+                self.optimal_policies = self.optimal_policies.head(-1)
         # merge indices from all clusters together and take the n most uncertain ones from them
         #  train_unlabeled_X_indices = list(
         #      chain(*list(train_unlabeled_X_cluster_indices.values()))
@@ -258,8 +265,8 @@ class ImitationLearner(ActiveLearner):
             possible_sample_indices = best_possible_sample_indices
             possible_samples_X = best_possible_samples_X
 
-        print("Max", max(future_peak_acc))
         print("std", statistics.stdev(future_peak_acc))
+        print("Max", max(future_peak_acc))
         #  print(statistics.pstdev(future_peak_acc))
         #  print(statistics.variance(future_peak_acc))
         #  print(statistics.pvariance(future_peak_acc))
