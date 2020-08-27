@@ -268,13 +268,13 @@ class ImitationLearner(ActiveLearner):
             possible_sample_indices = best_possible_sample_indices
             possible_samples_X = best_possible_samples_X
 
-        print("std", statistics.stdev(future_peak_acc))
-        print("Max", max(future_peak_acc))
+        #  print("std", statistics.stdev(future_peak_acc))
+        #  print("Max", max(future_peak_acc))
         #  print(statistics.pstdev(future_peak_acc))
         #  print(statistics.variance(future_peak_acc))
         #  print(statistics.pvariance(future_peak_acc))
-        print("tes", self.metrics_per_al_cycle["test_acc"][-1])
-        print()
+        #  print("tes", self.metrics_per_al_cycle["test_acc"][-1])
+        #  print()
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices

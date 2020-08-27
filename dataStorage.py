@@ -1,3 +1,4 @@
+import seaborn as sns
 import random
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
@@ -326,8 +327,16 @@ class DataStorage:
                 fig, (ax1, ax2) = plt.subplots(1, 2)
 
                 fig.set_size_inches(18.5, 10.5)
-                cmap = plt.cm.RdBu
-                cmap_bright = ListedColormap(["#FF0000", "#0000FF"])
+                main_hex_colors = ["#3182BD", "#E6550D", "#31A354", "#756BB1"]
+                color_list = []
+                color_list_r = []
+                for i in range(0, self.synthetic_creation_args["n_classes"]):
+                    color_list += sns.light_palette(main_hex_colors[i]).as_hex()
+
+                cmap = ListedColormap(color_list)
+                cmap_bright = ListedColormap(
+                    main_hex_colors[: self.synthetic_creation_args["n_classes"]]
+                )
 
                 x = pd.concat(
                     [self.train_labeled_X.iloc[:, 0], self.train_unlabeled_X.iloc[:, 0]]
@@ -382,19 +391,28 @@ class DataStorage:
                 # create decision boundary mesh grid
                 h = 0.02
                 xx, yy = np.meshgrid(np.arange(0, 1.02, h), np.arange(0, 1.02, h))
+                db = []
                 decision_boundary = self.clf.predict_proba(
                     np.c_[xx.ravel(), yy.ravel()]
-                )[:, 1]
-                decision_boundary = decision_boundary.reshape(xx.shape)
+                )
+
+                db = np.argmax(decision_boundary, axis=1) + np.amax(
+                    decision_boundary, axis=1
+                )
+                db = db.reshape(xx.shape)
+
                 cs = ax2.contourf(
                     xx,
                     yy,
-                    decision_boundary,
-                    levels=np.arange(0, 1.1, 0.1),
+                    db,
+                    #  decision_boundary,
+                    levels=np.arange(
+                        0, self.synthetic_creation_args["n_classes"] + 0.1, 0.1
+                    ),
                     cmap=cmap,
                     alpha=0.8,
-                    extend="neither",
-                    origin="lower",
+                    #  extend="neither",
+                    #  origin="lower",
                 )
 
                 #  if len(self.possible_samples_indices[0]) > 0:
@@ -427,7 +445,7 @@ class DataStorage:
                         plt.Circle((current_sample), 0.1, fill=False, color="green",)
                     )
                 #
-                #  cbar = fig.colorbar(cs)
+                cbar = fig.colorbar(cs)
 
                 plt.title(
                     "{}: {:.2%} {}".format(self.i, self.test_accuracy, self.deleted)
@@ -440,6 +458,7 @@ class DataStorage:
                     + str(self.i)
                     + ".png"
                 )
+                plt.clf()
                 self.i += 1
 
         Y_query = pd.DataFrame(
