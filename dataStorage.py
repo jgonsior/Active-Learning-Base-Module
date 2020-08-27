@@ -1,5 +1,5 @@
 import random
-
+from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -271,24 +271,7 @@ class DataStorage:
         X_data, Y_temp = make_classification(**synthetic_creation_args)
 
         df = pd.DataFrame(X_data)
-        #  df["label"] = Y_temp
-        #
-        #  #  print(df)
-        #  fig = plt.figure()
-        #  ax = fig.add_subplot(111)  # , projection="3d")
-        #  ax.scatter(
-        #      x=df.iloc[:, 0],
-        #      y=df.iloc[:, 1],
-        #      #  zs=df.iloc[:, 2],
-        #      c=df.label,
-        #      cmap="viridis",
-        #  )
-        #  if HYPERCUBE:
-        #      plt.savefig("hypercube/" + str(kwargs["RANDOM_SEED"]) + ".png")
-        #  else:
-        #      plt.savefig("polytope_hard/" + str(kwargs["RANDOM_SEED"]) + ".png")
-        #  exit(-1)
-        #
+
         # replace labels with strings
         Y_temp = Y_temp.astype("str")
         for i in range(0, synthetic_creation_args["n_classes"]):
@@ -340,9 +323,11 @@ class DataStorage:
             if len(self.train_labeled_Y_predicted) == 0:
                 self.i += 1
             else:
-                fig, (ax1, ax2) = plt.subplots(1, 2)
+                fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
 
                 fig.set_size_inches(18.5, 10.5)
+                cmap = plt.cm.RdBu
+                cmap_bright = ListedColormap(["#FF0000", "#0000FF"])
 
                 x = pd.concat(
                     [self.train_labeled_X.iloc[:, 0], self.train_unlabeled_X.iloc[:, 0]]
@@ -380,7 +365,7 @@ class DataStorage:
                     y=y,
                     #  zs=df.iloc[:, 2],
                     c=c,
-                    cmap="viridis",
+                    cmap=cmap_bright,
                     alpha=0.5,
                     s=areas,
                 )
@@ -389,10 +374,30 @@ class DataStorage:
                     y=y,
                     #  zs=df.iloc[:, 2],
                     c=c2,
-                    cmap="viridis",
+                    cmap=cmap_bright,
                     alpha=0.5,
                     s=areas,
                 )
+                ax3.scatter(
+                    x=x,
+                    y=y,
+                    #  zs=df.iloc[:, 2],
+                    c=c2,
+                    cmap=cmap_bright,
+                    marker=".",
+                    edgecolors="#000000",
+                    #  alpha=0.5,
+                    #  s=areas,
+                )
+
+                # create decision boundary mesh grid
+                h = 0.02
+                xx, yy = np.meshgrid(np.arange(0, 1.02, h), np.arange(0, 1.02, h))
+                decision_boundary = self.clf.predict_proba(
+                    np.c_[xx.ravel(), yy.ravel()]
+                )[:, 1]
+                decision_boundary = decision_boundary.reshape(xx.shape)
+                ax3.contourf(xx, yy, decision_boundary, cmap=cmap, alpha=0.8)
 
                 for peaked_sample in self.possible_samples_indices:
                     ax1.add_artist(

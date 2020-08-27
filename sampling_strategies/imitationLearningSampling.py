@@ -279,6 +279,7 @@ class ImitationLearner(ActiveLearner):
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices
             self.data_storage.test_accuracy = self.metrics_per_al_cycle["test_acc"][-1]
+            self.data_storage.clf = self.clf
 
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
