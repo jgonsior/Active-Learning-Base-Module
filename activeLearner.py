@@ -127,6 +127,11 @@ class ActiveLearner:
             clf=self.clf, nr_queries_per_iteration=self.nr_queries_per_iteration
         )
 
+        if self.data_storage.PLOT_EVOLUTION:
+            self.data_storage.possible_samples_indices = []
+            self.data_storage.test_accuracy = self.metrics_per_al_cycle["test_acc"][-1]
+            self.data_storage.clf = self.clf
+
         # ask strategy for new datapoint
         query_indices = self.calculate_next_query_indices(
             X_train_unlabeled_cluster_indices

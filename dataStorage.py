@@ -397,6 +397,7 @@ class DataStorage:
                     origin="lower",
                 )
 
+                #  if len(self.possible_samples_indices[0]) > 0:
                 for peaked_sample in self.possible_samples_indices:
                     ax1.add_artist(
                         plt.Circle(
@@ -414,6 +415,7 @@ class DataStorage:
                             color="red",
                         )
                     )
+
                 for current_sample in self.train_unlabeled_X.loc[
                     query_indices
                 ].to_numpy():
@@ -424,8 +426,8 @@ class DataStorage:
                     ax2.add_artist(
                         plt.Circle((current_sample), 0.1, fill=False, color="green",)
                     )
-
-                cbar = fig.colorbar(cs)
+                #
+                #  cbar = fig.colorbar(cs)
 
                 plt.title(
                     "{}: {:.2%} {}".format(self.i, self.test_accuracy, self.deleted)
