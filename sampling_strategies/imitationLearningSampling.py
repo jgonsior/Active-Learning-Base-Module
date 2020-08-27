@@ -23,9 +23,9 @@ def sample_unlabeled_X(
 
             # calculate distance to each other
             total_distance = np.sum(pairwise_distances(random_sample, random_sample))
-            total_distance += np.sum(
-                pairwise_distances(random_sample, train_unlabeled_X)
-            )
+            #  total_distance += np.sum(
+            #      pairwise_distances(random_sample, train_unlabeled_X)
+            #  )
             total_distance += np.sum(pairwise_distances(random_sample, train_labeled_X))
             if total_distance > max_sum:
                 max_sum = total_distance
