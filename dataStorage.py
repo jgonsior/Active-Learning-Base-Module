@@ -35,6 +35,7 @@ class DataStorage:
             self.train_labeled_Y_predicted = []
             self.train_unlabeled_Y_predicted = []
             self.i = 0
+            self.deleted = False
 
         if df is None:
             log_it("Loading " + DATASET_NAME)
@@ -410,24 +411,19 @@ class DataStorage:
                             color="red",
                         )
                     )
-
-                current_sample = plt.Circle(
-                    (self.train_unlabeled_X.loc[query_indices]),
-                    0.1,
-                    fill=False,
-                    color="green",
-                )
-
-                ax1.add_artist(current_sample)
-                ax2.add_artist(
-                    plt.Circle(
-                        (self.train_unlabeled_X.loc[query_indices]),
-                        0.1,
-                        fill=False,
-                        color="green",
+                for current_sample in self.train_unlabeled_X.loc[
+                    query_indices
+                ].to_numpy():
+                    ax1.add_artist(
+                        plt.Circle((current_sample), 0.1, fill=False, color="green",)
                     )
-                )
 
+                    ax2.add_artist(
+                        plt.Circle((current_sample), 0.1, fill=False, color="green",)
+                    )
+                plt.title(
+                    "{}: {:.2%} {}".format(self.i, self.test_accuracy, self.deleted)
+                )
                 plt.savefig(
                     self.hyper_parameters["OUTPUT_DIRECTORY"]
                     + "/"

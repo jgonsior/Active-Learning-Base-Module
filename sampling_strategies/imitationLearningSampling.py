@@ -210,10 +210,13 @@ class ImitationLearner(ActiveLearner):
         if len(self.metrics_per_al_cycle["test_acc"]) > 1:
             if (
                 self.metrics_per_al_cycle["test_acc"][-2]
-                > self.metrics_per_al_cycle["test_acc"][-1]
+                >= self.metrics_per_al_cycle["test_acc"][-1]
             ):
                 self.states = self.states.head(-1)
                 self.optimal_policies = self.optimal_policies.head(-1)
+                self.data_storage.deleted = True
+            else:
+                self.data_storage.deleted = False
         # merge indices from all clusters together and take the n most uncertain ones from them
         #  train_unlabeled_X_indices = list(
         #      chain(*list(train_unlabeled_X_cluster_indices.values()))
@@ -275,6 +278,7 @@ class ImitationLearner(ActiveLearner):
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices
+            self.data_storage.test_accuracy = self.metrics_per_al_cycle["test_acc"][-1]
 
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
