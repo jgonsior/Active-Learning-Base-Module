@@ -323,7 +323,7 @@ class DataStorage:
             if len(self.train_labeled_Y_predicted) == 0:
                 self.i += 1
             else:
-                fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+                fig, (ax1, ax2) = plt.subplots(1, 2)
 
                 fig.set_size_inches(18.5, 10.5)
                 cmap = plt.cm.RdBu
@@ -375,19 +375,8 @@ class DataStorage:
                     #  zs=df.iloc[:, 2],
                     c=c2,
                     cmap=cmap_bright,
-                    alpha=0.5,
-                    s=areas,
-                )
-                ax3.scatter(
-                    x=x,
-                    y=y,
-                    #  zs=df.iloc[:, 2],
-                    c=c2,
-                    cmap=cmap_bright,
-                    marker=".",
-                    edgecolors="#000000",
                     #  alpha=0.5,
-                    #  s=areas,
+                    s=areas,
                 )
 
                 # create decision boundary mesh grid
@@ -397,7 +386,16 @@ class DataStorage:
                     np.c_[xx.ravel(), yy.ravel()]
                 )[:, 1]
                 decision_boundary = decision_boundary.reshape(xx.shape)
-                ax3.contourf(xx, yy, decision_boundary, cmap=cmap, alpha=0.8)
+                cs = ax2.contourf(
+                    xx,
+                    yy,
+                    decision_boundary,
+                    levels=np.arange(0, 1.1, 0.1),
+                    cmap=cmap,
+                    alpha=0.8,
+                    extend="neither",
+                    origin="lower",
+                )
 
                 for peaked_sample in self.possible_samples_indices:
                     ax1.add_artist(
@@ -426,6 +424,9 @@ class DataStorage:
                     ax2.add_artist(
                         plt.Circle((current_sample), 0.1, fill=False, color="green",)
                     )
+
+                cbar = fig.colorbar(cs)
+
                 plt.title(
                     "{}: {:.2%} {}".format(self.i, self.test_accuracy, self.deleted)
                 )
