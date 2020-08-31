@@ -61,6 +61,12 @@ class TrainedNNLearner(ActiveLearner):
 
             zero_to_one_values_and_index += list(zip(sorting, possible_samples_indices))
 
+        if self.data_storage.PLOT_EVOLUTION:
+            self.data_storage.possible_samples_indices = [
+                ix for proba, ix, in zero_to_one_values_and_index
+            ]
+            #  self.data_storage.possible_samples_indices = zero_to_one_values_and_index
+
         #  print(zero_to_one_values_and_index)
         ordered_list_of_possible_sample_indices = sorted(
             zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True

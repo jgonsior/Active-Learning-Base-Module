@@ -62,7 +62,11 @@ def _future_peak(
     # what would happen if we apply WS after this one?
     for i in range(0, MAX_AMOUNT_OF_WS_PEAKS):
         for labelSource in weak_supervision_label_sources:
-            (Y_query, query_indices, source,) = labelSource.get_labeled_samples()
+            (
+                Y_query,
+                query_indices,
+                source,
+            ) = labelSource.get_labeled_samples()
 
             if Y_query is not None:
                 break
@@ -113,12 +117,20 @@ def calculate_state(X_query, data_storage, clf, old=False):
     arg_diff_probas = argmax_probas - argsecond_probas
 
     # calculate average distance to labeled and average distance to unlabeled samples
-    average_distance_labeled = np.sum(
-        pairwise_distances(data_storage.train_labeled_X, X_query), axis=0,
-    ) / len(data_storage.train_labeled_X)
-    average_distance_unlabeled = np.sum(
-        pairwise_distances(data_storage.train_unlabeled_X, X_query), axis=0,
-    ) / len(data_storage.train_unlabeled_X)
+    average_distance_labeled = (
+        np.sum(
+            pairwise_distances(data_storage.train_labeled_X, X_query),
+            axis=0,
+        )
+        / len(data_storage.train_labeled_X)
+    )
+    average_distance_unlabeled = (
+        np.sum(
+            pairwise_distances(data_storage.train_unlabeled_X, X_query),
+            axis=0,
+        )
+        / len(data_storage.train_unlabeled_X)
+    )
     #  print(average_distance_unlabeled)
     #  print(average_distance_labeled)
     #  print(possible_samples_X)
@@ -143,7 +155,9 @@ class ImitationLearner(ActiveLearner):
     def init_sampling_classifier(
         self, DATA_PATH, REPRESENTATIVE_FEATURES, CONVEX_HULL_SAMPLING, VARIANCE_BOUND
     ):
-        self.states = pd.DataFrame(data=None,)
+        self.states = pd.DataFrame(
+            data=None,
+        )
         self.optimal_policies = pd.DataFrame(
             data=None,
             columns=[

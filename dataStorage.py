@@ -438,11 +438,21 @@ class DataStorage:
                     query_indices
                 ].to_numpy():
                     ax1.add_artist(
-                        plt.Circle((current_sample), 0.1, fill=False, color="green",)
+                        plt.Circle(
+                            (current_sample),
+                            0.1,
+                            fill=False,
+                            color="green",
+                        )
                     )
 
                     ax2.add_artist(
-                        plt.Circle((current_sample), 0.1, fill=False, color="green",)
+                        plt.Circle(
+                            (current_sample),
+                            0.1,
+                            fill=False,
+                            color="green",
+                        )
                     )
                 #
                 cbar = fig.colorbar(cs)
