@@ -78,7 +78,8 @@ class ActiveLearner:
             self.data_storage.train_labeled_X,
             self.data_storage.train_labeled_Y["label"].to_list(),
             sample_weight=compute_sample_weight(
-                "balanced", self.data_storage.train_labeled_Y["label"].to_list(),
+                "balanced",
+                self.data_storage.train_labeled_Y["label"].to_list(),
             ),
         )
 
@@ -216,6 +217,17 @@ class ActiveLearner:
                 early_stop_reached = True
                 log_it("Budget exhausted")
                 if not ALLOW_RECOMMENDATIONS_AFTER_STOP:
+                    break
+            if kwargs["STOP_AFTER_MAXIMUM_ACCURACY_REACHED"]:
+                if (
+                    self.metrics_per_al_cycle["test_acc"][-1]
+                    >= kwargs["THEORETICALLY_BEST_ACHIEVABLE_ACCURACY"]
+                ):
+                    early_stop_reached = True
+                    print(
+                        "THEORETICALLY_BEST_ACHIEVABLE_ACCURACY: "
+                        + str(kwargs["THEORETICALLY_BEST_ACHIEVABLE_ACCURACY"])
+                    )
                     break
 
         return (self.clf, self.metrics_per_al_cycle)

@@ -372,7 +372,6 @@ class DataStorage:
                 ax1.scatter(
                     x=x,
                     y=y,
-                    #  zs=df.iloc[:, 2],
                     c=c,
                     cmap=cmap_bright,
                     alpha=0.5,
@@ -381,10 +380,8 @@ class DataStorage:
                 ax2.scatter(
                     x=x,
                     y=y,
-                    #  zs=df.iloc[:, 2],
                     c=c2,
                     cmap=cmap_bright,
-                    #  alpha=0.5,
                     s=areas,
                 )
 
@@ -405,17 +402,13 @@ class DataStorage:
                     xx,
                     yy,
                     db,
-                    #  decision_boundary,
                     levels=np.arange(
                         0, self.synthetic_creation_args["n_classes"] + 0.1, 0.1
                     ),
                     cmap=cmap,
                     alpha=0.8,
-                    #  extend="neither",
-                    #  origin="lower",
                 )
 
-                #  if len(self.possible_samples_indices[0]) > 0:
                 for peaked_sample in self.possible_samples_indices:
                     ax1.add_artist(
                         plt.Circle(
@@ -454,8 +447,25 @@ class DataStorage:
                             color="green",
                         )
                     )
-                #
                 cbar = fig.colorbar(cs)
+
+                # highlight misclassified
+                train_X = pd.concat([self.train_unlabeled_X, self.train_labeled_X])
+                Y_pred = self.clf.predict(train_X)
+                Y_true = np.array(
+                    self.train_unlabeled_Y["label"].to_list()
+                    + self.train_labeled_Y["label"].to_list()
+                )
+
+                misclassified_mask = Y_pred != Y_true
+                misclassified_X = train_X[misclassified_mask]
+                ax2.scatter(
+                    x=misclassified_X[0],
+                    y=misclassified_X[1],
+                    c="red",
+                    #  cmap=cmap_bright,
+                    s=40,
+                )
 
                 plt.title(
                     "{}: {:.2%} {}".format(self.i, self.test_accuracy, self.deleted)
