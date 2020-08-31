@@ -1,3 +1,4 @@
+from sklearn.svm import SVC
 import csv
 import datetime
 import hashlib
@@ -66,9 +67,13 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
 
     cluster_strategy.set_data_storage(data_storage, hyper_parameters["N_JOBS"])
 
-    classifier = RandomForestClassifier(
-        n_jobs=hyper_parameters["N_JOBS"], random_state=hyper_parameters["RANDOM_SEED"]
-    )
+    if hyper_parameters["CLASSIFIER"] == "RF":
+        classifier = RandomForestClassifier(
+            n_jobs=hyper_parameters["N_JOBS"],
+            random_state=hyper_parameters["RANDOM_SEED"],
+        )
+    elif hyper_parameters["CLASSIFIER"] == "SVM":
+        classifier = SVC(random_state=hyper_parameters["RANDOM_SEED"], probability=True)
 
     weak_supervision_label_sources = []
 
@@ -193,7 +198,13 @@ def eval_al(
 
     # calculate accuracy for Random Forest only on oracle human expert queries
 
-    active_rf = RandomForestClassifier(random_state=hyper_parameters["RANDOM_SEED"])
+    if hyper_parameters["CLASSIFIER"] == "RF":
+        active_rf = RandomForestClassifier(
+            #  n_jobs=hyper_parameters["N_JOBS"],
+            random_state=hyper_parameters["RANDOM_SEED"],
+        )
+    elif hyper_parameters["CLASSIFIER"] == "SVM":
+        active_rf = SVC(random_state=hyper_parameters["RANDOM_SEED"], probability=True)
 
     Y_train_al = data_storage.train_labeled_Y
 
@@ -287,7 +298,11 @@ Takes a dataset_path, X, Y, label_encoder and does the following steps:
 
 
 def train_and_eval_dataset(
-    hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH=None,
+    hyper_parameters,
+    oracle,
+    df=None,
+    DATASET_NAME=None,
+    DATASETS_PATH=None,
 ):
     (
         trained_active_clf_list,
