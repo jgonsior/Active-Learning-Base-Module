@@ -138,6 +138,8 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
             hyper_parameters["AMOUNT_OF_RANDOM_QUERY_SETS"],
             hyper_parameters["REPRESENTATIVE_FEATURES"],
             hyper_parameters["CONVEX_HULL_SAMPLING"],
+            hyper_parameters["NO_DIFF_FEATURES"],
+            hyper_parameters["LRU_AREAS_LIMIT"],
         )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"

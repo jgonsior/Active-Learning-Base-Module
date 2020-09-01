@@ -7,6 +7,9 @@ import random
 import sys
 import threading
 
+import warnings
+
+from sklearn.exceptions import ConvergenceWarning
 import numpy as np
 
 #  import np.random.distributions as dists
@@ -23,7 +26,8 @@ def get_classifier(classifier_name, random_state=None, n_jobs=None):
     elif classifier_name == "SVM":
         return SVC(probability=True, random_state=random_state)
     elif classifier_name == "MLP":
-        return MLPClassifier(random_state=random_state)
+        warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
+        return MLPClassifier(random_state=random_state, verbose=0)
 
 
 # really dirty hack to provide logging as functions instead of objects

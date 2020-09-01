@@ -17,6 +17,8 @@ class TrainedNNLearner(ActiveLearner):
         AMOUNT_OF_RANDOM_QUERY_SETS,
         REPRESENTATIVE_FEATURES,
         CONVEX_HULL_SAMPLING,
+        NO_DIFF_FEATURES,
+        LRU_AREAS_LIMIT,
     ):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -28,6 +30,8 @@ class TrainedNNLearner(ActiveLearner):
         self.AMOUNT_OF_RANDOM_QUERY_SETS = AMOUNT_OF_RANDOM_QUERY_SETS
         self.REPRESENTATIVE_FEATURES = REPRESENTATIVE_FEATURES
         self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
+        self.NO_DIFF_FEATURES = NO_DIFF_FEATURES
+        self.LRU_AREAS_LIMIT = LRU_AREAS_LIMIT
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         # merge indices from all clusters together and take the n most uncertain ones from them
@@ -51,7 +55,9 @@ class TrainedNNLearner(ActiveLearner):
                 X_query,
                 self.data_storage,
                 self.clf,
-                old=not self.REPRESENTATIVE_FEATURES,
+                OLD=self.REPRESENTATIVE_FEATURES,
+                LRU_AREAS_LIMIT=self.LRU_AREAS_LIMIT,
+                NO_DIFF_FEATURES=self.NO_DIFF_FEATURES,
             )
             X_state = np.reshape(X_state, (1, len(X_state)))
 
