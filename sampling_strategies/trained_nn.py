@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 from sklearn.metrics import pairwise_distances
 import random
@@ -32,6 +33,9 @@ class TrainedNNLearner(ActiveLearner):
         self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
         self.NO_DIFF_FEATURES = NO_DIFF_FEATURES
         self.LRU_AREAS_LIMIT = LRU_AREAS_LIMIT
+        self.lru_samples = pd.DataFrame(
+            data=None, columns=self.data_storage.train_unlabeled_X.columns, index=None
+        )
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         # merge indices from all clusters together and take the n most uncertain ones from them
@@ -58,6 +62,7 @@ class TrainedNNLearner(ActiveLearner):
                 OLD=self.REPRESENTATIVE_FEATURES,
                 LRU_AREAS_LIMIT=self.LRU_AREAS_LIMIT,
                 NO_DIFF_FEATURES=self.NO_DIFF_FEATURES,
+                lru_samples=self.lru_samples,
             )
             X_state = np.reshape(X_state, (1, len(X_state)))
 
@@ -77,6 +82,27 @@ class TrainedNNLearner(ActiveLearner):
         ordered_list_of_possible_sample_indices = sorted(
             zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True
         )
+
+        if self.LRU_AREAS_LIMIT > 0:
+            # fifo queue
+            self.lru_samples = pd.concat(
+                [
+                    self.lru_samples,
+                    self.data_storage.train_unlabeled_X.loc[
+                        [
+                            v
+                            for k, v in ordered_list_of_possible_sample_indices[
+                                : self.nr_queries_per_iteration
+                            ]
+                        ]
+                    ],
+                ],
+                #  ignore_index=True,
+            )
+
+            # clean up
+            if len(self.lru_samples) > self.LRU_AREAS_LIMIT:
+                self.lru_samples = self.lru_samples.tail(self.LRU_AREAS_LIMIT)
 
         return [
             v

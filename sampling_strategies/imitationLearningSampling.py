@@ -365,7 +365,6 @@ class ImitationLearner(ActiveLearner):
         )
 
         if self.LRU_AREAS_LIMIT > 0:
-
             # fifo queue
             self.lru_samples = pd.concat(
                 [
