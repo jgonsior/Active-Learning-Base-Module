@@ -137,10 +137,8 @@ def calculate_state(X_query, data_storage, clf, old=False):
 
     X_state = np.array(
         [
-            #  *argmax_probas,
-            #  *arg_diff_probas,
-            *average_distance_labeled,
-            *average_distance_unlabeled,
+            *argmax_probas,
+            *arg_diff_probas,
             *average_distance_labeled,
             *average_distance_unlabeled,
         ]
@@ -281,14 +279,6 @@ class ImitationLearner(ActiveLearner):
             future_peak_acc = best_future_peak_acc
             possible_sample_indices = best_possible_sample_indices
             possible_samples_X = best_possible_samples_X
-
-        #  print("std", statistics.stdev(future_peak_acc))
-        #  print("Max", max(future_peak_acc))
-        #  print(statistics.pstdev(future_peak_acc))
-        #  print(statistics.variance(future_peak_acc))
-        #  print(statistics.pvariance(future_peak_acc))
-        #  print("tes", self.metrics_per_al_cycle["test_acc"][-1])
-        #  print()
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices
