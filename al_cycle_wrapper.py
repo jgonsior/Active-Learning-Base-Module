@@ -1,4 +1,3 @@
-from sklearn.svm import SVC
 import csv
 import datetime
 import hashlib
@@ -10,7 +9,6 @@ import pandas as pd
 
 #  import np.random.distributions as dists
 from json_tricks import dumps
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from .cluster_strategies import (
@@ -20,7 +18,7 @@ from .cluster_strategies import (
     RoundRobinClusterStrategy,
 )
 from .dataStorage import DataStorage
-from .experiment_setup_lib import get_param_distribution
+from .experiment_setup_lib import get_param_distribution, get_classifier
 from .sampling_strategies import (
     BoundaryPairSampler,
     RandomSampler,
@@ -67,13 +65,11 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
 
     cluster_strategy.set_data_storage(data_storage, hyper_parameters["N_JOBS"])
 
-    if hyper_parameters["CLASSIFIER"] == "RF":
-        classifier = RandomForestClassifier(
-            n_jobs=hyper_parameters["N_JOBS"],
-            random_state=hyper_parameters["RANDOM_SEED"],
-        )
-    elif hyper_parameters["CLASSIFIER"] == "SVM":
-        classifier = SVC(random_state=hyper_parameters["RANDOM_SEED"], probability=True)
+    classifier = get_classifier(
+        hyper_parameters["CLASSIFIER"],
+        n_jobs=hyper_parameters["N_JOBS"],
+        random_state=hyper_parameters["RANDOM_SEED"],
+    )
 
     weak_supervision_label_sources = []
 
@@ -197,14 +193,7 @@ def eval_al(
     amount_of_all_labels = len(data_storage.train_labeled_Y)
 
     # calculate accuracy for Random Forest only on oracle human expert queries
-
-    if hyper_parameters["CLASSIFIER"] == "RF":
-        active_rf = RandomForestClassifier(
-            #  n_jobs=hyper_parameters["N_JOBS"],
-            random_state=hyper_parameters["RANDOM_SEED"],
-        )
-    elif hyper_parameters["CLASSIFIER"] == "SVM":
-        active_rf = SVC(random_state=hyper_parameters["RANDOM_SEED"], probability=True)
+    active_rf = get_classifier(hyper_parameters["CLASSIFIER"])
 
     Y_train_al = data_storage.train_labeled_Y
 

@@ -77,9 +77,9 @@ class ActiveLearner:
         self.clf.fit(
             self.data_storage.train_labeled_X,
             self.data_storage.train_labeled_Y["label"].to_list(),
-            sample_weight=compute_sample_weight(
-                "balanced", self.data_storage.train_labeled_Y["label"].to_list(),
-            ),
+            #  sample_weight=compute_sample_weight(
+            #      "balanced", self.data_storage.train_labeled_Y["label"].to_list(),
+            #  ),
         )
 
     def calculate_pre_metrics(self, X_query, Y_query):

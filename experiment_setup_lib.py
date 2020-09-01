@@ -1,4 +1,6 @@
 import argparse
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 import datetime
 import os
 import random
@@ -6,11 +8,22 @@ import sys
 import threading
 
 import numpy as np
+
 #  import np.random.distributions as dists
 import numpy.random
 import scipy
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, roc_auc_score
+from sklearn.neural_network import MLPClassifier
+
+
+def get_classifier(classifier_name, random_state=None, n_jobs=None):
+    if classifier_name == "RF":
+        return RandomForestClassifier(n_jobs=n_jobs, random_state=random_state)
+    elif classifier_name == "SVM":
+        return SVC(probability=True, random_state=random_state)
+    elif classifier_name == "MLP":
+        return MLPClassifier(random_state=random_state)
 
 
 # really dirty hack to provide logging as functions instead of objects

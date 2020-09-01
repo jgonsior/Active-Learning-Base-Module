@@ -389,9 +389,11 @@ class DataStorage:
                 h = 0.02
                 xx, yy = np.meshgrid(np.arange(0, 1.02, h), np.arange(0, 1.02, h))
                 db = []
+
                 decision_boundary = self.clf.predict_proba(
                     np.c_[xx.ravel(), yy.ravel()]
                 )
+                print(decision_boundary)
 
                 db = np.argmax(decision_boundary, axis=1) + np.amax(
                     decision_boundary, axis=1
