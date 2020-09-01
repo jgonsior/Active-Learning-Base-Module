@@ -203,9 +203,14 @@ class DataStorage:
                 WEIGHTS = np.random.dirichlet(np.ones(N_CLASSES), size=1).tolist()[
                     0
                 ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
-                FLIP_Y = (
-                    np.random.pareto(2.0) + 1
-                ) * 0.01  # amount of noise, larger values make it harder
+
+                if kwargs["GENERATE_NOISE"]:
+                    FLIP_Y = (
+                        np.random.pareto(2.0) + 1
+                    ) * 0.01  # amount of noise, larger values make it harder
+                else:
+                    FLIP_Y = 0
+
                 CLASS_SEP = random.uniform(
                     0, 10
                 )  # larger values spread out the clusters and make it easier
@@ -238,9 +243,12 @@ class DataStorage:
                     0
                 ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
 
-                FLIP_Y = (
-                    np.random.pareto(2.0) + 1
-                ) * 0.01  # amount of noise, larger values make it harder
+                if kwargs["GENERATE_NOISE"]:
+                    FLIP_Y = (
+                        np.random.pareto(2.0) + 1
+                    ) * 0.01  # amount of noise, larger values make it harder
+                else:
+                    FLIP_Y = 0
 
                 CLASS_SEP = random.uniform(
                     0, 10

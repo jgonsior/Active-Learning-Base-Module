@@ -41,7 +41,7 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
         HYPERCUBE=hyper_parameters["HYPERCUBE"],
         AMOUNT_OF_FEATURES=hyper_parameters["AMOUNT_OF_FEATURES"],
         PLOT_EVOLUTION=hyper_parameters["PLOT_EVOLUTION"],
-        #
+        GENERATE_NOISE=hyper_parameters["GENERATE_NOISE"],
     )
     hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.train_unlabeled_Y) + len(
         data_storage.train_labeled_Y
