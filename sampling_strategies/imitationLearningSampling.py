@@ -131,9 +131,6 @@ def calculate_state(X_query, data_storage, clf, old=False):
         )
         / len(data_storage.train_unlabeled_X)
     )
-    #  print(average_distance_unlabeled)
-    #  print(average_distance_labeled)
-    #  print(possible_samples_X)
 
     X_state = np.array(
         [
