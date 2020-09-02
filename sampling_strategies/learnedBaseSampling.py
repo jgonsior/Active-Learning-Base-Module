@@ -181,7 +181,7 @@ class LearnedBaseSampling(ActiveLearner):
             )
         else:
             if len(lru_samples) == 0:
-                lru_distances = [0 for _ in range(0, len(X_query))]
+                lru_distances = [len(lru_samples) + 2 for _ in range(0, len(X_query))]
             else:
                 lru_distances = (
                     np.sum(
