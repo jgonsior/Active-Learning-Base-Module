@@ -9,3 +9,4 @@ from .sheetBasedRandomSampling import *
 from .sheetBasedUncertaintySampling import *
 from .trained_nn import *
 from .uncertaintySampling import *
+from .learnedBaseSampling import *

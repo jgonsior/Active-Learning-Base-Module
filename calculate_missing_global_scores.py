@@ -18,7 +18,11 @@ from playhouse.postgres_ext import *
 alt.renderers.enable("altair_viewer")
 #  alt.renderers.enable('vegascope')
 
-config = standard_config([(["--db"], {"default": "sqlite"}),])
+config = standard_config(
+    [
+        (["--db"], {"default": "sqlite"}),
+    ]
+)
 
 db = get_db(db_name_or_type=config.db)
 
@@ -103,7 +107,9 @@ migrate(
         global_score_no_weak_roc_auc_field,
     ),
     migrator.add_column(
-        "experimentresult", "global_score_no_weak_acc", global_score_no_weak_acc_field,
+        "experimentresult",
+        "global_score_no_weak_acc",
+        global_score_no_weak_acc_field,
     ),
     migrator.add_column(
         "experimentresult",

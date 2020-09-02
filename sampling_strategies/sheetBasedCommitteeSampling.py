@@ -73,7 +73,9 @@ class SheetBasedCommitteeSampler(SheetBasedActiveLearner):
             "queried_length": [],
         }
 
-    def fit_clf(self,):
+    def fit_clf(
+        self,
+    ):
         self.committee.fit(self.X_train_labeled, self.Y_train_labeled)
 
         current_clf_list = self.committee.get_clf_list()
