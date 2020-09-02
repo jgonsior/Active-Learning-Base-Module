@@ -81,7 +81,7 @@ class LearnedBaseSampling(ActiveLearner):
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = possible_samples_indices
 
-        if self.LRU_AREAS_LIMIT > 0:
+        if self.STATE_LRU_AREAS_LIMIT > 0:
             # fifo queue
             self.lru_samples = pd.concat(
                 [
@@ -99,8 +99,8 @@ class LearnedBaseSampling(ActiveLearner):
             )
 
             # clean up
-            if len(self.lru_samples) > self.LRU_AREAS_LIMIT:
-                self.lru_samples = self.lru_samples.tail(self.LRU_AREAS_LIMIT)
+            if len(self.lru_samples) > self.STATE_LRU_AREAS_LIMIT:
+                self.lru_samples = self.lru_samples.tail(self.STATE_LRU_AREAS_LIMIT)
 
         return [
             v
@@ -147,18 +147,22 @@ class LearnedBaseSampling(ActiveLearner):
         lru_samples=[],
     ):
         possible_samples_probas = self.clf.predict_proba(X_query)
-        state_list = []
 
         sorted_probas = -np.sort(-possible_samples_probas, axis=1)
         argmax_probas = sorted_probas[:, 0]
 
+        state_list = argmax_probas.tolist()
+
         if STATE_ARGSECOND_PROBAS:
             argsecond_probas = sorted_probas[:, 1]
-            state_list += argsecond_probas
+            state_list += argsecond_probas.tolist()
         if STATE_DIFF_PROBAS:
-            state_list += argmax_probas - argsecond_probas
+            state_list += (argmax_probas - sorted_probas[:, 1]).tolist()
         if STATE_ARGTHIRD_PROBAS:
-            state_list = sorted_probas[:, 2]
+            if np.shape(sorted_probas)[1] < 3:
+                state_list += [0 for _ in range(0, len(X_query))]
+            else:
+                state_list += sorted_probas[:, 2].tolist()
 
         if STATE_DISTANCES:
             # calculate average distance to labeled and average distance to unlabeled samples
@@ -176,8 +180,8 @@ class LearnedBaseSampling(ActiveLearner):
                 )
                 / len(self.data_storage.train_unlabeled_X)
             )
-            state_list += average_distance_labeled
-            state_list += average_distance_unlabeled
+            state_list += average_distance_labeled.tolist()
+            state_list += average_distance_unlabeled.tolist()
 
         if STATE_LRU_AREAS_LIMIT > 0:
             if len(lru_samples) == 0:
@@ -192,7 +196,7 @@ class LearnedBaseSampling(ActiveLearner):
                         axis=1,
                     )
                     / len(lru_samples)
-                )
+                ).tolist()
             state_list += lru_distances
 
         return np.array(state_list)

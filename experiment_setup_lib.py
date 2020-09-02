@@ -88,7 +88,7 @@ def standard_config(additional_parameters=None, standard_args=True):
     return config
 
 
-def get_active_config(additional_parameters=None):
+def get_active_config(additional_parameters=[]):
     return standard_config(
         [
             (
@@ -155,8 +155,8 @@ def get_active_config(additional_parameters=None):
             (["--MAX_AMOUNT_OF_WS_PEAKS"], {"type": int, "default": 1}),
             (["--AMOUNT_OF_LEARN_ITERATIONS"], {"type": int, "default": 1}),
             (["--PLOT_EVOLUTION"], {"action": "store_true"}),
-            (["--VARIABLE_INPUT_SIZE"], {"action": "store_true"}),
             (["--REPRESENTATIVE_FEATURES"], {"action": "store_true"}),
+            (["--VARIABLE_DATASET"], {"action": "store_true"}),
             (["--NEW_SYNTHETIC_PARAMS"], {"action": "store_true"}),
             (["--HYPERCUBE"], {"action": "store_true"}),
             (["--AMOUNT_OF_FEATURES"], {"type": int, "default": -1}),

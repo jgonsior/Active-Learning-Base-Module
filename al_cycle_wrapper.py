@@ -36,7 +36,7 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
         df=df,
         DATASET_NAME=DATASET_NAME,
         DATASETS_PATH=DATASETS_PATH,
-        VARIABLE_INPUT_SIZE=hyper_parameters["VARIABLE_INPUT_SIZE"],
+        VARIABLE_DATASET=hyper_parameters["VARIABLE_DATASET"],
         NEW_SYNTHETIC_PARAMS=hyper_parameters["NEW_SYNTHETIC_PARAMS"],
         HYPERCUBE=hyper_parameters["HYPERCUBE"],
         AMOUNT_OF_FEATURES=hyper_parameters["AMOUNT_OF_FEATURES"],

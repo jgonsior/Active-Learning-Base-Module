@@ -176,7 +176,7 @@ class DataStorage:
         while no_valid_synthetic_arguments_found:
             print(kwargs)
             if not kwargs["NEW_SYNTHETIC_PARAMS"]:
-                if kwargs["VARIABLE_INPUT_SIZE"]:
+                if kwargs["VARIABLE_DATASET"]:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
                     N_SAMPLES = random.randint(100, 5000)
@@ -217,7 +217,7 @@ class DataStorage:
                 HYPERCUBE = kwargs["HYPERCUBE"]  # if false random polytope
                 SCALE = 0.01  # features should be between 0 and 1 now
             else:
-                if kwargs["VARIABLE_INPUT_SIZE"]:
+                if kwargs["VARIABLE_DATASET"]:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
                     N_SAMPLES = random.randint(100, 5000)
