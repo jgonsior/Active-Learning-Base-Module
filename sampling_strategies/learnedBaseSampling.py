@@ -16,15 +16,20 @@ from ..activeLearner import ActiveLearner
 class LearnedBaseSampling(ActiveLearner):
     def init_sampling_classifier(
         self,
-        REPRESENTATIVE_FEATURES,
         CONVEX_HULL_SAMPLING,
-        NO_DIFF_FEATURES,
-        LRU_AREAS_LIMIT,
+        STATE_DISTANCES,
+        STATE_DIFF_PROBAS,
+        STATE_ARGTHIRD_PROBAS,
+        STATE_LRU_AREAS_LIMIT,
+        STATE_ARGSECOND_PROBAS,
     ):
-        self.REPRESENTATIVE_FEATURES = REPRESENTATIVE_FEATURES
         self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
-        self.NO_DIFF_FEATURES = NO_DIFF_FEATURES
-        self.LRU_AREAS_LIMIT = LRU_AREAS_LIMIT
+        self.STATE_DISTANCES = STATE_DISTANCES
+        self.STATE_DIFF_PROBAS = STATE_DIFF_PROBAS
+        self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
+        self.STATE_LRU_AREAS_LIMIT = STATE_LRU_AREAS_LIMIT
+        self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
+
         self.lru_samples = pd.DataFrame(
             data=None, columns=self.data_storage.train_unlabeled_X.columns, index=None
         )
@@ -55,9 +60,11 @@ class LearnedBaseSampling(ActiveLearner):
 
         X_state = self.calculate_state(
             X_query,
-            OLD=self.REPRESENTATIVE_FEATURES,
-            LRU_AREAS_LIMIT=self.LRU_AREAS_LIMIT,
-            NO_DIFF_FEATURES=self.NO_DIFF_FEATURES,
+            STATE_ARGSECOND_PROBAS=self.STATE_ARGSECOND_PROBAS,
+            STATE_DIFF_PROBAS=self.STATE_DIFF_PROBAS,
+            STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
+            STATE_LRU_AREAS_LIMIT=self.STATE_LRU_AREAS_LIMIT,
+            STATE_DISTANCES=self.STATE_DISTANCES,
             lru_samples=self.lru_samples,
         )
 
@@ -132,29 +139,28 @@ class LearnedBaseSampling(ActiveLearner):
     def calculate_state(
         self,
         X_query,
-        OLD=False,
-        NO_DIFF_FEATURES=False,
-        LRU_AREAS_LIMIT=0,
+        STATE_ARGSECOND_PROBAS,
+        STATE_DIFF_PROBAS,
+        STATE_ARGTHIRD_PROBAS,
+        STATE_LRU_AREAS_LIMIT,
+        STATE_DISTANCES,
         lru_samples=[],
     ):
         possible_samples_probas = self.clf.predict_proba(X_query)
+        state_list = []
 
         sorted_probas = -np.sort(-possible_samples_probas, axis=1)
         argmax_probas = sorted_probas[:, 0]
-        argsecond_probas = sorted_probas[:, 1]
 
-        if OLD:
-            if NO_DIFF_FEATURES:
-                arg_diff_probas = argmax_probas - argsecond_probas
-                argsecond_probas = arg_diff_probas
-            return np.array([*argmax_probas, *argsecond_probas])
+        if STATE_ARGSECOND_PROBAS:
+            argsecond_probas = sorted_probas[:, 1]
+            state_list += argsecond_probas
+        if STATE_DIFF_PROBAS:
+            state_list += argmax_probas - argsecond_probas
+        if STATE_ARGTHIRD_PROBAS:
+            state_list = sorted_probas[:, 2]
 
-        arg_diff_probas = argmax_probas - argsecond_probas
-
-        if not NO_DIFF_FEATURES:
-            arg_diff_probas = argsecond_probas
-
-        if LRU_AREAS_LIMIT == 0:
+        if STATE_DISTANCES:
             # calculate average distance to labeled and average distance to unlabeled samples
             average_distance_labeled = (
                 np.sum(
@@ -170,16 +176,10 @@ class LearnedBaseSampling(ActiveLearner):
                 )
                 / len(self.data_storage.train_unlabeled_X)
             )
+            state_list += average_distance_labeled
+            state_list += average_distance_unlabeled
 
-            X_state = np.array(
-                [
-                    *argmax_probas,
-                    *arg_diff_probas,
-                    *average_distance_labeled,
-                    *average_distance_unlabeled,
-                ]
-            )
-        else:
+        if STATE_LRU_AREAS_LIMIT > 0:
             if len(lru_samples) == 0:
                 lru_distances = [len(lru_samples) + 2 for _ in range(0, len(X_query))]
             else:
@@ -193,5 +193,6 @@ class LearnedBaseSampling(ActiveLearner):
                     )
                     / len(lru_samples)
                 )
-            X_state = np.array([*argmax_probas, *arg_diff_probas, *lru_distances])
-        return X_state
+            state_list += lru_distances
+
+        return np.array(state_list)

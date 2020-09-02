@@ -134,11 +134,13 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         active_learner = TrainedNNLearner(**active_learner_params)
         active_learner.init_sampling_classifier(
-            hyper_parameters["NN_BINARY"],
-            hyper_parameters["REPRESENTATIVE_FEATURES"],
-            hyper_parameters["CONVEX_HULL_SAMPLING"],
-            hyper_parameters["NO_DIFF_FEATURES"],
-            hyper_parameters["LRU_AREAS_LIMIT"],
+            NN_BINARY_PATH=hyper_parameters["NN_BINARY_PATH"],
+            CONVEX_HULL_SAMPLING=hyper_parameters["CONVEX_HULL_SAMPLING"],
+            STATE_DISTANCES=hyper_parameters["STATE_DISTANCES"],
+            STATE_DIFF_PROBAS=hyper_parameters["STATE_DIFF_PROBAS"],
+            STATE_ARGTHIRD_PROBAS=hyper_parameters["STATE_ARGTHIRD_PROBAS"],
+            STATE_LRU_AREAS_LIMIT=hyper_parameters["STATE_LRU_AREAS_LIMIT"],
+            STATE_ARGSECOND_PROBAS=hyper_parameters["STATE_ARGSECOND_PROBAS"],
         )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"

@@ -14,10 +14,12 @@ class TrainedNNLearner(LearnedBaseSampling):
     def init_sampling_classifier(
         self,
         NN_BINARY_PATH,
-        REPRESENTATIVE_FEATURES,
         CONVEX_HULL_SAMPLING,
-        NO_DIFF_FEATURES,
-        LRU_AREAS_LIMIT,
+        STATE_DISTANCES,
+        STATE_DIFF_PROBAS,
+        STATE_ARGTHIRD_PROBAS,
+        STATE_LRU_AREAS_LIMIT,
+        STATE_ARGSECOND_PROBAS,
     ):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -28,10 +30,12 @@ class TrainedNNLearner(LearnedBaseSampling):
         self.sampling_classifier = model
 
         super().init_sampling_classifier(
-            LRU_AREAS_LIMIT=LRU_AREAS_LIMIT,
-            NO_DIFF_FEATURES=NO_DIFF_FEATURES,
             CONVEX_HULL_SAMPLING=CONVEX_HULL_SAMPLING,
-            REPRESENTATIVE_FEATURES=REPRESENTATIVE_FEATURES,
+            STATE_DISTANCES=STATE_DISTANCES,
+            STATE_DIFF_PROBAS=STATE_DIFF_PROBAS,
+            STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
+            STATE_LRU_AREAS_LIMIT=STATE_LRU_AREAS_LIMIT,
+            STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
         )
 
     def get_X_query(self):

@@ -20,11 +20,13 @@ class ImitationLearner(LearnedBaseSampling):
     def init_sampling_classifier(
         self,
         DATA_PATH,
-        REPRESENTATIVE_FEATURES,
-        CONVEX_HULL_SAMPLING,
         VARIANCE_BOUND,
-        NO_DIFF_FEATURES,
-        LRU_AREAS_LIMIT,
+        CONVEX_HULL_SAMPLING,
+        STATE_DISTANCES,
+        STATE_DIFF_PROBAS,
+        STATE_ARGTHIRD_PROBAS,
+        STATE_LRU_AREAS_LIMIT,
+        STATE_ARGSECOND_PROBAS,
     ):
         self.states = pd.DataFrame(
             data=None,
@@ -38,10 +40,12 @@ class ImitationLearner(LearnedBaseSampling):
         )
 
         super().init_sampling_classifier(
-            LRU_AREAS_LIMIT=LRU_AREAS_LIMIT,
-            NO_DIFF_FEATURES=NO_DIFF_FEATURES,
             CONVEX_HULL_SAMPLING=CONVEX_HULL_SAMPLING,
-            REPRESENTATIVE_FEATURES=REPRESENTATIVE_FEATURES,
+            STATE_DISTANCES=STATE_DISTANCES,
+            STATE_DIFF_PROBAS=STATE_DIFF_PROBAS,
+            STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
+            STATE_LRU_AREAS_LIMIT=STATE_LRU_AREAS_LIMIT,
+            STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
         )
         self.VARIANCE_BOUND = VARIANCE_BOUND
 
