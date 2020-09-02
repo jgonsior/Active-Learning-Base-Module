@@ -20,6 +20,7 @@ class TrainedNNLearner(LearnedBaseSampling):
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
         STATE_ARGSECOND_PROBAS,
+        STATE_NO_LRU_WEIGHTS,
     ):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -36,6 +37,7 @@ class TrainedNNLearner(LearnedBaseSampling):
             STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
             STATE_LRU_AREAS_LIMIT=STATE_LRU_AREAS_LIMIT,
             STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
+            STATE_NO_LRU_WEIGHTS=STATE_NO_LRU_WEIGHTS,
         )
 
     def get_X_query(self):

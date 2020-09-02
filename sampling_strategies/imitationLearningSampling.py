@@ -27,6 +27,7 @@ class ImitationLearner(LearnedBaseSampling):
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
         STATE_ARGSECOND_PROBAS,
+        STATE_NO_LRU_WEIGHTS,
     ):
         self.states = pd.DataFrame(
             data=None,
@@ -46,6 +47,7 @@ class ImitationLearner(LearnedBaseSampling):
             STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
             STATE_LRU_AREAS_LIMIT=STATE_LRU_AREAS_LIMIT,
             STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
+            STATE_NO_LRU_WEIGHTS=STATE_NO_LRU_WEIGHTS,
         )
         self.VARIANCE_BOUND = VARIANCE_BOUND
 

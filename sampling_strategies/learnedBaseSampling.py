@@ -22,6 +22,7 @@ class LearnedBaseSampling(ActiveLearner):
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
         STATE_ARGSECOND_PROBAS,
+        STATE_NO_LRU_WEIGHTS,
     ):
         self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
         self.STATE_DISTANCES = STATE_DISTANCES
@@ -29,6 +30,7 @@ class LearnedBaseSampling(ActiveLearner):
         self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
         self.STATE_LRU_AREAS_LIMIT = STATE_LRU_AREAS_LIMIT
         self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
+        self.STATE_NO_LRU_WEIGHTS = STATE_NO_LRU_WEIGHTS
 
         self.lru_samples = pd.DataFrame(
             data=None, columns=self.data_storage.train_unlabeled_X.columns, index=None
@@ -65,6 +67,7 @@ class LearnedBaseSampling(ActiveLearner):
             STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
             STATE_LRU_AREAS_LIMIT=self.STATE_LRU_AREAS_LIMIT,
             STATE_DISTANCES=self.STATE_DISTANCES,
+            STATE_NO_LRU_WEIGHTS=self.STATE_NO_LRU_WEIGHTS,
             lru_samples=self.lru_samples,
         )
 
@@ -144,6 +147,7 @@ class LearnedBaseSampling(ActiveLearner):
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
         STATE_DISTANCES,
+        STATE_NO_LRU_WEIGHTS,
         lru_samples=[],
     ):
         possible_samples_probas = self.clf.predict_proba(X_query)
@@ -187,16 +191,22 @@ class LearnedBaseSampling(ActiveLearner):
             if len(lru_samples) == 0:
                 lru_distances = [len(lru_samples) + 2 for _ in range(0, len(X_query))]
             else:
-                lru_distances = (
-                    np.sum(
-                        np.multiply(
-                            [i for i in range(1, len(lru_samples) + 1)],
-                            pairwise_distances(X_query, lru_samples),
-                        ),
-                        axis=1,
-                    )
-                    / len(lru_samples)
-                ).tolist()
+                if STATE_NO_LRU_WEIGHTS:
+                    lru_distances = (
+                        np.sum(pairwise_distances(X_query, lru_samples), axis=1)
+                        / len(lru_samples)
+                    ).to_list()
+                else:
+                    lru_distances = (
+                        np.sum(
+                            np.multiply(
+                                [i for i in range(1, len(lru_samples) + 1)],
+                                pairwise_distances(X_query, lru_samples),
+                            ),
+                            axis=1,
+                        )
+                        / len(lru_samples)
+                    ).tolist()
             state_list += lru_distances
 
         return np.array(state_list)
