@@ -138,6 +138,7 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
             CONVEX_HULL_SAMPLING=hyper_parameters["CONVEX_HULL_SAMPLING"],
             STATE_DISTANCES=hyper_parameters["STATE_DISTANCES"],
             STATE_DIFF_PROBAS=hyper_parameters["STATE_DIFF_PROBAS"],
+            STATE_PREDICTED_CLASS=hyper_parameters["STATE_PREDICTED_CLASS"],
             STATE_ARGTHIRD_PROBAS=hyper_parameters["STATE_ARGTHIRD_PROBAS"],
             STATE_LRU_AREAS_LIMIT=hyper_parameters["STATE_LRU_AREAS_LIMIT"],
             STATE_ARGSECOND_PROBAS=hyper_parameters["STATE_ARGSECOND_PROBAS"],

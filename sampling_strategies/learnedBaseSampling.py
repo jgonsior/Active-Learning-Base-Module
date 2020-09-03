@@ -28,6 +28,7 @@ class LearnedBaseSampling(ActiveLearner):
         STATE_DIFF_PROBAS,
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
+        STATE_PREDICTED_CLASS,
         STATE_ARGSECOND_PROBAS,
         STATE_NO_LRU_WEIGHTS,
     ):
@@ -38,6 +39,7 @@ class LearnedBaseSampling(ActiveLearner):
         self.STATE_LRU_AREAS_LIMIT = STATE_LRU_AREAS_LIMIT
         self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
         self.STATE_NO_LRU_WEIGHTS = STATE_NO_LRU_WEIGHTS
+        self.STATE_PREDICTED_CLASS = STATE_PREDICTED_CLASS
 
         self.lru_samples = pd.DataFrame(
             data=None, columns=self.data_storage.train_unlabeled_X.columns, index=None
@@ -74,6 +76,7 @@ class LearnedBaseSampling(ActiveLearner):
             STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
             STATE_LRU_AREAS_LIMIT=self.STATE_LRU_AREAS_LIMIT,
             STATE_DISTANCES=self.STATE_DISTANCES,
+            STATE_PREDICTED_CLASS=self.STATE_PREDICTED_CLASS,
             STATE_NO_LRU_WEIGHTS=self.STATE_NO_LRU_WEIGHTS,
             lru_samples=self.lru_samples,
         )
@@ -154,6 +157,7 @@ class LearnedBaseSampling(ActiveLearner):
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
         STATE_DISTANCES,
+        STATE_PREDICTED_CLASS,
         STATE_NO_LRU_WEIGHTS,
         lru_samples=[],
     ):
@@ -174,6 +178,8 @@ class LearnedBaseSampling(ActiveLearner):
                 state_list += [0 for _ in range(0, len(X_query))]
             else:
                 state_list += sorted_probas[:, 2].tolist()
+        if STATE_PREDICTED_CLASS:
+            state_list += self.clf.predict(X_query).tolist()
 
         if STATE_DISTANCES:
             # calculate average distance to labeled and average distance to unlabeled samples

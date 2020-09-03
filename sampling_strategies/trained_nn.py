@@ -18,6 +18,7 @@ class TrainedNNLearner(LearnedBaseSampling):
         STATE_DISTANCES,
         STATE_DIFF_PROBAS,
         STATE_ARGTHIRD_PROBAS,
+        STATE_PREDICTED_CLASS,
         STATE_LRU_AREAS_LIMIT,
         STATE_ARGSECOND_PROBAS,
         STATE_NO_LRU_WEIGHTS,
@@ -38,6 +39,7 @@ class TrainedNNLearner(LearnedBaseSampling):
             STATE_LRU_AREAS_LIMIT=STATE_LRU_AREAS_LIMIT,
             STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
             STATE_NO_LRU_WEIGHTS=STATE_NO_LRU_WEIGHTS,
+            STATE_PREDICTED_CLASS=STATE_PREDICTED_CLASS,
         )
 
     def get_X_query(self):
