@@ -53,7 +53,9 @@ def log_it(message):
             f.write(message + "\n")
 
 
-def standard_config(additional_parameters=None, standard_args=True):
+def standard_config(
+    additional_parameters=None, standard_args=True, return_argparse=False
+):
     parser = argparse.ArgumentParser()
     if standard_args:
         parser.add_argument("--DATASETS_PATH", default="../datasets/")
@@ -84,8 +86,10 @@ def standard_config(additional_parameters=None, standard_args=True):
         random.seed(config.RANDOM_SEED)
 
     init_logger(config.LOG_FILE)
-
-    return config
+    if return_argparse:
+        return config, parser
+    else:
+        return config
 
 
 def get_active_config(additional_parameters=[]):
