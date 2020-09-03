@@ -224,7 +224,7 @@ class ActiveLearner:
                         >= kwargs["THEORETICALLY_BEST_ACHIEVABLE_ACCURACY"]
                     ):
                         early_stop_reached = True
-                        print(
+                        log_it(
                             "THEORETICALLY_BEST_ACHIEVABLE_ACCURACY: "
                             + str(kwargs["THEORETICALLY_BEST_ACHIEVABLE_ACCURACY"])
                         )

@@ -174,7 +174,7 @@ class DataStorage:
     def _load_synthetic(self, RANDOM_SEED, **kwargs):
         no_valid_synthetic_arguments_found = True
         while no_valid_synthetic_arguments_found:
-            print(kwargs)
+            log_it(kwargs)
             if not kwargs["NEW_SYNTHETIC_PARAMS"]:
                 if kwargs["VARIABLE_DATASET"]:
                     N_SAMPLES = random.randint(500, 20000)
@@ -276,7 +276,7 @@ class DataStorage:
             }
             self.synthetic_creation_args = synthetic_creation_args
 
-        print(synthetic_creation_args)
+        log_it(synthetic_creation_args)
         X_data, Y_temp = make_classification(**synthetic_creation_args)
 
         df = pd.DataFrame(X_data)
@@ -401,7 +401,7 @@ class DataStorage:
                 decision_boundary = self.clf.predict_proba(
                     np.c_[xx.ravel(), yy.ravel()]
                 )
-                print(decision_boundary)
+                #  log_it(decision_boundary)
 
                 db = np.argmax(decision_boundary, axis=1) + np.amax(
                     decision_boundary, axis=1

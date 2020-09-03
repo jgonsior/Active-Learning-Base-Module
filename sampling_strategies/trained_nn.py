@@ -50,6 +50,6 @@ class TrainedNNLearner(LearnedBaseSampling):
 
     def get_sorting(self, X_state):
         X_state = np.reshape(X_state, (1, len(X_state)))
-        Y_pred = self.sampling_classifier.predict(X_state)
+        Y_pred = self.sampling_classifier.predict(X_state, verbose=0)
         sorting = Y_pred
         return sorting

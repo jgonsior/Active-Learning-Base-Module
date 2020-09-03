@@ -226,7 +226,7 @@ def eval_al(
     #  db = get_db(db_name_or_type=hyper_parameters["DB_NAME_OR_TYPE"])
 
     #  hyper_parameters["DATASET_NAME"] = DATASET_NAME
-    print(hyper_parameters.keys())
+    #  print(hyper_parameters.keys())
     hyper_parameters["cores"] = hyper_parameters["N_JOBS"]
     #  del hyper_parameters["N_JOBS"]
 
