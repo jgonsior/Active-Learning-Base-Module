@@ -183,20 +183,13 @@ class LearnedBaseSampling(ActiveLearner):
 
         if STATE_DISTANCES:
             # calculate average distance to labeled and average distance to unlabeled samples
-            average_distance_labeled = (
-                np.sum(
-                    pairwise_distances(self.data_storage.train_labeled_X, X_query),
-                    axis=0,
-                )
-                / len(self.data_storage.train_labeled_X)
-            )
-            average_distance_unlabeled = (
-                np.sum(
-                    pairwise_distances(self.data_storage.train_unlabeled_X, X_query),
-                    axis=0,
-                )
-                / len(self.data_storage.train_unlabeled_X)
-            )
+            average_distance_labeled = np.sum(
+                pairwise_distances(self.data_storage.train_labeled_X, X_query), axis=0,
+            ) / len(self.data_storage.train_labeled_X)
+            average_distance_unlabeled = np.sum(
+                pairwise_distances(self.data_storage.train_unlabeled_X, X_query),
+                axis=0,
+            ) / len(self.data_storage.train_unlabeled_X)
             state_list += average_distance_labeled.tolist()
             state_list += average_distance_unlabeled.tolist()
 
@@ -208,7 +201,7 @@ class LearnedBaseSampling(ActiveLearner):
                     lru_distances = (
                         np.sum(pairwise_distances(X_query, lru_samples), axis=1)
                         / len(lru_samples)
-                    ).to_list()
+                    ).tolist()
                 else:
                     lru_distances = (
                         np.sum(
