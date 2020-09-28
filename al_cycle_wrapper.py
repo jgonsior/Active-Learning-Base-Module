@@ -1,3 +1,4 @@
+import numpy as np
 import csv
 import datetime
 import hashlib
@@ -9,7 +10,7 @@ import pandas as pd
 
 #  import np.random.distributions as dists
 from json_tricks import dumps
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, roc_auc_score, auc
 
 from .cluster_strategies import (
     DummyClusterStrategy,
@@ -209,10 +210,45 @@ def eval_al(
     active_rf.fit(
         data_storage.train_labeled_X.loc[ys_oracle.index], ys_oracle["label"].to_list()
     )
-    acc_test_oracle = accuracy_score(
-        data_storage.test_Y, active_rf.predict(data_storage.test_X)
-    )
+    y_pred = active_rf.predict(data_storage.test_X)
+    acc_test_oracle = accuracy_score(data_storage.test_Y, y_pred)
+    y_probas = active_rf.predict_proba(data_storage.test_X)
 
+    if data_storage.synthetic_creation_args["n_classes"] > 2:
+        roc_auc_macro_oracle = roc_auc_score(
+            data_storage.test_Y["label"].to_list(),
+            y_probas,
+            average="macro",
+            multi_class="ovo",
+        )
+        roc_auc_weighted_oracle = roc_auc_score(
+            data_storage.test_Y["label"].to_list(),
+            y_probas,
+            average="weighted",
+            multi_class="ovo",
+        )
+    else:
+        y_probas = np.max(y_probas, axis=1)
+        roc_auc_macro_oracle = roc_auc_score(
+            data_storage.test_Y["label"].to_list(),
+            y_probas,
+            average="macro",
+            multi_class="ovo",
+        )
+        roc_auc_weighted_oracle = roc_auc_score(
+            data_storage.test_Y["label"].to_list(),
+            y_probas,
+            average="weighted",
+            multi_class="ovo",
+        )
+
+    acc_auc = (
+        auc(
+            [i for i in range(0, len(metrics_per_al_cycle["test_acc"]))],
+            metrics_per_al_cycle["test_acc"],
+        )
+        / (len(metrics_per_al_cycle["test_acc"]) - 1)
+    )
     # save labels
     #  Y_train_al.to_pickle(
     #  "pickles/" + str(len(Y_train_al)) + "_" + param_list_id + ".pickle"
@@ -240,6 +276,9 @@ def eval_al(
     hyper_parameters["acc_train"] = metrics_per_al_cycle["train_acc"][-1]
     hyper_parameters["acc_test"] = metrics_per_al_cycle["test_acc"][-1]
     hyper_parameters["acc_test_oracle"] = acc_test_oracle
+    hyper_parameters["roc_auc_weighted_oracle"] = roc_auc_weighted_oracle
+    hyper_parameters["roc_auc_macro_oracle"] = roc_auc_macro_oracle
+    hyper_parameters["acc_auc"] = acc_auc
     hyper_parameters["fit_score"] = score
     hyper_parameters["param_list_id"] = param_list_id
     hyper_parameters["thread_id"] = threading.get_ident()
