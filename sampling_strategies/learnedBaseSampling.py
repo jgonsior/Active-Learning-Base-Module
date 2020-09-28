@@ -25,6 +25,8 @@ class LearnedBaseSampling(ActiveLearner):
         self,
         CONVEX_HULL_SAMPLING,
         STATE_DISTANCES,
+        STATE_DISTANCES_LAB,
+        STATE_DISTANCES_UNLAB,
         STATE_DIFF_PROBAS,
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
@@ -34,6 +36,8 @@ class LearnedBaseSampling(ActiveLearner):
     ):
         self.CONVEX_HULL_SAMPLING = CONVEX_HULL_SAMPLING
         self.STATE_DISTANCES = STATE_DISTANCES
+        self.STATE_DISTANCES_LAB = STATE_DISTANCES_LAB
+        self.STATE_DISTANCES_UNLAB = STATE_DISTANCES_UNLAB
         self.STATE_DIFF_PROBAS = STATE_DIFF_PROBAS
         self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
         self.STATE_LRU_AREAS_LIMIT = STATE_LRU_AREAS_LIMIT
@@ -76,6 +80,8 @@ class LearnedBaseSampling(ActiveLearner):
             STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
             STATE_LRU_AREAS_LIMIT=self.STATE_LRU_AREAS_LIMIT,
             STATE_DISTANCES=self.STATE_DISTANCES,
+            STATE_DISTANCES_LAB=self.STATE_DISTANCES_LAB,
+            STATE_DISTANCES_UNLAB=self.STATE_DISTANCES_UNLAB,
             STATE_PREDICTED_CLASS=self.STATE_PREDICTED_CLASS,
             STATE_NO_LRU_WEIGHTS=self.STATE_NO_LRU_WEIGHTS,
             lru_samples=self.lru_samples,
@@ -157,6 +163,8 @@ class LearnedBaseSampling(ActiveLearner):
         STATE_ARGTHIRD_PROBAS,
         STATE_LRU_AREAS_LIMIT,
         STATE_DISTANCES,
+        STATE_DISTANCES_LAB,
+        STATE_DISTANCES_UNLAB,
         STATE_PREDICTED_CLASS,
         STATE_NO_LRU_WEIGHTS,
         lru_samples=[],
@@ -181,15 +189,44 @@ class LearnedBaseSampling(ActiveLearner):
         if STATE_PREDICTED_CLASS:
             state_list += self.clf.predict(X_query).tolist()
 
+        if STATE_DISTANCES_LAB:
+            # calculate average distance to labeled and average distance to unlabeled samples
+            average_distance_labeled = (
+                np.sum(
+                    pairwise_distances(self.data_storage.train_labeled_X, X_query),
+                    axis=0,
+                )
+                / len(self.data_storage.train_labeled_X)
+            )
+            state_list += average_distance_labeled.tolist()
+
+        if STATE_DISTANCES_UNLAB:
+            # calculate average distance to labeled and average distance to unlabeled samples
+            average_distance_unlabeled = (
+                np.sum(
+                    pairwise_distances(self.data_storage.train_unlabeled_X, X_query),
+                    axis=0,
+                )
+                / len(self.data_storage.train_unlabeled_X)
+            )
+            state_list += average_distance_unlabeled.tolist()
+
         if STATE_DISTANCES:
             # calculate average distance to labeled and average distance to unlabeled samples
-            average_distance_labeled = np.sum(
-                pairwise_distances(self.data_storage.train_labeled_X, X_query), axis=0,
-            ) / len(self.data_storage.train_labeled_X)
-            average_distance_unlabeled = np.sum(
-                pairwise_distances(self.data_storage.train_unlabeled_X, X_query),
-                axis=0,
-            ) / len(self.data_storage.train_unlabeled_X)
+            average_distance_labeled = (
+                np.sum(
+                    pairwise_distances(self.data_storage.train_labeled_X, X_query),
+                    axis=0,
+                )
+                / len(self.data_storage.train_labeled_X)
+            )
+            average_distance_unlabeled = (
+                np.sum(
+                    pairwise_distances(self.data_storage.train_unlabeled_X, X_query),
+                    axis=0,
+                )
+                / len(self.data_storage.train_unlabeled_X)
+            )
             state_list += average_distance_labeled.tolist()
             state_list += average_distance_unlabeled.tolist()
 

@@ -172,6 +172,8 @@ def get_active_config(additional_parameters=[]):
             (["--STATE_ARGSECOND_PROBAS"], {"action": "store_true"}),
             (["--STATE_ARGTHIRD_PROBAS"], {"action": "store_true"}),
             (["--STATE_DISTANCES"], {"action": "store_true"}),
+            (["--STATE_DISTANCES_LAB"], {"action": "store_true"}),
+            (["--STATE_DISTANCES_UNLAB"], {"action": "store_true"}),
             (["--STATE_PREDICTED_CLASS"], {"action": "store_true"}),
             (["--STATE_NO_LRU_WEIGHTS"], {"action": "store_true"}),
             (["--STATE_LRU_AREAS_LIMIT"], {"type": int, "default": 0}),
