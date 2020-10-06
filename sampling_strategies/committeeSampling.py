@@ -71,9 +71,7 @@ class CommitteeSampler(ActiveLearner):
             "query_length": [],
         }
 
-    def fit_clf(
-        self,
-    ):
+    def fit_clf(self,):
         self.committee.fit(self.X_train_labeled, self.Y_train_labeled)
 
     def setClassifierClasses(self, classes):

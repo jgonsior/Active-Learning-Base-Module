@@ -74,11 +74,7 @@ class OptimalForecastSampler(ActiveLearner):
         # what would happen if we apply WS after this one?
         for i in range(0, self.MAX_AMOUNT_OF_WS_PEAKS):
             for labelSource in self.weak_supervision_label_sources:
-                (
-                    Y_query,
-                    query_indices,
-                    source,
-                ) = labelSource.get_labeled_samples()
+                (Y_query, query_indices, source,) = labelSource.get_labeled_samples()
 
                 if Y_query is not None:
                     break

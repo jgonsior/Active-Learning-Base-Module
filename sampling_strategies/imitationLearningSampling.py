@@ -32,9 +32,7 @@ class ImitationLearner(LearnedBaseSampling):
         STATE_NO_LRU_WEIGHTS,
         STATE_PREDICTED_CLASS,
     ):
-        self.states = pd.DataFrame(
-            data=None,
-        )
+        self.states = pd.DataFrame(data=None,)
         self.optimal_policies = pd.DataFrame(
             data=None,
             columns=[
@@ -210,11 +208,7 @@ class ImitationLearner(LearnedBaseSampling):
         # what would happen if we apply WS after this one?
         for i in range(0, MAX_AMOUNT_OF_WS_PEAKS):
             for labelSource in weak_supervision_label_sources:
-                (
-                    Y_query,
-                    query_indices,
-                    source,
-                ) = labelSource.get_labeled_samples()
+                (Y_query, query_indices, source,) = labelSource.get_labeled_samples()
 
                 if Y_query is not None:
                     break
