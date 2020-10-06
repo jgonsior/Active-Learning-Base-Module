@@ -137,7 +137,6 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
         active_learner.init_sampling_classifier(
             NN_BINARY_PATH=hyper_parameters["NN_BINARY_PATH"],
             CONVEX_HULL_SAMPLING=hyper_parameters["CONVEX_HULL_SAMPLING"],
-            STATE_DISTANCES=hyper_parameters["STATE_DISTANCES"],
             STATE_DISTANCES_LAB=hyper_parameters["STATE_DISTANCES_LAB"],
             STATE_DISTANCES_UNLAB=hyper_parameters["STATE_DISTANCES_UNLAB"],
             STATE_DIFF_PROBAS=hyper_parameters["STATE_DIFF_PROBAS"],
@@ -244,10 +243,13 @@ def eval_al(
             multi_class="ovo",
         )
 
-    acc_auc = auc(
-        [i for i in range(0, len(metrics_per_al_cycle["test_acc"]))],
-        metrics_per_al_cycle["test_acc"],
-    ) / (len(metrics_per_al_cycle["test_acc"]) - 1)
+    acc_auc = (
+        auc(
+            [i for i in range(0, len(metrics_per_al_cycle["test_acc"]))],
+            metrics_per_al_cycle["test_acc"],
+        )
+        / (len(metrics_per_al_cycle["test_acc"]) - 1)
+    )
     # save labels
     #  Y_train_al.to_pickle(
     #  "pickles/" + str(len(Y_train_al)) + "_" + param_list_id + ".pickle"
@@ -330,7 +332,11 @@ Takes a dataset_path, X, Y, label_encoder and does the following steps:
 
 
 def train_and_eval_dataset(
-    hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH=None,
+    hyper_parameters,
+    oracle,
+    df=None,
+    DATASET_NAME=None,
+    DATASETS_PATH=None,
 ):
     (
         trained_active_clf_list,

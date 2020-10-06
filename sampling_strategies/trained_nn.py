@@ -15,7 +15,6 @@ class TrainedNNLearner(LearnedBaseSampling):
         self,
         NN_BINARY_PATH,
         CONVEX_HULL_SAMPLING,
-        STATE_DISTANCES,
         STATE_DISTANCES_LAB,
         STATE_DISTANCES_UNLAB,
         STATE_DIFF_PROBAS,
@@ -35,7 +34,6 @@ class TrainedNNLearner(LearnedBaseSampling):
 
         super().init_sampling_classifier(
             CONVEX_HULL_SAMPLING=CONVEX_HULL_SAMPLING,
-            STATE_DISTANCES=STATE_DISTANCES,
             STATE_DISTANCES_LAB=STATE_DISTANCES_LAB,
             STATE_DISTANCES_UNLAB=STATE_DISTANCES_UNLAB,
             STATE_DIFF_PROBAS=STATE_DIFF_PROBAS,

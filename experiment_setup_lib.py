@@ -164,7 +164,6 @@ def get_active_config(additional_parameters=[]):
             (["--STATE_DIFF_PROBAS"], {"action": "store_true"}),
             (["--STATE_ARGSECOND_PROBAS"], {"action": "store_true"}),
             (["--STATE_ARGTHIRD_PROBAS"], {"action": "store_true"}),
-            (["--STATE_DISTANCES"], {"action": "store_true"}),
             (["--STATE_DISTANCES_LAB"], {"action": "store_true"}),
             (["--STATE_DISTANCES_UNLAB"], {"action": "store_true"}),
             (["--STATE_PREDICTED_CLASS"], {"action": "store_true"}),

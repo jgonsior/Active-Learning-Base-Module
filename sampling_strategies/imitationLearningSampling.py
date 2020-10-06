@@ -22,7 +22,6 @@ class ImitationLearner(LearnedBaseSampling):
         DATA_PATH,
         VARIANCE_BOUND,
         CONVEX_HULL_SAMPLING,
-        STATE_DISTANCES,
         STATE_DISTANCES_LAB,
         STATE_DISTANCES_UNLAB,
         STATE_DIFF_PROBAS,
@@ -32,7 +31,9 @@ class ImitationLearner(LearnedBaseSampling):
         STATE_NO_LRU_WEIGHTS,
         STATE_PREDICTED_CLASS,
     ):
-        self.states = pd.DataFrame(data=None,)
+        self.states = pd.DataFrame(
+            data=None,
+        )
         self.optimal_policies = pd.DataFrame(
             data=None,
             columns=[
@@ -43,7 +44,6 @@ class ImitationLearner(LearnedBaseSampling):
 
         super().init_sampling_classifier(
             CONVEX_HULL_SAMPLING=CONVEX_HULL_SAMPLING,
-            STATE_DISTANCES=STATE_DISTANCES,
             STATE_DISTANCES_LAB=STATE_DISTANCES_LAB,
             STATE_DISTANCES_UNLAB=STATE_DISTANCES_UNLAB,
             STATE_DIFF_PROBAS=STATE_DIFF_PROBAS,
@@ -208,7 +208,11 @@ class ImitationLearner(LearnedBaseSampling):
         # what would happen if we apply WS after this one?
         for i in range(0, MAX_AMOUNT_OF_WS_PEAKS):
             for labelSource in weak_supervision_label_sources:
-                (Y_query, query_indices, source,) = labelSource.get_labeled_samples()
+                (
+                    Y_query,
+                    query_indices,
+                    source,
+                ) = labelSource.get_labeled_samples()
 
                 if Y_query is not None:
                     break
