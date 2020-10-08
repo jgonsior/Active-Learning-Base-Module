@@ -45,7 +45,8 @@ class DataStorage:
             elif DATASET_NAME == "synthetic":
                 df = self._load_synthetic(RANDOM_SEED=RANDOM_SEED, **kwargs)
             else:
-                df = self._load_alc(DATASET_NAME, DATASETS_PATH)
+                df = self._load_uci(DATASET_NAME, DATASETS_PATH)
+                #  df = self._load_alc(DATASET_NAME, DATASETS_PATH)
         else:
             self.amount_of_training_samples = 0
 
@@ -160,13 +161,28 @@ class DataStorage:
 
         log_it("Loaded " + str(DATASET_NAME))
 
+    def _load_uci(self, DATASET_NAME, DATASETS_PATH):
+        df = pd.read_csv(DATASETS_PATH + "uci_cleaned/" + DATASET_NAME + ".csv")
+
+        # shuffle df
+        df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
+
+        df.rename({"LABEL": "label"}, axis="columns", inplace=True)
+        self.synthetic_creation_args = {}
+        self.synthetic_creation_args["n_classes"] = len(df["label"].unique())
+
+        self.amount_of_training_samples = int(len(df) * 0.5)
+        return df
+
     def _load_dwtc(self, DATASETS_PATH):
-        df = pd.read_csv(DATASETS_PATH + "/dwtc/aft.csv", index_col="id")
+        df = pd.read_csv(DATASETS_PATH + "dwtc/aft.csv", index_col="id")
 
         # shuffle df
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
 
         df.rename({"CLASS": "label"}, axis="columns", inplace=True)
+        self.synthetic_creation_args = {}
+        self.synthetic_creation_args["n_classes"] = len(df["label"].unique())
 
         self.amount_of_training_samples = int(len(df) * 0.5)
         return df
