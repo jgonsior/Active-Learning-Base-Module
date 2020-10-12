@@ -175,7 +175,7 @@ class DataStorage:
         return df
 
     def _load_dwtc(self, DATASETS_PATH):
-        df = pd.read_csv(DATASETS_PATH + "dwtc/aft.csv", index_col="id")
+        df = pd.read_csv(DATASETS_PATH + "dwtc/aft.csv")
 
         # shuffle df
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
