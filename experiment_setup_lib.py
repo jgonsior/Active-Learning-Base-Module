@@ -27,7 +27,7 @@ def get_classifier(classifier_name, random_state=None, n_jobs=None):
         return SVC(probability=True, random_state=random_state)
     elif classifier_name == "MLP":
         warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
-        return MLPClassifier(random_state=random_state, verbose=0)
+        return MLPClassifier(random_state=random_state, verbose=1)
 
 
 # really dirty hack to provide logging as functions instead of objects
@@ -97,9 +97,16 @@ def get_active_config(additional_parameters=[]):
         [
             (
                 ["--SAMPLING"],
-                {"help": "Possible values: uncertainty, random, committe, boundary",},
+                {
+                    "help": "Possible values: uncertainty, random, committe, boundary",
+                },
             ),
-            (["--DATASET_NAME"], {"required": True,},),
+            (
+                ["--DATASET_NAME"],
+                {
+                    "required": True,
+                },
+            ),
             (
                 ["--CLUSTER"],
                 {
