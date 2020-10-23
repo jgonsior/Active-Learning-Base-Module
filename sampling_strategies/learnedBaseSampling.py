@@ -130,7 +130,7 @@ class LearnedBaseSampling(ActiveLearner):
     ):
         if CONVEX_HULL_SAMPLING:
             max_sum = 0
-            for i in range(0, 100):
+            for i in range(0, 10):
                 random_sample = train_unlabeled_X.sample(n=sample_size)
 
                 # calculate distance to each other
