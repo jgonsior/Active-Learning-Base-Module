@@ -74,7 +74,11 @@ class OptimalForecastSampler(ActiveLearner):
         # what would happen if we apply WS after this one?
         for i in range(0, self.MAX_AMOUNT_OF_WS_PEAKS):
             for labelSource in self.weak_supervision_label_sources:
-                (Y_query, query_indices, source,) = labelSource.get_labeled_samples()
+                (
+                    Y_query,
+                    query_indices,
+                    source,
+                ) = labelSource.get_labeled_samples()
 
                 if Y_query is not None:
                     break
@@ -89,10 +93,10 @@ class OptimalForecastSampler(ActiveLearner):
                 copy_of_data_storage.train_labeled_Y["label"].to_list(),
             )
 
-        Y_pred = copy_of_classifier.predict(copy_of_data_storage.train_unlabeled_X)
+        Y_pred = copy_of_classifier.predict(copy_of_data_storage.test_X)
 
         accuracy_with_that_label = accuracy_score(
-            Y_pred, copy_of_data_storage.train_unlabeled_Y["label"].to_list()
+            Y_pred, copy_of_data_storage.test_Y["label"].to_list()
         )
 
         #  print(
