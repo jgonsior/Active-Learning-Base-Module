@@ -164,8 +164,6 @@ def get_active_config(additional_parameters=[]):
             (["--NEW_SYNTHETIC_PARAMS"], {"action": "store_true"}),
             (["--HYPERCUBE"], {"action": "store_true"}),
             (["--AMOUNT_OF_FEATURES"], {"type": int, "default": -1}),
-            (["--CONVEX_HULL_SAMPLING"], {"action": "store_true"}),
-            (["--VARIANCE_BOUND"], {"type": int, "default": 1}),
             (["--STOP_AFTER_MAXIMUM_ACCURACY_REACHED"], {"action": "store_true"}),
             (["--GENERATE_NOISE"], {"action": "store_true"}),
             (["--STATE_DIFF_PROBAS"], {"action": "store_true"}),
@@ -174,8 +172,8 @@ def get_active_config(additional_parameters=[]):
             (["--STATE_DISTANCES_LAB"], {"action": "store_true"}),
             (["--STATE_DISTANCES_UNLAB"], {"action": "store_true"}),
             (["--STATE_PREDICTED_CLASS"], {"action": "store_true"}),
-            (["--STATE_NO_LRU_WEIGHTS"], {"action": "store_true"}),
-            (["--STATE_LRU_AREAS_LIMIT"], {"type": int, "default": 0}),
+            (["--INITIAL_BATCH_SAMPLING_METHOD"], {"default": "furthest"}),
+            (["--INITIAL_BATCH_SAMPLING_ARG"], {"type": int, "default": 100}),
             *additional_parameters,
         ]
     )

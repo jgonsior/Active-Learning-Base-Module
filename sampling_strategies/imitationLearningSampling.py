@@ -20,16 +20,14 @@ class ImitationLearner(LearnedBaseSampling):
     def init_sampling_classifier(
         self,
         DATA_PATH,
-        VARIANCE_BOUND,
-        CONVEX_HULL_SAMPLING,
         STATE_DISTANCES_LAB,
         STATE_DISTANCES_UNLAB,
         STATE_DIFF_PROBAS,
         STATE_ARGTHIRD_PROBAS,
-        STATE_LRU_AREAS_LIMIT,
         STATE_ARGSECOND_PROBAS,
-        STATE_NO_LRU_WEIGHTS,
         STATE_PREDICTED_CLASS,
+        INITIAL_BATCH_SAMPLING_METHOD,
+        INITIAL_BATCH_SAMPLING_ARG,
     ):
         self.states = pd.DataFrame(
             data=None,
@@ -43,17 +41,15 @@ class ImitationLearner(LearnedBaseSampling):
         )
 
         super().init_sampling_classifier(
-            CONVEX_HULL_SAMPLING=CONVEX_HULL_SAMPLING,
             STATE_DISTANCES_LAB=STATE_DISTANCES_LAB,
             STATE_DISTANCES_UNLAB=STATE_DISTANCES_UNLAB,
             STATE_DIFF_PROBAS=STATE_DIFF_PROBAS,
             STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
-            STATE_LRU_AREAS_LIMIT=STATE_LRU_AREAS_LIMIT,
             STATE_PREDICTED_CLASS=STATE_PREDICTED_CLASS,
             STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
-            STATE_NO_LRU_WEIGHTS=STATE_NO_LRU_WEIGHTS,
+            INITIAL_BATCH_SAMPLING_METHOD=INITIAL_BATCH_SAMPLING_METHOD,
+            INITIAL_BATCH_SAMPLING_ARG=INITIAL_BATCH_SAMPLING_ARG,
         )
-        self.VARIANCE_BOUND = VARIANCE_BOUND
 
     def move_labeled_queries(self, X_query, Y_query, query_indices):
         # move new queries from unlabeled to labeled dataset
@@ -116,48 +112,27 @@ class ImitationLearner(LearnedBaseSampling):
     def get_X_query(self):
         future_peak_acc = []
 
-        good_sample_found = False
-        hard_kill_count = 0
-        best_largest_stdev = 0
-        best_future_peak_acc = None
-        best_possible_samples_X = None
-        best_possible_sample_indices = None
+        possible_samples_X = self.sample_unlabeled_X(
+            self.data_storage.train_unlabeled_X,
+            self.data_storage.train_labeled_X,
+            self.amount_of_peaked_objects,
+            self.INITIAL_BATCH_SAMPLING_METHOD,
+            self.INITIAL_BATCH_SAMPLING_ARG,
+        )
+        possible_samples_indices = possible_samples_X.index
 
-        while not good_sample_found and hard_kill_count < self.VARIANCE_BOUND:
-            possible_samples_X = self.sample_unlabeled_X(
-                self.data_storage.train_unlabeled_X,
-                self.data_storage.train_labeled_X,
-                self.amount_of_peaked_objects,
-                self.CONVEX_HULL_SAMPLING,
-            )
-            possible_samples_indices = possible_samples_X.index
-
-            # parallelisieren
-            with parallel_backend("loky", n_jobs=self.N_JOBS):
-                future_peak_acc = Parallel()(
-                    delayed(self._future_peak)(
-                        unlabeled_sample_indice,
-                        self.weak_supervision_label_sources,
-                        self.data_storage,
-                        self.clf,
-                        self.MAX_AMOUNT_OF_WS_PEAKS,
-                    )
-                    for unlabeled_sample_indice in possible_samples_indices
+        # parallelisieren
+        with parallel_backend("loky", n_jobs=self.N_JOBS):
+            future_peak_acc = Parallel()(
+                delayed(self._future_peak)(
+                    unlabeled_sample_indice,
+                    self.weak_supervision_label_sources,
+                    self.data_storage,
+                    self.clf,
+                    self.MAX_AMOUNT_OF_WS_PEAKS,
                 )
-            if max(future_peak_acc) > best_largest_stdev:
-                best_future_peak_acc = future_peak_acc
-                best_possible_sample_indices = possible_samples_indices
-                best_possible_samples_X = possible_samples_X
-
-            if statistics.stdev(future_peak_acc) > 0.03:
-                good_sample_found = True
-            else:
-                hard_kill_count += 1
-
-        if hard_kill_count == self.VARIANCE_BOUND:
-            future_peak_acc = best_future_peak_acc
-            possible_sample_indices = best_possible_sample_indices
-            possible_samples_X = best_possible_samples_X
+                for unlabeled_sample_indice in possible_samples_indices
+            )
 
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage

@@ -1,7 +1,6 @@
 from .boundaryPairSampling import *
 from .committeeSampling import *
 from .imitationLearningSampling import *
-from .optimalForecastSampling import *
 from .randomSampling import *
 from .sheetBasedActiveLearner import *
 from .sheetBasedCommitteeSampling import *

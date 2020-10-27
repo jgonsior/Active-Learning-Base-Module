@@ -24,7 +24,6 @@ from .sampling_strategies import (
     BoundaryPairSampler,
     RandomSampler,
     UncertaintySampler,
-    OptimalForecastSampler,
     TrainedNNLearner,
 )
 from .weak_supervision import WeakCert, WeakClust
@@ -124,27 +123,16 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
     elif hyper_parameters["SAMPLING"] == "uncertainty_entropy":
         active_learner = UncertaintySampler(**active_learner_params)
         active_learner.set_uncertainty_strategy("entropy")
-    elif hyper_parameters["SAMPLING"] == "optimal_forecast":
-        active_learner = OptimalForecastSampler(**active_learner_params)
-        active_learner.set_amount_of_peaked_objects(
-            hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"]
-        )
-        active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
-            "MAX_AMOUNT_OF_WS_PEAKS"
-        ]
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         active_learner = TrainedNNLearner(**active_learner_params)
         active_learner.init_sampling_classifier(
             NN_BINARY_PATH=hyper_parameters["NN_BINARY_PATH"],
-            CONVEX_HULL_SAMPLING=hyper_parameters["CONVEX_HULL_SAMPLING"],
             STATE_DISTANCES_LAB=hyper_parameters["STATE_DISTANCES_LAB"],
             STATE_DISTANCES_UNLAB=hyper_parameters["STATE_DISTANCES_UNLAB"],
             STATE_DIFF_PROBAS=hyper_parameters["STATE_DIFF_PROBAS"],
             STATE_PREDICTED_CLASS=hyper_parameters["STATE_PREDICTED_CLASS"],
             STATE_ARGTHIRD_PROBAS=hyper_parameters["STATE_ARGTHIRD_PROBAS"],
-            STATE_LRU_AREAS_LIMIT=hyper_parameters["STATE_LRU_AREAS_LIMIT"],
             STATE_ARGSECOND_PROBAS=hyper_parameters["STATE_ARGSECOND_PROBAS"],
-            STATE_NO_LRU_WEIGHTS=hyper_parameters["STATE_NO_LRU_WEIGHTS"],
         )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"
