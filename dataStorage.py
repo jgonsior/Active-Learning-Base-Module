@@ -394,10 +394,19 @@ class DataStorage:
                         areas.append(10)
 
                 ax1.scatter(
-                    x=x, y=y, c=c, cmap=cmap_bright, alpha=0.5, s=areas,
+                    x=x,
+                    y=y,
+                    c=c,
+                    cmap=cmap_bright,
+                    alpha=0.5,
+                    s=areas,
                 )
                 ax2.scatter(
-                    x=x, y=y, c=c2, cmap=cmap_bright, s=areas,
+                    x=x,
+                    y=y,
+                    c=c2,
+                    cmap=cmap_bright,
+                    s=areas,
                 )
 
                 # create decision boundary mesh grid
@@ -448,11 +457,21 @@ class DataStorage:
                     query_indices
                 ].to_numpy():
                     ax1.add_artist(
-                        plt.Circle((current_sample), 0.1, fill=False, color="green",)
+                        plt.Circle(
+                            (current_sample),
+                            0.1,
+                            fill=False,
+                            color="green",
+                        )
                     )
 
                     ax2.add_artist(
-                        plt.Circle((current_sample), 0.1, fill=False, color="green",)
+                        plt.Circle(
+                            (current_sample),
+                            0.1,
+                            fill=False,
+                            color="green",
+                        )
                     )
                 cbar = fig.colorbar(cs)
 
@@ -524,3 +543,6 @@ class DataStorage:
 
     def get_true_label(self, query_indice):
         return self.train_unlabeled_Y.loc[query_indice, "label"]
+
+    def get_all_train_X(self):
+        return pd.concat([self.train_labeled_X, self.train_unlabeled_X])
