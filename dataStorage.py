@@ -1,9 +1,9 @@
+import math
 import seaborn as sns
 import random
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
@@ -20,6 +20,7 @@ class DataStorage:
         RANDOM_SEED,
         hyper_parameters,
         df=None,
+        TEST_FRACTION=0.5,
         DATASET_NAME=None,
         DATASETS_PATH=None,
         PLOT_EVOLUTION=False,
@@ -43,69 +44,54 @@ class DataStorage:
             if DATASET_NAME == "dwtc":
                 df = self._load_dwtc(DATASETS_PATH)
             elif DATASET_NAME == "synthetic":
-                df = self._load_synthetic(RANDOM_SEED=RANDOM_SEED, **kwargs)
+                X, Y = self._load_synthetic(RANDOM_SEED=RANDOM_SEED, **kwargs)
             else:
                 df = self._load_uci(DATASET_NAME, DATASETS_PATH)
                 #  df = self._load_alc(DATASET_NAME, DATASETS_PATH)
         else:
             self.amount_of_training_samples = 0
 
-        self.feature_columns = df.columns.to_list()
-        self.feature_columns.remove("label")
         self.hyper_parameters = hyper_parameters
 
         self.label_encoder = LabelEncoder()
 
+        self.labeled_mask = []
+        self.unlabeled_mask = []
+        self.Y = [1, 2, 1, 1, 1, 10, np.nan]
+        self.label_source = [np.nan]
+
         # ignore nan as labels
-        df.loc[df["label"].notnull(), "label"] = self.label_encoder.fit_transform(
-            df["label"].dropna()
-        )
+        Y = self.label_encoder.fit_transform(Y[~np.isnan(Y)])
 
         # feature normalization
         scaler = RobustScaler()
-        df[self.feature_columns] = scaler.fit_transform(df[self.feature_columns])
+        X = scaler.fit_transform(X)
 
         # scale back to [0,1]
         scaler = MinMaxScaler()
-        df[self.feature_columns] = scaler.fit_transform(df[self.feature_columns])
-
-        # split dataframe into test, train_labeled, train_unlabeled
-        self.test_X = df[: self.amount_of_training_samples].copy()
-        self.test_Y = pd.DataFrame(
-            data=self.test_X["label"], columns=["label"], index=self.test_X.index
-        )
-        del self.test_X["label"]
+        X = scaler.fit_transform(X)
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
-        if df.label.isnull().values.any():
-            # real data
-            train_data = df[self.amount_of_training_samples :].copy()
-            self.train_labeled_X = train_data[~train_data["label"].isnull()]
-            self.train_labeled_Y = pd.DataFrame(self.train_labeled_X["label"])
-            self.train_labeled_Y["source"] = "G"
-            del self.train_labeled_X["label"]
+        if sum(np.isnan(Y) > 0):
+            self.unlabeled_mask = np.argwhere(np.isnan(Y))
+            self.labeled_mask = np.argwhere(~np.isnan(Y))
+            self.label_source = ["G" for _ in self.labeled_mask]
 
-            self.train_unlabeled_X = train_data[train_data["label"].isnull()]
-            self.train_unlabeled_Y = pd.DataFrame(
-                data=None, columns=["label"], index=self.train_unlabeled_X.index
-            )
-            del self.train_unlabeled_X["label"]
+            self.test_mask = self.labeled_mask[
+                0 : math.floor(len(self.labeled_mask) * TEST_FRACTION)
+            ]
+            self.labeled_mask = self.labeled_mask[
+                math.floor(len(self.labeled_mask) * TEST_FRACTION) :
+            ]
 
         else:
-            # experiment setting apparently
-            train_data = df[self.amount_of_training_samples :].copy()
-            train_labeled_data = pd.DataFrame(data=None, columns=train_data.columns)
-            self.train_labeled_X = train_labeled_data
-            self.train_labeled_Y = pd.DataFrame(
-                data=None, columns=["label", "source"], index=self.train_labeled_X.index
-            )
-            del self.train_labeled_X["label"]
+            # split into test, train_labeled, train_unlabeled
+            self.test_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
 
-            self.train_unlabeled_X = train_data
-            self.train_unlabeled_Y = pd.DataFrame(
-                data=train_data["label"], columns=["label"], index=train_data.index
-            )
-            del self.train_unlabeled_X["label"]
+            # experiment setting apparently
+            self.unlabeled_mask = np.arange(0, math.ceil(len(Y) * TEST_FRACTION))
+            self.labeled_mask = np.empty(0)
+            self.label_source = []
 
             """ 
             1. get start_set from X_labeled
@@ -293,21 +279,12 @@ class DataStorage:
             self.synthetic_creation_args = synthetic_creation_args
 
         log_it(synthetic_creation_args)
-        X_data, Y_temp = make_classification(**synthetic_creation_args)
-
-        df = pd.DataFrame(X_data)
-
-        # replace labels with strings
-        Y_temp = Y_temp.astype("str")
-        for i in range(0, synthetic_creation_args["n_classes"]):
-            np.place(Y_temp, Y_temp == str(i), chr(65 + i))
+        X, Y = make_classification(**synthetic_creation_args)
 
         # feature_columns fehlt
-        self.amount_of_training_samples = int(len(df) * 0.5)
+        self.amount_of_training_samples = int(len(Y))
 
-        df["label"] = Y_temp
-
-        return df
+        return X, Y
 
     def _load_alc(self, DATASET_NAME, DATASETS_PATH):
         df = pd.read_csv(
