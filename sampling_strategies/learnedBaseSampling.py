@@ -125,7 +125,10 @@ class LearnedBaseSampling(ActiveLearner):
         elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
             max_sum = 0
             for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
-                random_sample = train_unlabeled_X.sample(n=sample_size)
+                random_index = np.random.choice(
+                    self.data_storage.unlabeled_mask, size=sample_size
+                )
+                random_sample = self.data_storage.X[random_index]
 
                 # calculate distance to each other
                 total_distance = np.sum(
@@ -133,11 +136,14 @@ class LearnedBaseSampling(ActiveLearner):
                 )
 
                 total_distance += np.sum(
-                    pairwise_distances(random_sample, train_labeled_X)
+                    pairwise_distances(
+                        random_sample,
+                        self.data_storage.X[self.data_storage.labeled_mask],
+                    )
                 )
                 if total_distance > max_sum:
                     max_sum = total_distance
-                    X_query = random_sample
+                    X_query_index = random_index
 
         elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
             # get n samples with highest connectivity

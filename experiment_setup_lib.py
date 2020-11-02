@@ -33,7 +33,7 @@ def get_classifier(classifier_name, random_state=None, n_jobs=None):
         return MLPClassifier(random_state=random_state, verbose=0, warm_start=False)
     elif classifier_name == "LR":
         return LogisticRegression(
-            random_state=random_state, verbose=0, warm_start=False
+            random_state=random_state, verbose=0, warm_start=False, max_iter=10000
         )
 
 
@@ -68,7 +68,7 @@ def standard_config(
         parser.add_argument("--DATASETS_PATH", default="../datasets/")
         parser.add_argument(
             "--CLASSIFIER",
-            default="LR",
+            default="RF",
             help="Supported types: RF, DTree, NB, SVM, Linear",
         )
         parser.add_argument("--N_JOBS", type=int, default=-1)
