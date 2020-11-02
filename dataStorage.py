@@ -55,11 +55,6 @@ class DataStorage:
 
         self.label_encoder = LabelEncoder()
 
-        self.labeled_mask = []
-        self.unlabeled_mask = []
-        self.Y = [1, 2, 1, 1, 1, 10, np.nan]
-        self.label_source = [np.nan]
-
         # ignore nan as labels
         Y = self.label_encoder.fit_transform(Y[~np.isnan(Y)])
 
@@ -70,13 +65,18 @@ class DataStorage:
         # scale back to [0,1]
         scaler = MinMaxScaler()
         X = scaler.fit_transform(X)
+        self.label_source = np.full(len(Y), "N", dtype=str)
+        self.Y = np.full(len(Y), -1, dtype=int)
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if sum(np.isnan(Y) > 0):
             self.unlabeled_mask = np.argwhere(np.isnan(Y))
             self.labeled_mask = np.argwhere(~np.isnan(Y))
-            self.label_source = ["G" for _ in self.labeled_mask]
+            self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
+            self.X = X
+            self.Y[self.labeled_mask] = Y
 
+            # create test split out of labeled data
             self.test_mask = self.labeled_mask[
                 0 : math.floor(len(self.labeled_mask) * TEST_FRACTION)
             ]
@@ -91,7 +91,8 @@ class DataStorage:
             # experiment setting apparently
             self.unlabeled_mask = np.arange(0, math.ceil(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0)
-            self.label_source = []
+            self.X = X
+            self.experiment_Y = Y
 
             """ 
             1. get start_set from X_labeled
@@ -107,13 +108,6 @@ class DataStorage:
             labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))
             all_label_in_start_set = False
 
-            for Y in self.train_labeled_Y:
-                if Y in labels_not_in_start_set:
-                    labels_not_in_start_set.remove(Y)
-                if len(labels_not_in_start_set) == 0:
-                    all_label_in_start_set = True
-                    break
-
             if not all_label_in_start_set:
                 #  if len(self.train_labeled_data) == 0:
                 #      print("Please specify at least one labeled example of each class")
@@ -121,17 +115,15 @@ class DataStorage:
 
                 # move more data here from the classes not present
                 for label in labels_not_in_start_set:
-                    # select a random sample which is NOT yet labeled
-                    selected_index = (
-                        self.train_unlabeled_Y[self.train_unlabeled_Y["label"] == label]
-                        .iloc[0:1]
-                        .index
-                    )
+                    # select a random sample of this labelwhich is NOT yet labeled
+                    random_index = np.where(
+                        self.experiment_Y[self.unlabeled_mask] == label
+                    )[0][0]
 
-                    self._label_samples_without_clusters(selected_index, [label], "G")
+                    self._label_samples_without_clusters(random_index, label, "G")
 
-        len_train_labeled = len(self.train_labeled_Y)
-        len_train_unlabeled = len(self.train_unlabeled_Y)
+        len_train_labeled = len(self.labeled_mask)
+        len_train_unlabeled = len(self.unlabeled_mask)
         #  len_test = len(self.X_test)
 
         len_total = len_train_unlabeled + len_train_labeled  # + len_test
@@ -281,7 +273,6 @@ class DataStorage:
         log_it(synthetic_creation_args)
         X, Y = make_classification(**synthetic_creation_args)
 
-        # feature_columns fehlt
         self.amount_of_training_samples = int(len(Y))
 
         return X, Y
@@ -484,18 +475,10 @@ class DataStorage:
                 plt.clf()
                 self.i += 1
 
-        Y_query = pd.DataFrame(
-            {"label": Y_query, "source": [source for _ in Y_query]},
-            index=query_indices,
-        )
-
-        # @todo: liber .loc[index_location] verwenden, bessere performance als append
-        self.train_labeled_X = self.train_labeled_X.append(
-            self.train_unlabeled_X.loc[query_indices]
-        )
-        self.train_labeled_Y = self.train_labeled_Y.append(Y_query)
-        self.train_unlabeled_X = self.train_unlabeled_X.drop(query_indices)
-        self.train_unlabeled_Y = self.train_unlabeled_Y.drop(query_indices)
+        self.labeled_mask = np.append(self.labeled_mask, [query_indices], axis=0)
+        self.unlabeled_mask = np.delete(self.unlabeled_mask, query_indices, axis=0)
+        self.label_source[query_indices] = source
+        self.Y[query_indices] = Y_query
 
     def label_samples(self, query_indices, Y_query, source):
         # remove from train_unlabeled_data and add to train_labeled_data
