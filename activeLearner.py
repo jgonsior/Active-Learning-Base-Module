@@ -1,7 +1,6 @@
 import abc
 
 from sklearn.utils.class_weight import compute_sample_weight
-
 from .experiment_setup_lib import (
     conf_matrix_and_acc,
     get_single_al_run_stats_row,
@@ -35,7 +34,6 @@ class ActiveLearner:
             "train_conf_matrix": [],
             "query_length": [],
             "source": [],
-            "labels_indices": [],
         }
         self.cluster_strategy = cluster_strategy
         self.amount_of_user_asked_queries = 0
@@ -45,12 +43,11 @@ class ActiveLearner:
         self.RANDOM_SEED = RANDOM_SEED
 
         # fake iteration zero
-        X_query = self.data_storage.train_labeled_X
-        Y_query = self.data_storage.train_labeled_Y
+        X_query = self.data_storage.X[self.data_storage.labeled_mask]
+        Y_query = self.data_storage.Y[self.data_storage.labeled_mask]
 
         self.metrics_per_al_cycle["source"].append("G")
         self.metrics_per_al_cycle["query_length"].append(len(Y_query))
-        self.metrics_per_al_cycle["labels_indices"].append(str(X_query.index))
 
         self.calculate_pre_metrics(X_query, Y_query)
 
@@ -63,8 +60,8 @@ class ActiveLearner:
         log_it(
             get_single_al_run_stats_row(
                 0,
-                len(self.data_storage.train_labeled_X),
-                len(self.data_storage.train_unlabeled_X),
+                len(self.data_storage.labeled_mask),
+                len(self.data_storage.unlabeled_mask),
                 self.metrics_per_al_cycle,
             )
         )
@@ -75,10 +72,11 @@ class ActiveLearner:
 
     def fit_clf(self):
         self.clf.fit(
-            self.data_storage.train_labeled_X,
-            self.data_storage.train_labeled_Y["label"].to_list(),
+            self.data_storage.X[self.data_storage.labeled_mask],
+            self.data_storage.Y[self.data_storage.labeled_mask],
             #  sample_weight=compute_sample_weight(
-            #      "balanced", self.data_storage.train_labeled_Y["label"].to_list(),
+            #      "balanced",
+            #      self.data_storage.Y[self.data_storage.labeled_mask],
             #  ),
         )
 
@@ -86,12 +84,12 @@ class ActiveLearner:
         pass
 
     def calculate_post_metrics(self, X_query, Y_query):
-        if len(self.data_storage.test_X) > 0:
+        if len(self.data_storage.test_mask) > 0:
             # experiment
             conf_matrix, acc = conf_matrix_and_acc(
                 self.clf,
-                self.data_storage.test_X,
-                self.data_storage.test_Y["label"].to_list(),
+                self.data_storage.X[self.data_storage.test_mask],
+                self.data_storage.experiment_Y[self.data_storage.test_mask],
                 self.data_storage.label_encoder,
             )
         else:
@@ -100,12 +98,12 @@ class ActiveLearner:
         self.metrics_per_al_cycle["test_conf_matrix"].append(conf_matrix)
         self.metrics_per_al_cycle["test_acc"].append(acc)
 
-        if not self.data_storage.train_unlabeled_Y.label.isnull().values.any():
+        if len(self.data_storage.test_mask) > 0:
             # experiment
             conf_matrix, acc = conf_matrix_and_acc(
                 self.clf,
-                self.data_storage.train_labeled_X,
-                self.data_storage.train_labeled_Y["label"].to_list(),
+                self.data_storage.X[self.data_storage.labeled_mask],
+                self.data_storage.Y[self.data_storage.labeled_mask],
                 self.data_storage.label_encoder,
             )
         else:
@@ -116,10 +114,10 @@ class ActiveLearner:
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.train_unlabeled_Y_predicted = self.clf.predict(
-                self.data_storage.train_unlabeled_X
+                self.data_storage.X[self.data_storage.unlabeled_mask]
             )
             self.data_storage.train_labeled_Y_predicted = self.clf.predict(
-                self.data_storage.train_labeled_X
+                self.data_storage.X[self.data_storage.labeled_mask]
             )
 
     def get_newly_labeled_data(self):
@@ -157,8 +155,8 @@ class ActiveLearner:
 
         for i in range(0, self.NR_LEARNING_ITERATIONS):
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
-            if len(self.data_storage.train_unlabeled_X) < self.nr_queries_per_iteration:
-                self.nr_queries_per_iteration = len(self.data_storage.train_unlabeled_X)
+            if len(self.data_storage.unlabeled_mask) < self.nr_queries_per_iteration:
+                self.nr_queries_per_iteration = len(self.data_storage.unlabeled_mask)
             if self.nr_queries_per_iteration == 0:
                 break
 
@@ -190,11 +188,10 @@ class ActiveLearner:
 
             self.metrics_per_al_cycle["source"].append(source)
             self.metrics_per_al_cycle["query_length"].append(len(Y_query))
-            self.metrics_per_al_cycle["labels_indices"].append(str(query_indices))
 
             self.data_storage.label_samples(query_indices, Y_query, source)
 
-            X_query = self.data_storage.train_labeled_X.loc[query_indices]
+            X_query = self.data_storage.X[query_indices]
 
             self.calculate_pre_metrics(X_query, Y_query)
 
@@ -206,8 +203,8 @@ class ActiveLearner:
             log_it(
                 get_single_al_run_stats_row(
                     i,
-                    len(self.data_storage.train_labeled_X),
-                    len(self.data_storage.train_unlabeled_X),
+                    len(self.data_storage.labeled_mask),
+                    len(self.data_storage.unlabeled_mask),
                     self.metrics_per_al_cycle,
                 )
             )

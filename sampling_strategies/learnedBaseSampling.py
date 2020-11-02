@@ -43,10 +43,6 @@ class LearnedBaseSampling(ActiveLearner):
         self.INITIAL_BATCH_SAMPLING_METHOD = INITIAL_BATCH_SAMPLING_METHOD
         self.INITIAL_BATCH_SAMPLING_ARG = INITIAL_BATCH_SAMPLING_ARG
 
-        self.lru_samples = pd.DataFrame(
-            data=None, columns=self.data_storage.train_unlabeled_X.columns, index=None
-        )
-
         if INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
             # compute k-nearest neighbors grap
             self.compute_graph_density()
@@ -97,12 +93,12 @@ class LearnedBaseSampling(ActiveLearner):
         self.data_storage.graph_density_labeled = pd.DataFrame(columns=["density"])
         self.data_storage.graph_density_unlabeled = pd.DataFrame(columns=["density"])
 
-        for i in range(0, len(self.data_storage.train_unlabeled_X)):
+        for i in range(0, len(self.data_storage.X[self.data_storage.unlabeled_mask])):
             self.data_storage.graph_density_unlabeled.loc[X_df.index[i]] = [
                 connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
             ]
 
-        for i in range(0, len(self.data_storage.train_labeled_X)):
+        for i in range(0, len(self.data_storage.X[self.data_storage.labeled_mask])):
             self.data_storage.graph_density_labeled.loc[X_df.index[i]] = [
                 connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
             ]
@@ -117,14 +113,15 @@ class LearnedBaseSampling(ActiveLearner):
 
     def sample_unlabeled_X(
         self,
-        train_unlabeled_X,
-        train_labeled_X,
         sample_size,
         INITIAL_BATCH_SAMPLING_METHOD,
         INITIAL_BATCH_SAMPLING_ARG,
     ):
         if INITIAL_BATCH_SAMPLING_METHOD == "random":
-            X_query = train_unlabeled_X.sample(n=sample_size)
+            X_query_index = np.random.choice(
+                self.data_storage.unlabeled_mask, size=sample_size
+            )
+
         elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
             max_sum = 0
             for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
@@ -152,19 +149,21 @@ class LearnedBaseSampling(ActiveLearner):
             )[-sample_size:]
             print(max_n_local_indices)
             print(self.data_storage.graph_density_unlabeled[max_n_local_indices])
-            possible_samples_indices = self.data_storage.graph_density_unlabeled[
-                "density"
-            ][max_n_local_indices]
-            X_query = self.data_storage.train_unlabeled_X[possible_samples_indices]
+            X_query_index = self.data_storage.graph_density_unlabeled["density"][
+                max_n_local_indices
+            ]
+            X_query = self.data_storage.X[self.data_storage.unlabeled_mask][
+                X_query_index
+            ]
             exit(-1)
-        return X_query
+        return X_query_index
 
     @abc.abstractmethod
     def calculate_next_query_indices_pre_hook(self):
         pass
 
     @abc.abstractmethod
-    def get_X_query(self):
+    def get_X_query_index(self):
         pass
 
     @abc.abstractmethod
@@ -177,35 +176,33 @@ class LearnedBaseSampling(ActiveLearner):
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         self.calculate_next_query_indices_pre_hook()
-        X_query = self.get_X_query()
-        possible_samples_indices = X_query.index
+        X_query_index = self.get_X_query_index()
 
         if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.possible_samples_indices = X_query.index
+            self.data_storage.X_query_index = X_query_index
 
         X_state = self.calculate_state(
-            X_query,
+            self.data_storage.X[X_query_index],
             STATE_ARGSECOND_PROBAS=self.STATE_ARGSECOND_PROBAS,
             STATE_DIFF_PROBAS=self.STATE_DIFF_PROBAS,
             STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
             STATE_DISTANCES_LAB=self.STATE_DISTANCES_LAB,
             STATE_DISTANCES_UNLAB=self.STATE_DISTANCES_UNLAB,
             STATE_PREDICTED_CLASS=self.STATE_PREDICTED_CLASS,
-            lru_samples=self.lru_samples,
         )
 
         self.calculate_next_query_indices_post_hook(X_state)
 
         # use the optimal values
         zero_to_one_values_and_index = list(
-            zip(self.get_sorting(X_state), possible_samples_indices)
+            zip(self.get_sorting(X_state), X_query_index)
         )
         ordered_list_of_possible_sample_indices = sorted(
             zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True
         )
 
         if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.possible_samples_indices = possible_samples_indices
+            self.data_storage.X_query_index = X_query_index
 
         return [
             v
@@ -223,7 +220,6 @@ class LearnedBaseSampling(ActiveLearner):
         STATE_DISTANCES_LAB,
         STATE_DISTANCES_UNLAB,
         STATE_PREDICTED_CLASS,
-        lru_samples=[],
     ):
         possible_samples_probas = self.clf.predict_proba(X_query)
 
@@ -249,10 +245,12 @@ class LearnedBaseSampling(ActiveLearner):
             # calculate average distance to labeled and average distance to unlabeled samples
             average_distance_labeled = (
                 np.sum(
-                    pairwise_distances(self.data_storage.train_labeled_X, X_query),
+                    pairwise_distances(
+                        self.data_storage.X[self.data_storage.labeled_mask], X_query
+                    ),
                     axis=0,
                 )
-                / len(self.data_storage.train_labeled_X)
+                / len(self.data_storage.X[self.data_storage.labeled_mask])
             )
             state_list += average_distance_labeled.tolist()
 
@@ -260,10 +258,12 @@ class LearnedBaseSampling(ActiveLearner):
             # calculate average distance to labeled and average distance to unlabeled samples
             average_distance_unlabeled = (
                 np.sum(
-                    pairwise_distances(self.data_storage.train_unlabeled_X, X_query),
+                    pairwise_distances(
+                        self.data_storage.X[self.data_storage.unlabeled_mask], X_query
+                    ),
                     axis=0,
                 )
-                / len(self.data_storage.train_unlabeled_X)
+                / len(self.data_storage.X[self.data_storage.unlabeled_mask])
             )
             state_list += average_distance_unlabeled.tolist()
 

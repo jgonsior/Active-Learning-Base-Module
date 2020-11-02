@@ -38,10 +38,8 @@ class TrainedNNLearner(LearnedBaseSampling):
             STATE_PREDICTED_CLASS=STATE_PREDICTED_CLASS,
         )
 
-    def get_X_query(self):
+    def get_X_query_index(self):
         return self.sample_unlabeled_X(
-            self.data_storage.train_unlabeled_X,
-            self.data_storage.train_labeled_X,
             self.sampling_classifier.n_outputs_,
         )
 

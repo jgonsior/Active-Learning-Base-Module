@@ -66,7 +66,6 @@ class DataStorage:
         scaler = MinMaxScaler()
         X = scaler.fit_transform(X)
         self.label_source = np.full(len(Y), "N", dtype=str)
-        self.Y = np.full(len(Y), -1, dtype=int)
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if sum(np.isnan(Y) > 0):
@@ -74,6 +73,7 @@ class DataStorage:
             self.labeled_mask = np.argwhere(~np.isnan(Y))
             self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
             self.X = X
+            self.Y = np.full(len(self.labeled_mask), np.nan, dtype=np.int64)
             self.Y[self.labeled_mask] = Y
 
             # create test split out of labeled data
@@ -86,13 +86,13 @@ class DataStorage:
 
         else:
             # split into test, train_labeled, train_unlabeled
-            self.test_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
-
+            self.test_mask = np.arange(math.floor(len(Y) * TEST_FRACTION), len(Y))
             # experiment setting apparently
             self.unlabeled_mask = np.arange(0, math.ceil(len(Y) * TEST_FRACTION))
-            self.labeled_mask = np.empty(0)
+            self.labeled_mask = np.empty(0, dtype=np.int64)
             self.X = X
             self.experiment_Y = Y
+            self.Y = np.full(len(self.unlabeled_mask), -1, dtype=np.int64)
 
             """ 
             1. get start_set from X_labeled
@@ -120,7 +120,7 @@ class DataStorage:
                         self.experiment_Y[self.unlabeled_mask] == label
                     )[0][0]
 
-                    self._label_samples_without_clusters(random_index, label, "G")
+                    self._label_samples_without_clusters([random_index], label, "G")
 
         len_train_labeled = len(self.labeled_mask)
         len_train_unlabeled = len(self.unlabeled_mask)
@@ -475,7 +475,11 @@ class DataStorage:
                 plt.clf()
                 self.i += 1
 
-        self.labeled_mask = np.append(self.labeled_mask, [query_indices], axis=0)
+        #  print(self.Y)
+        #  print(self.labeled_mask)
+        #  print(Y_query)
+
+        self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
         self.unlabeled_mask = np.delete(self.unlabeled_mask, query_indices, axis=0)
         self.label_source[query_indices] = source
         self.Y[query_indices] = Y_query
@@ -484,25 +488,26 @@ class DataStorage:
         # remove from train_unlabeled_data and add to train_labeled_data
         self._label_samples_without_clusters(query_indices, Y_query, source)
 
+        # removed clustering code
         # remove indices from all clusters in unlabeled and add to labeled
-        for cluster_id in self.train_unlabeled_cluster_indices.keys():
-            list_to_be_removed_and_appended = []
-            for indice in query_indices:
-                if indice in self.train_unlabeled_cluster_indices[cluster_id]:
-                    list_to_be_removed_and_appended.append(indice)
-
-            # don't change a list you're iterating over!
-            for indice in list_to_be_removed_and_appended:
-                self.train_unlabeled_cluster_indices[cluster_id].remove(indice)
-                self.train_labeled_cluster_indices[cluster_id].append(indice)
-
-        # remove possible empty clusters
-        self.train_unlabeled_cluster_indices = {
-            k: v for k, v in self.train_unlabeled_cluster_indices.items() if len(v) != 0
-        }
+        #  for cluster_id in self.train_unlabeled_cluster_indices.keys():
+        #      list_to_be_removed_and_appended = []
+        #      for indice in query_indices:
+        #          if indice in self.train_unlabeled_cluster_indices[cluster_id]:
+        #              list_to_be_removed_and_appended.append(indice)
+        #
+        #      # don't change a list you're iterating over!
+        #      for indice in list_to_be_removed_and_appended:
+        #          self.train_unlabeled_cluster_indices[cluster_id].remove(indice)
+        #          self.train_labeled_cluster_indices[cluster_id].append(indice)
+        #
+        #  # remove possible empty clusters
+        #  self.train_unlabeled_cluster_indices = {
+        #      k: v for k, v in self.train_unlabeled_cluster_indices.items() if len(v) != 0
+        #  }
 
     def get_true_label(self, query_indice):
-        return self.train_unlabeled_Y.loc[query_indice, "label"]
+        return self.experiment_Y[query_indice]
 
     def get_all_train_X(self):
         return pd.concat([self.train_labeled_X, self.train_unlabeled_X])

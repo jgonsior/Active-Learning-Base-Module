@@ -43,8 +43,8 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
         PLOT_EVOLUTION=hyper_parameters["PLOT_EVOLUTION"],
         GENERATE_NOISE=hyper_parameters["GENERATE_NOISE"],
     )
-    hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.train_unlabeled_Y) + len(
-        data_storage.train_labeled_Y
+    hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.unlabeled_mask) + len(
+        data_storage.labeled_mask
     )
 
     if hyper_parameters["CLUSTER"] == "dummy":
@@ -185,33 +185,38 @@ def eval_al(
         / (percentage_user_asked_queries + test_acc)
     )
 
-    amount_of_all_labels = len(data_storage.train_labeled_Y)
+    amount_of_all_labels = len(data_storage.labeled_mask)
 
     # calculate accuracy for Random Forest only on oracle human expert queries
     active_rf = get_classifier(hyper_parameters["CLASSIFIER"])
 
-    Y_train_al = data_storage.train_labeled_Y
-
-    ys_oracle_a = Y_train_al.loc[Y_train_al.source == "A"]
-    ys_oracle_g = Y_train_al.loc[Y_train_al.source == "G"]
-    ys_oracle = pd.concat([ys_oracle_g, ys_oracle_a])
+    #  Y_train_al = data_storage.Y[data_storage.labeled_mask]
+    #
+    #  ys_oracle_a = Y_train_al.loc[Y_train_al.source == "A"]
+    #  ys_oracle_g = Y_train_al.loc[Y_train_al.source == "G"]
+    #  ys_oracle = pd.concat([ys_oracle_g, ys_oracle_a])
 
     active_rf.fit(
-        data_storage.train_labeled_X.loc[ys_oracle.index], ys_oracle["label"].to_list()
+        data_storage.X[data_storage.labeled_mask],
+        data_storage.Y[data_storage.labeled_mask]
+        #  data_storage.train_labeled_X.loc[ys_oracle.index], ys_oracle["label"].to_list()
     )
-    y_pred = active_rf.predict(data_storage.test_X)
-    acc_test_oracle = accuracy_score(data_storage.test_Y, y_pred)
-    y_probas = active_rf.predict_proba(data_storage.test_X)
+
+    y_pred = active_rf.predict(data_storage.X[data_storage.test_mask])
+    acc_test_oracle = accuracy_score(
+        data_storage.experiment_Y[data_storage.test_mask], y_pred
+    )
+    y_probas = active_rf.predict_proba(data_storage.X[data_storage.test_mask])
 
     if data_storage.synthetic_creation_args["n_classes"] > 2:
         roc_auc_macro_oracle = roc_auc_score(
-            data_storage.test_Y["label"].to_list(),
+            data_storage.experiment_Y[data_storage.test_mask],
             y_probas,
             average="macro",
             multi_class="ovo",
         )
         roc_auc_weighted_oracle = roc_auc_score(
-            data_storage.test_Y["label"].to_list(),
+            data_storage.experiment_Y[data_storage.test_mask],
             y_probas,
             average="weighted",
             multi_class="ovo",
@@ -219,13 +224,13 @@ def eval_al(
     else:
         y_probas = np.max(y_probas, axis=1)
         roc_auc_macro_oracle = roc_auc_score(
-            data_storage.test_Y["label"].to_list(),
+            data_storage.experiment_Y[data_storage.test_mask],
             y_probas,
             average="macro",
             multi_class="ovo",
         )
         roc_auc_weighted_oracle = roc_auc_score(
-            data_storage.test_Y["label"].to_list(),
+            data_storage.experiment_Y[data_storage.test_mask],
             y_probas,
             average="weighted",
             multi_class="ovo",

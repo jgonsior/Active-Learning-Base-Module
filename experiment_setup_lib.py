@@ -18,16 +18,23 @@ import scipy
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import LogisticRegression
 
 
 def get_classifier(classifier_name, random_state=None, n_jobs=None):
     if classifier_name == "RF":
-        return RandomForestClassifier(n_jobs=n_jobs, random_state=random_state)
+        return RandomForestClassifier(
+            n_jobs=n_jobs, random_state=random_state, warm_start=False
+        )
     elif classifier_name == "SVM":
-        return SVC(probability=True, random_state=random_state)
+        return SVC(probability=True, random_state=random_state, warm_start=False)
     elif classifier_name == "MLP":
         warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
-        return MLPClassifier(random_state=random_state, verbose=0)
+        return MLPClassifier(random_state=random_state, verbose=0, warm_start=False)
+    elif classifier_name == "LR":
+        return LogisticRegression(
+            random_state=random_state, verbose=0, warm_start=False
+        )
 
 
 # really dirty hack to provide logging as functions instead of objects
@@ -61,7 +68,7 @@ def standard_config(
         parser.add_argument("--DATASETS_PATH", default="../datasets/")
         parser.add_argument(
             "--CLASSIFIER",
-            default="RF",
+            default="LR",
             help="Supported types: RF, DTree, NB, SVM, Linear",
         )
         parser.add_argument("--N_JOBS", type=int, default=-1)
