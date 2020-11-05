@@ -89,7 +89,7 @@ class ActiveLearner:
             conf_matrix, acc = conf_matrix_and_acc(
                 self.clf,
                 self.data_storage.X[self.data_storage.test_mask],
-                self.data_storage.experiment_Y[self.data_storage.test_mask],
+                self.data_storage.Y[self.data_storage.test_mask],
                 self.data_storage.label_encoder,
             )
         else:

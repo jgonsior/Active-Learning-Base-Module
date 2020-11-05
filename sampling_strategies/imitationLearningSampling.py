@@ -210,8 +210,8 @@ class ImitationLearner(LearnedBaseSampling):
         #          copy_of_data_storage.train_labeled_Y["label"].to_list(),
         #      )
 
-        Y_pred_test = copy_of_classifier.predict(data_storage.X[data_storage.test_mask])
-        Y_true = data_storage.experiment_Y[data_storage.test_mask]
+        Y_pred_test = copy_of_classifier.predict(data_storage.X)
+        Y_true = data_storage.Y
 
         accuracy_with_that_label = accuracy_score(Y_pred_test, Y_true)
 

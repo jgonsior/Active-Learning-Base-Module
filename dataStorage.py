@@ -91,8 +91,7 @@ class DataStorage:
             self.unlabeled_mask = np.arange(0, math.ceil(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.X = X
-            self.experiment_Y = Y
-            self.Y = np.full(len(self.unlabeled_mask), -1, dtype=np.int64)
+            self.Y = Y
 
             """ 
             1. get start_set from X_labeled
@@ -116,9 +115,7 @@ class DataStorage:
                 # move more data here from the classes not present
                 for label in labels_not_in_start_set:
                     # select a random sample of this labelwhich is NOT yet labeled
-                    random_index = np.where(
-                        self.experiment_Y[self.unlabeled_mask] == label
-                    )[0][0]
+                    random_index = np.where(self.Y[self.unlabeled_mask] == label)[0][0]
 
                     self._label_samples_without_clusters([random_index], label, "G")
 
@@ -482,7 +479,8 @@ class DataStorage:
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
         self.unlabeled_mask = np.delete(self.unlabeled_mask, query_indices, axis=0)
         self.label_source[query_indices] = source
-        self.Y[query_indices] = Y_query
+        # is not working with initial labels, after that it works, but isn't needed
+        #  self.Y[query_indices] = Y_query
 
     def label_samples(self, query_indices, Y_query, source):
         # remove from train_unlabeled_data and add to train_labeled_data
@@ -507,7 +505,7 @@ class DataStorage:
         #  }
 
     def get_true_label(self, query_indice):
-        return self.experiment_Y[query_indice]
+        return self.Y[query_indice]
 
     def get_all_train_X(self):
         return pd.concat([self.train_labeled_X, self.train_unlabeled_X])

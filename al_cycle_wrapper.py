@@ -203,20 +203,18 @@ def eval_al(
     )
 
     y_pred = active_rf.predict(data_storage.X[data_storage.test_mask])
-    acc_test_oracle = accuracy_score(
-        data_storage.experiment_Y[data_storage.test_mask], y_pred
-    )
+    acc_test_oracle = accuracy_score(data_storage.Y[data_storage.test_mask], y_pred)
     y_probas = active_rf.predict_proba(data_storage.X[data_storage.test_mask])
 
     if data_storage.synthetic_creation_args["n_classes"] > 2:
         roc_auc_macro_oracle = roc_auc_score(
-            data_storage.experiment_Y[data_storage.test_mask],
+            data_storage.Y[data_storage.test_mask],
             y_probas,
             average="macro",
             multi_class="ovo",
         )
         roc_auc_weighted_oracle = roc_auc_score(
-            data_storage.experiment_Y[data_storage.test_mask],
+            data_storage.Y[data_storage.test_mask],
             y_probas,
             average="weighted",
             multi_class="ovo",
@@ -224,13 +222,13 @@ def eval_al(
     else:
         y_probas = np.max(y_probas, axis=1)
         roc_auc_macro_oracle = roc_auc_score(
-            data_storage.experiment_Y[data_storage.test_mask],
+            data_storage.Y[data_storage.test_mask],
             y_probas,
             average="macro",
             multi_class="ovo",
         )
         roc_auc_weighted_oracle = roc_auc_score(
-            data_storage.experiment_Y[data_storage.test_mask],
+            data_storage.Y[data_storage.test_mask],
             y_probas,
             average="weighted",
             multi_class="ovo",
