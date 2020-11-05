@@ -146,9 +146,9 @@ class DataStorage:
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
 
         self.synthetic_creation_args = {}
-        self.synthetic_creation_args["n_classes"] = len(df["label"].unique())
+        self.synthetic_creation_args["n_classes"] = len(df["LABEL"].unique())
 
-        Y = df["LABELS"].to_numpy()
+        Y = df["LABEL"].to_numpy()
         le = LabelEncoder()
         Y = le.fit_transform(Y)
 
