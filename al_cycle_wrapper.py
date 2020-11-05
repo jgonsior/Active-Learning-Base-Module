@@ -133,6 +133,10 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
             STATE_PREDICTED_CLASS=hyper_parameters["STATE_PREDICTED_CLASS"],
             STATE_ARGTHIRD_PROBAS=hyper_parameters["STATE_ARGTHIRD_PROBAS"],
             STATE_ARGSECOND_PROBAS=hyper_parameters["STATE_ARGSECOND_PROBAS"],
+            INITIAL_BATCH_SAMPLING_METHOD=hyper_parameters[
+                "INITIAL_BATCH_SAMPLING_METHOD"
+            ],
+            INITIAL_BATCH_SAMPLING_ARG=hyper_parameters["INITIAL_BATCH_SAMPLING_ARG"],
         )
         active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
             "MAX_AMOUNT_OF_WS_PEAKS"

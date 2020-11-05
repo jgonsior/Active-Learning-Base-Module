@@ -1,3 +1,4 @@
+import pandas as pd
 import math
 import seaborn as sns
 import random
@@ -42,14 +43,12 @@ class DataStorage:
         if df is None:
             log_it("Loading " + DATASET_NAME)
             if DATASET_NAME == "dwtc":
-                df = self._load_dwtc(DATASETS_PATH)
+                X, Y = self._load_dwtc(DATASETS_PATH)
             elif DATASET_NAME == "synthetic":
                 X, Y = self._load_synthetic(RANDOM_SEED=RANDOM_SEED, **kwargs)
             else:
-                df = self._load_uci(DATASET_NAME, DATASETS_PATH)
+                X, Y = self._load_uci(DATASET_NAME, DATASETS_PATH)
                 #  df = self._load_alc(DATASET_NAME, DATASETS_PATH)
-        else:
-            self.amount_of_training_samples = 0
 
         self.hyper_parameters = hyper_parameters
 
@@ -117,6 +116,10 @@ class DataStorage:
                     # select a random sample of this labelwhich is NOT yet labeled
                     random_index = np.where(self.Y[self.unlabeled_mask] == label)[0][0]
 
+                    # the random_index before is an index on Y[unlabeled_mask], and therefore NOT the same as an index on purely Y
+                    # therefore it needs to be converted first
+                    random_index = self.unlabeled_mask[random_index]
+
                     self._label_samples_without_clusters([random_index], label, "G")
 
         len_train_labeled = len(self.labeled_mask)
@@ -142,12 +145,14 @@ class DataStorage:
         # shuffle df
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
 
-        df.rename({"LABEL": "label"}, axis="columns", inplace=True)
         self.synthetic_creation_args = {}
         self.synthetic_creation_args["n_classes"] = len(df["label"].unique())
 
-        self.amount_of_training_samples = int(len(df) * 0.5)
-        return df
+        Y = df["LABELS"].to_numpy()
+        le = LabelEncoder()
+        Y = le.fit_transform(Y)
+
+        return df.loc[:, df.columns != "LABEL"].to_numpy(), Y
 
     def _load_dwtc(self, DATASETS_PATH):
         df = pd.read_csv(DATASETS_PATH + "dwtc/aft.csv")
@@ -155,12 +160,14 @@ class DataStorage:
         # shuffle df
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
 
-        df.rename({"CLASS": "label"}, axis="columns", inplace=True)
         self.synthetic_creation_args = {}
-        self.synthetic_creation_args["n_classes"] = len(df["label"].unique())
+        self.synthetic_creation_args["n_classes"] = len(df["CLASS"].unique())
 
-        self.amount_of_training_samples = int(len(df) * 0.5)
-        return df
+        Y = df["CLASS"].to_numpy()
+        le = LabelEncoder()
+        Y = le.fit_transform(Y)
+
+        return df.loc[:, df.columns != "CLASS"].to_numpy(), Y
 
     def _load_synthetic(self, RANDOM_SEED, **kwargs):
         no_valid_synthetic_arguments_found = True
@@ -270,8 +277,6 @@ class DataStorage:
         log_it(synthetic_creation_args)
         X, Y = make_classification(**synthetic_creation_args)
 
-        self.amount_of_training_samples = int(len(Y))
-
         return X, Y
 
     def _load_alc(self, DATASET_NAME, DATASETS_PATH):
@@ -294,19 +299,8 @@ class DataStorage:
 
         labels = labels.replace([-1], "A")
         labels = labels.replace([1], "B")
-        df["label"] = labels[0]
-        #  Y_temp = labels[0].to_numpy()
-        train_indices = {
-            "ibn_sina": 10361,
-            "hiva": 21339,
-            "nova": 9733,
-            "orange": 25000,
-            "sylva": 72626,
-            "zebra": 30744,
-        }
-        self.amount_of_training_samples = train_indices[DATASET_NAME]
 
-        return df
+        return df.to_numpy(), labels[0].to_numpy()
 
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
         if self.PLOT_EVOLUTION and source != "P":

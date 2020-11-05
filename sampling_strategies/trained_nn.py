@@ -20,6 +20,8 @@ class TrainedNNLearner(LearnedBaseSampling):
         STATE_ARGTHIRD_PROBAS,
         STATE_PREDICTED_CLASS,
         STATE_ARGSECOND_PROBAS,
+        INITIAL_BATCH_SAMPLING_METHOD,
+        INITIAL_BATCH_SAMPLING_ARG,
     ):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
@@ -36,11 +38,15 @@ class TrainedNNLearner(LearnedBaseSampling):
             STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
             STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
             STATE_PREDICTED_CLASS=STATE_PREDICTED_CLASS,
+            INITIAL_BATCH_SAMPLING_ARG=INITIAL_BATCH_SAMPLING_ARG,
+            INITIAL_BATCH_SAMPLING_METHOD=INITIAL_BATCH_SAMPLING_METHOD,
         )
 
     def get_X_query_index(self):
         return self.sample_unlabeled_X(
             self.sampling_classifier.n_outputs_,
+            INITIAL_BATCH_SAMPLING_ARG=self.INITIAL_BATCH_SAMPLING_ARG,
+            INITIAL_BATCH_SAMPLING_METHOD=self.INITIAL_BATCH_SAMPLING_METHOD,
         )
 
     def get_sorting(self, X_state):
