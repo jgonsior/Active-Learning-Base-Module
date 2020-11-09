@@ -532,6 +532,9 @@ class DataStorage:
         # remove before performance measurements -> only a development safety measure
         assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
         assert len(np.intersect1d(query_indices, self.test_mask)) == 0
+        print(query_indices)
+        print(self.unlabeled_mask)
+        print(np.intersect1d(query_indices, self.unlabeled_mask))
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
             query_indices
         )
@@ -548,11 +551,10 @@ class DataStorage:
             #  print((self.connect_lil[query_indices, :] > 0).nonzero()[1])
             #  exit(-1)
             neighbors = (self.connect_lil[query_indices, :] > 0).nonzero()[1]
-            #  self.graph_density[neighbors] = (
-            #      self.graph_density[neighbors] - self.graph_density[query_indices]
-            #  )
-            self.graph_density[neighbors] = -100
-            #  print(neighbors)
+            self.graph_density[neighbors] = (
+                self.graph_density[neighbors] - self.graph_density[query_indices]
+            )
+            print(neighbors)
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
 

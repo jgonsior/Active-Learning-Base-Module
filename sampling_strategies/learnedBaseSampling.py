@@ -49,14 +49,14 @@ class LearnedBaseSampling(ActiveLearner):
     ):
         if INITIAL_BATCH_SAMPLING_METHOD == "random":
             X_query_index = np.random.choice(
-                self.data_storage.unlabeled_mask, size=sample_size
+                self.data_storage.unlabeled_mask, size=sample_size, replace=False
             )
 
         elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
             max_sum = 0
             for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
                 random_index = np.random.choice(
-                    self.data_storage.unlabeled_mask, size=sample_size
+                    self.data_storage.unlabeled_mask, size=sample_size, replace=False
                 )
                 random_sample = self.data_storage.X[random_index]
 
