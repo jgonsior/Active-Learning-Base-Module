@@ -73,9 +73,6 @@ class DataStorage:
         X = scaler.fit_transform(X)
         self.label_source = np.full(len(Y), "N", dtype=str)
         self.X = X
-        if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            # compute k-nearest neighbors grap
-            self.compute_graph_density()
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if sum(np.isnan(Y) > 0):
@@ -92,6 +89,9 @@ class DataStorage:
             self.labeled_mask = self.labeled_mask[
                 math.floor(len(self.labeled_mask) * TEST_FRACTION) :
             ]
+            if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+                # compute k-nearest neighbors graph
+                self.compute_graph_density()
 
         else:
             # split into test, train_labeled, train_unlabeled
@@ -100,6 +100,9 @@ class DataStorage:
             self.unlabeled_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
+            if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+                # compute k-nearest neighbors graph
+                self.compute_graph_density()
 
             """ 
             1. get start_set from X_labeled
@@ -314,10 +317,12 @@ class DataStorage:
     # adapted from https://github.com/google/active-learning/blob/master/sampling_methods/graph_density.py#L47-L72
     # original idea: https://www.mpi-inf.mpg.de/fileadmin/inf/d2/Research_projects_files/EbertCVPR2012.pdf
     def compute_graph_density(self, n_neighbor=10):
-        shape = np.shape(self.X)
-        flat_X = self.X
+        shape = np.shape(self.X[self.unlabeled_mask])
+        flat_X = self.X[self.unlabeled_mask]
         if len(shape) > 2:
-            flat_X = np.reshape(self.X, (shape[0], np.product(shape[1:])))
+            flat_X = np.reshape(
+                self.X[self.unlabeled_mask], (shape[0], np.product(shape[1:]))
+            )
 
         gamma = 1.0 / shape[1]
 
@@ -364,7 +369,6 @@ class DataStorage:
                 connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
             )
         self.connect_lil = connect_lil
-        #  self.starting_density = copy.deepcopy(self.graph_density)
 
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
         if self.PLOT_EVOLUTION and source != "P":
@@ -540,23 +544,15 @@ class DataStorage:
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
             query_indices
         )
+        print("Label: ", query_indices)
 
-        # -> select samples as a batch and update graph denisty in one run for it completely, or do it on the fly while collecting batch?!
-        # --> compare both in opti_setting!
-        #  -> in RALF im Detail nachlesen, wie genau die Updates vom density graph aussehen, wann kommt -1, etc.
         if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            #  print(query_indices)
-            #  print(self.connect_lil[query_indices])
-            #  print(self.connect_lil[query_indices, :])
-            #  print(self.connect_lil[query_indices, :] > 0)
-            #  print((self.connect_lil[query_indices, :] > 0).nonzero())
-            #  print((self.connect_lil[query_indices, :] > 0).nonzero()[1])
-            #  exit(-1)
-            neighbors = (self.connect_lil[query_indices, :] > 0).nonzero()[1]
-            self.graph_density[neighbors] = (
-                self.graph_density[neighbors] - self.graph_density[query_indices]
-            )
-            print(neighbors)
+            for selected in query_indices:
+                neighbors = (self.connect_lil[selected, :] > 0).nonzero()[1]
+                self.graph_density[neighbors] = (
+                    self.graph_density[neighbors] - self.graph_density[selected]
+                )
+            self.graph_density[query_indices] = min(self.graph_density) - 1
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
 

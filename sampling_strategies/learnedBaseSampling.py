@@ -76,15 +76,24 @@ class LearnedBaseSampling(ActiveLearner):
                     X_query_index = random_index
 
         elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            # take those n samples who have the highest graph_density
-            unlabeled_mask_local_max_n_indices = np.argpartition(
-                self.data_storage.graph_density[self.data_storage.unlabeled_mask],
-                -sample_size,
-            )[-sample_size:]
+            graph_density = copy.deepcopy(self.data_storage.graph_density)
 
-            X_query_index = self.data_storage.unlabeled_mask[
-                unlabeled_mask_local_max_n_indices
-            ]
+            initial_sample_indexes = []
+
+            for _ in range(1, sample_size):
+                selected = np.argmax(graph_density)
+                neighbors = (self.data_storage.connect_lil[selected, :] > 0).nonzero()[
+                    1
+                ]
+                graph_density[neighbors] = (
+                    graph_density[neighbors] - graph_density[selected]
+                )
+                initial_sample_indexes.append(selected)
+                graph_density[initial_sample_indexes] = min(graph_density) - 1
+
+            X_query_index = self.data_storage.unlabeled_mask[initial_sample_indexes]
+            print(X_query_index)
+
         return X_query_index
 
     @abc.abstractmethod
