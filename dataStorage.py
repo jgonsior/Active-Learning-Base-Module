@@ -1,3 +1,4 @@
+from numba import jit
 import copy
 import pandas as pd
 from sklearn.metrics import pairwise_distances
@@ -17,6 +18,15 @@ from .experiment_setup_lib import log_it
 
 # refactoring: dataset wird ein pandas dataframe:
 # id, feature_columns, label (-1 heißt gibt's noch nie, kann auch weak sein), true_label, dataset (train, test, val?), label_source
+
+
+@jit(nopython=True)
+def _find_first(item, vec):
+    """return the index of the first occurence of item in vec"""
+    for i in range(len(vec)):
+        if item == vec[i]:
+            return i
+    return -1
 
 
 class DataStorage:
@@ -95,9 +105,9 @@ class DataStorage:
 
         else:
             # split into test, train_labeled, train_unlabeled
-            self.test_mask = np.arange(math.floor(len(Y) * TEST_FRACTION), len(Y))
             # experiment setting apparently
-            self.unlabeled_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
+            self.unlabeled_mask = np.arange(math.floor(len(Y) * TEST_FRACTION), len(Y))
+            self.test_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
             if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
@@ -548,14 +558,24 @@ class DataStorage:
         #  print("Label: ", query_indices)
 
         if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+            graph_density_query_indices = []
             for selected in query_indices:
-                neighbors = (self.connect_lil[selected, :] > 0).nonzero()[1]
-                self.graph_density[neighbors] = (
-                    self.graph_density[neighbors] - self.graph_density[selected]
+                graph_density_query_index = _find_first(
+                    selected, self.initial_unlabeled_mask
                 )
-            self.graph_density[query_indices] = min(self.graph_density) - 1
-
-        #  print("1988", self.graph_density[1988])
+                graph_density_query_indices.append(graph_density_query_index)
+                neighbors = (
+                    self.connect_lil[graph_density_query_index, :] > 0
+                ).nonzero()[1]
+                self.graph_density[neighbors] = (
+                    self.graph_density[neighbors]
+                    - self.graph_density[graph_density_query_index]
+                )
+                self.graph_density[graph_density_query_indices] = (
+                    min(self.graph_density) - 1
+                )
+        #  plt.hist(np.hstack(self.graph_density))
+        #  plt.show()
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
 
