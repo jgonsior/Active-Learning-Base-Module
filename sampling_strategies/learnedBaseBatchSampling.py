@@ -17,108 +17,81 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import MinMaxScaler
 import abc
-from ..activeLearner import ActiveLearner
+from .learnedBaseSampling import LearnedBaseSampling
 
 
-class LearnedBaseSampling(ActiveLearner):
-    def init_sampling_classifier(
-        self,
-        STATE_DISTANCES_LAB,
-        STATE_DISTANCES_UNLAB,
-        STATE_DIFF_PROBAS,
-        STATE_ARGTHIRD_PROBAS,
-        STATE_PREDICTED_CLASS,
-        STATE_ARGSECOND_PROBAS,
-        INITIAL_BATCH_SAMPLING_METHOD,
-        INITIAL_BATCH_SAMPLING_ARG,
-    ):
-        self.STATE_DISTANCES_LAB = STATE_DISTANCES_LAB
-        self.STATE_DISTANCES_UNLAB = STATE_DISTANCES_UNLAB
-        self.STATE_DIFF_PROBAS = STATE_DIFF_PROBAS
-        self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
-        self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
-        self.STATE_PREDICTED_CLASS = STATE_PREDICTED_CLASS
-        self.INITIAL_BATCH_SAMPLING_METHOD = INITIAL_BATCH_SAMPLING_METHOD
-        self.INITIAL_BATCH_SAMPLING_ARG = INITIAL_BATCH_SAMPLING_ARG
-
+class LearnedBaseBatchSampling(LearnedBaseSampling):
     def sample_unlabeled_X(
         self,
         sample_size,
         INITIAL_BATCH_SAMPLING_METHOD,
         INITIAL_BATCH_SAMPLING_ARG,
     ):
+        index_batches = []
         if INITIAL_BATCH_SAMPLING_METHOD == "random":
-            X_query_index = np.random.choice(
-                self.data_storage.unlabeled_mask, size=sample_size, replace=False
-            )
-
-        elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
-            max_sum = 0
-            for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
-                random_index = np.random.choice(
-                    self.data_storage.unlabeled_mask, size=sample_size, replace=False
-                )
-                random_sample = self.data_storage.X[random_index]
-
-                # calculate distance to each other
-                total_distance = np.sum(
-                    pairwise_distances(random_sample, random_sample)
-                )
-
-                total_distance += np.sum(
-                    pairwise_distances(
-                        random_sample,
-                        self.data_storage.X[self.data_storage.labeled_mask],
+            for _ in range(0, sample_size):
+                index_batches.append(
+                    np.random.choice(
+                        self.data_storage.unlabeled_mask,
+                        size=self.nr_queries_per_iteration,
+                        replace=False,
                     )
                 )
-                if total_distance > max_sum:
-                    max_sum = total_distance
-                    X_query_index = random_index
-
-        elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            graph_density = copy.deepcopy(self.data_storage.graph_density)
-
-            initial_sample_indexes = []
-
-            for _ in range(1, sample_size):
-                selected = np.argmax(graph_density)
-                neighbors = (self.data_storage.connect_lil[selected, :] > 0).nonzero()[
-                    1
-                ]
-                graph_density[neighbors] = (
-                    graph_density[neighbors] - graph_density[selected]
-                )
-                initial_sample_indexes.append(selected)
-                graph_density[initial_sample_indexes] = min(graph_density) - 1
-
-            X_query_index = self.data_storage.initial_unlabeled_mask[
-                initial_sample_indexes
-            ]
-
-        return X_query_index
-
-    @abc.abstractmethod
-    def calculate_next_query_indices_pre_hook(self):
-        pass
-
-    @abc.abstractmethod
-    def get_X_query_index(self):
-        pass
-
-    @abc.abstractmethod
-    def calculate_next_query_indices_post_hook(self, X_state):
-        pass
-
-    @abc.abstractmethod
-    def get_sorting(self, X_state):
-        pass
+        print(index_batches)
+        return index_batches
+        #  elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
+        #      max_sum = 0
+        #      for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
+        #          random_index = np.random.choice(
+        #              self.data_storage.unlabeled_mask, size=sample_size, replace=False
+        #          )
+        #          random_sample = self.data_storage.X[random_index]
+        #
+        #          # calculate distance to each other
+        #          total_distance = np.sum(
+        #              pairwise_distances(random_sample, random_sample)
+        #          )
+        #
+        #          total_distance += np.sum(
+        #              pairwise_distances(
+        #                  random_sample,
+        #                  self.data_storage.X[self.data_storage.labeled_mask],
+        #              )
+        #          )
+        #          if total_distance > max_sum:
+        #              max_sum = total_distance
+        #              X_query_index = random_index
+        #
+        #  elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+        #      graph_density = copy.deepcopy(self.data_storage.graph_density)
+        #
+        #      initial_sample_indexes = []
+        #
+        #      for _ in range(1, sample_size):
+        #          selected = np.argmax(graph_density)
+        #          neighbors = (self.data_storage.connect_lil[selected, :] > 0).nonzero()[
+        #              1
+        #          ]
+        #          graph_density[neighbors] = (
+        #              graph_density[neighbors] - graph_density[selected]
+        #          )
+        #          initial_sample_indexes.append(selected)
+        #          graph_density[initial_sample_indexes] = min(graph_density) - 1
+        #
+        #      X_query_index = self.data_storage.initial_unlabeled_mask[
+        #          initial_sample_indexes
+        #      ]
+        #
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         self.calculate_next_query_indices_pre_hook()
-        X_query_index = self.get_X_query_index()
+        batch_indices = self.get_X_query_index()
+        print(self.get_sorting(None))
+        print(self.get_sorting(None).argmax())
+        return batch_indices[self.get_sorting(None).argmax()]
 
         if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.X_query_index = X_query_index
+            self.data_storage.X_query_index = batch_indices
 
         X_state = self.calculate_state(
             self.data_storage.X[X_query_index],

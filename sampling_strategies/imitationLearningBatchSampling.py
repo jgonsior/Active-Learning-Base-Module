@@ -10,10 +10,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import MinMaxScaler
 
-from .learnedBaseSampling import LearnedBaseSampling
+from .learnedBaseBatchSampling import LearnedBaseBatchSampling
 
 
-class ImitationLearner(LearnedBaseSampling):
+class ImitationBatchLearner(LearnedBaseBatchSampling):
     def set_amount_of_peaked_objects(self, amount_of_peaked_objects):
         self.amount_of_peaked_objects = amount_of_peaked_objects
 
@@ -112,7 +112,7 @@ class ImitationLearner(LearnedBaseSampling):
     def get_X_query_index(self):
         future_peak_acc = []
 
-        possible_samples_indices = self.sample_unlabeled_X(
+        index_batches = self.sample_unlabeled_X(
             self.amount_of_peaked_objects,
             self.INITIAL_BATCH_SAMPLING_METHOD,
             self.INITIAL_BATCH_SAMPLING_ARG,
@@ -120,10 +120,10 @@ class ImitationLearner(LearnedBaseSampling):
 
         future_peak_acc = []
         # single thread
-        for unlabeled_sample_index in possible_samples_indices:
+        for index_batch in index_batches:
             future_peak_acc.append(
                 self._future_peak(
-                    unlabeled_sample_index,
+                    index_batch,
                     self.weak_supervision_label_sources,
                     self.data_storage,
                     self.clf,
@@ -131,19 +131,6 @@ class ImitationLearner(LearnedBaseSampling):
                 )
             )
 
-        # parallelisieren
-        #  with parallel_backend("loky", n_jobs=self.N_JOBS):
-        #      future_peak_acc = Parallel()(
-        #          delayed(self._future_peak)(
-        #              unlabeled_sample_index,
-        #              self.weak_supervision_label_sources,
-        #              self.data_storage,
-        #              self.clf,
-        #              self.MAX_AMOUNT_OF_WS_PEAKS,
-        #          )
-        #          for unlabeled_sample_index in possible_samples_indices
-        #      )
-        #
         for labelSource in self.weak_supervision_label_sources:
             labelSource.data_storage = self.data_storage
 
@@ -151,7 +138,7 @@ class ImitationLearner(LearnedBaseSampling):
             pd.Series(dict(zip(self.optimal_policies.columns, future_peak_acc))),
             ignore_index=True,
         )
-        return possible_samples_indices
+        return index_batches
 
     def calculate_next_query_indices_post_hook(self, X_state):
         self.states = self.states.append(
@@ -165,7 +152,7 @@ class ImitationLearner(LearnedBaseSampling):
 
     def _future_peak(
         self,
-        unlabeled_sample_index,
+        unlabeled_sample_indices,
         weak_supervision_label_sources,
         data_storage,
         clf,
@@ -174,50 +161,16 @@ class ImitationLearner(LearnedBaseSampling):
         copy_of_classifier = copy.deepcopy(clf)
 
         copy_of_labeled_mask = np.append(
-            data_storage.labeled_mask, [unlabeled_sample_index], axis=0
+            data_storage.labeled_mask, unlabeled_sample_indices, axis=0
         )
-        #  copy_of_unlabeled_mask = np.delete(
-        #      data_storage.unlabeled_mask, unlabeled_sample_index, axis=0
-        #  )
 
         copy_of_classifier.fit(
             data_storage.X[copy_of_labeled_mask], data_storage.Y[copy_of_labeled_mask]
         )
-
-        # fixme if ws is being incorpated again
-        #  for labelSource in weak_supervision_label_sources:
-        #      labelSource.data_storage = copy_of_data_storage
-        #
-        #  # what would happen if we apply WS after this one?
-        #  for i in range(0, MAX_AMOUNT_OF_WS_PEAKS):
-        #      for labelSource in weak_supervision_label_sources:
-        #          (
-        #              Y_query,
-        #              query_indices,
-        #              source,
-        #          ) = labelSource.get_labeled_samples()
-        #
-        #          if Y_query is not None:
-        #              break
-        #      if Y_query is None:
-        #          ws_still_applicable = False
-        #          continue
-        #
-        #      copy_of_data_storage.label_samples(query_indices, Y_query, source)
-        #
-        #      copy_of_classifier.fit(
-        #          copy_of_data_storage.train_labeled_X,
-        #          copy_of_data_storage.train_labeled_Y["label"].to_list(),
-        #      )
 
         Y_pred_test = copy_of_classifier.predict(data_storage.X)
         Y_true = data_storage.Y
 
         accuracy_with_that_label = accuracy_score(Y_pred_test, Y_true)
 
-        #  print(
-        #      "Testing out : {}, test acc: {}".format(
-        #          unlabeled_sample_index, accuracy_with_that_label
-        #      )
-        #  )
         return accuracy_with_that_label

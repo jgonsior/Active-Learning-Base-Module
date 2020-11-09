@@ -5,3 +5,5 @@ from .randomSampling import *
 from .trained_nn import *
 from .uncertaintySampling import *
 from .learnedBaseSampling import *
+from .learnedBaseBatchSampling import *
+from .imitationLearningBatchSampling import *
