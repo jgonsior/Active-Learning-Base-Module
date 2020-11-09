@@ -18,8 +18,6 @@ from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import MinMaxScaler
 import abc
 from ..activeLearner import ActiveLearner
-from sklearn.neighbors import kneighbors_graph
-from scipy.sparse import lil_matrix
 
 
 class LearnedBaseSampling(ActiveLearner):
@@ -42,74 +40,6 @@ class LearnedBaseSampling(ActiveLearner):
         self.STATE_PREDICTED_CLASS = STATE_PREDICTED_CLASS
         self.INITIAL_BATCH_SAMPLING_METHOD = INITIAL_BATCH_SAMPLING_METHOD
         self.INITIAL_BATCH_SAMPLING_ARG = INITIAL_BATCH_SAMPLING_ARG
-
-        if INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            # compute k-nearest neighbors grap
-            self.compute_graph_density()
-
-    # adapted from https://github.com/google/active-learning/blob/master/sampling_methods/graph_density.py#L47-L72
-    # original idea: https://www.mpi-inf.mpg.de/fileadmin/inf/d2/Research_projects_files/EbertCVPR2012.pdf
-    def compute_graph_density(self, n_neighbor=10):
-        X_df = self.data_storage.get_all_train_X()
-        gamma = 1.0 / X_df.shape[1]
-        X = X_df.to_numpy()
-        # kneighbors graph is constructed using k=10
-        connect = kneighbors_graph(
-            X, n_neighbor, metric="manhattan"
-        )  # , n_jobs=self.N_JOBS)
-
-        # Make connectivity matrix symmetric, if a point is a k nearest neighbor of
-        # another point, make it vice versa
-        neighbors = connect.nonzero()
-
-        inds = zip(neighbors[0], neighbors[1])
-
-        # changes as in connect[i, j] = new_weight are much faster for lil_matrix
-        connect_lil = lil_matrix(connect)
-
-        # Graph edges are weighted by applying gaussian kernel to manhattan dist.
-        # By default, gamma for rbf kernel is equal to 1/n_features but may
-        # get better results if gamma is tuned.
-        for entry in inds:
-            i = entry[0]
-            j = entry[1]
-
-            # das hier auf einmal berechnen?!
-            distance = pairwise_distances(
-                X[[i]], X[[j]], metric="manhattan"  # , n_jobs=self.N_JOBS
-            )
-
-            distance = distance[0, 0]
-
-            # gaussian kernel
-            weight = np.exp(-distance * gamma)
-            connect_lil[i, j] = weight
-            connect_lil[j, i] = weight
-
-        # Define graph density for an observation to be sum of weights for all
-        # edges to the node representing the datapoint.  Normalize sum weights
-        # by total number of neighbors.
-
-        self.data_storage.graph_density_labeled = pd.DataFrame(columns=["density"])
-        self.data_storage.graph_density_unlabeled = pd.DataFrame(columns=["density"])
-
-        for i in range(0, len(self.data_storage.X[self.data_storage.unlabeled_mask])):
-            self.data_storage.graph_density_unlabeled.loc[X_df.index[i]] = [
-                connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
-            ]
-
-        for i in range(0, len(self.data_storage.X[self.data_storage.labeled_mask])):
-            self.data_storage.graph_density_labeled.loc[X_df.index[i]] = [
-                connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
-            ]
-
-        #  self.graph_density = np.zeros(X.shape[0])
-        #  for i in np.arange(X.shape[0]):
-        #      self.graph_density[i] = (
-        #          connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
-        #      )
-        #  self.starting_density = copy.deepcopy(self.graph_density)
-        self.connect = connect_lil
 
     def sample_unlabeled_X(
         self,
@@ -146,22 +76,15 @@ class LearnedBaseSampling(ActiveLearner):
                     X_query_index = random_index
 
         elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            # get n samples with highest connectivity
-            print(self.data_storage.graph_density_unlabeled)
-            print(self.data_storage.graph_density_unlabeled["density"].to_numpy())
-            max_n_local_indices = np.argpartition(
-                self.data_storage.graph_density_unlabeled["density"].to_numpy(),
+            # take those n samples who have the highest graph_density
+            unlabeled_mask_local_max_n_indices = np.argpartition(
+                self.data_storage.graph_density[self.data_storage.unlabeled_mask],
                 -sample_size,
             )[-sample_size:]
-            print(max_n_local_indices)
-            print(self.data_storage.graph_density_unlabeled[max_n_local_indices])
-            X_query_index = self.data_storage.graph_density_unlabeled["density"][
-                max_n_local_indices
+
+            X_query_index = self.data_storage.unlabeled_mask[
+                unlabeled_mask_local_max_n_indices
             ]
-            X_query = self.data_storage.X[self.data_storage.unlabeled_mask][
-                X_query_index
-            ]
-            exit(-1)
         return X_query_index
 
     @abc.abstractmethod

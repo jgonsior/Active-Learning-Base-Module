@@ -1,4 +1,8 @@
+import copy
 import pandas as pd
+from sklearn.metrics import pairwise_distances
+from sklearn.neighbors import kneighbors_graph
+from scipy.sparse import lil_matrix
 import math
 import seaborn as sns
 import random
@@ -25,6 +29,7 @@ class DataStorage:
         DATASET_NAME=None,
         DATASETS_PATH=None,
         PLOT_EVOLUTION=False,
+        INITIAL_BATCH_SAMPLING_METHOD="",
         **kwargs
     ):
         if RANDOM_SEED != -1:
@@ -39,6 +44,8 @@ class DataStorage:
             self.train_unlabeled_Y_predicted = []
             self.i = 0
             self.deleted = False
+
+        self.INITIAL_BATCH_SAMPLING_METHOD = INITIAL_BATCH_SAMPLING_METHOD
 
         if df is None:
             log_it("Loading " + DATASET_NAME)
@@ -65,13 +72,16 @@ class DataStorage:
         scaler = MinMaxScaler()
         X = scaler.fit_transform(X)
         self.label_source = np.full(len(Y), "N", dtype=str)
+        self.X = X
+        if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+            # compute k-nearest neighbors grap
+            self.compute_graph_density()
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if sum(np.isnan(Y) > 0):
             self.unlabeled_mask = np.argwhere(np.isnan(Y))
             self.labeled_mask = np.argwhere(~np.isnan(Y))
             self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
-            self.X = X
             self.Y = np.full(len(self.labeled_mask), np.nan, dtype=np.int64)
             self.Y[self.labeled_mask] = Y
 
@@ -89,7 +99,6 @@ class DataStorage:
             # experiment setting apparently
             self.unlabeled_mask = np.arange(0, math.ceil(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
-            self.X = X
             self.Y = Y
 
             """ 
@@ -302,6 +311,61 @@ class DataStorage:
 
         return df.to_numpy(), labels[0].to_numpy()
 
+    # adapted from https://github.com/google/active-learning/blob/master/sampling_methods/graph_density.py#L47-L72
+    # original idea: https://www.mpi-inf.mpg.de/fileadmin/inf/d2/Research_projects_files/EbertCVPR2012.pdf
+    def compute_graph_density(self, n_neighbor=10):
+        shape = np.shape(self.X)
+        flat_X = self.X
+        if len(shape) > 2:
+            flat_X = np.reshape(self.X, (shape[0], np.product(shape[1:])))
+
+        gamma = 1.0 / shape[1]
+
+        # kneighbors graph is constructed using k=10
+        connect = kneighbors_graph(
+            flat_X, n_neighbor, metric="manhattan"
+        )  # , n_jobs=self.N_JOBS)
+
+        # Make connectivity matrix symmetric, if a point is a k nearest neighbor of
+        # another point, make it vice versa
+        neighbors = connect.nonzero()
+
+        inds = zip(neighbors[0], neighbors[1])
+
+        # changes as in connect[i, j] = new_weight are much faster for lil_matrix
+        connect_lil = lil_matrix(connect)
+
+        # Graph edges are weighted by applying gaussian kernel to manhattan dist.
+        # By default, gamma for rbf kernel is equal to 1/n_features but may
+        # get better results if gamma is tuned.
+        for entry in inds:
+            i = entry[0]
+            j = entry[1]
+
+            # das hier auf einmal berechnen?!
+            distance = pairwise_distances(
+                flat_X[[i]], flat_X[[j]], metric="manhattan"  # , n_jobs=self.N_JOBS
+            )
+
+            distance = distance[0, 0]
+
+            # gaussian kernel
+            weight = np.exp(-distance * gamma)
+            connect_lil[i, j] = weight
+            connect_lil[j, i] = weight
+
+        # Define graph density for an observation to be sum of weights for all
+        # edges to the node representing the datapoint.  Normalize sum weights
+        # by total number of neighbors.
+
+        self.graph_density = np.zeros(shape[0])
+        for i in np.arange(shape[0]):
+            self.graph_density[i] = (
+                connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
+            )
+        self.connect_lil = connect_lil
+        #  self.starting_density = copy.deepcopy(self.graph_density)
+
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
         if self.PLOT_EVOLUTION and source != "P":
             if len(self.train_labeled_Y_predicted) == 0:
@@ -465,16 +529,45 @@ class DataStorage:
                 )
                 plt.clf()
                 self.i += 1
+        # remove before performance measurements -> only a development safety measure
+        assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
+        assert len(np.intersect1d(query_indices, self.test_mask)) == 0
+        assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
+            query_indices
+        )
 
-        #  print(self.Y)
-        #  print(self.labeled_mask)
-        #  print(Y_query)
+        # -> select samples as a batch and update graph denisty in one run for it completely, or do it on the fly while collecting batch?!
+        # --> compare both in opti_setting!
+        #  -> in RALF im Detail nachlesen, wie genau die Updates vom density graph aussehen, wann kommt -1, etc.
+        if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+            #  print(query_indices)
+            #  print(self.connect_lil[query_indices])
+            #  print(self.connect_lil[query_indices, :])
+            #  print(self.connect_lil[query_indices, :] > 0)
+            #  print((self.connect_lil[query_indices, :] > 0).nonzero())
+            #  print((self.connect_lil[query_indices, :] > 0).nonzero()[1])
+            #  exit(-1)
+            neighbors = (self.connect_lil[query_indices, :] > 0).nonzero()[1]
+            #  self.graph_density[neighbors] = (
+            #      self.graph_density[neighbors] - self.graph_density[query_indices]
+            #  )
+            self.graph_density[neighbors] = -100
+            #  print(neighbors)
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
-        self.unlabeled_mask = np.delete(self.unlabeled_mask, query_indices, axis=0)
+
+        for element in query_indices:
+            self.unlabeled_mask = self.unlabeled_mask[self.unlabeled_mask != element]
+
         self.label_source[query_indices] = source
         # is not working with initial labels, after that it works, but isn't needed
         #  self.Y[query_indices] = Y_query
+        # remove before performance measurements -> only a development safety measure
+        assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == 0
+        assert len(np.intersect1d(query_indices, self.test_mask)) == 0
+        assert len(np.intersect1d(query_indices, self.labeled_mask)) == len(
+            query_indices
+        )
 
     def label_samples(self, query_indices, Y_query, source):
         # remove from train_unlabeled_data and add to train_labeled_data
@@ -500,6 +593,3 @@ class DataStorage:
 
     def get_true_label(self, query_indice):
         return self.Y[query_indice]
-
-    def get_all_train_X(self):
-        return pd.concat([self.train_labeled_X, self.train_unlabeled_X])
