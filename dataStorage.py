@@ -97,7 +97,7 @@ class DataStorage:
             # split into test, train_labeled, train_unlabeled
             self.test_mask = np.arange(math.floor(len(Y) * TEST_FRACTION), len(Y))
             # experiment setting apparently
-            self.unlabeled_mask = np.arange(0, math.ceil(len(Y) * TEST_FRACTION))
+            self.unlabeled_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
 
@@ -531,6 +531,11 @@ class DataStorage:
                 self.i += 1
         # remove before performance measurements -> only a development safety measure
         assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
+        print(query_indices)
+        print(self.test_mask)
+        print(self.unlabeled_mask)
+        print(self.labeled_mask)
+        print(np.intersect1d(query_indices, self.test_mask))
         assert len(np.intersect1d(query_indices, self.test_mask)) == 0
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
             query_indices
