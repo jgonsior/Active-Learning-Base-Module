@@ -317,6 +317,7 @@ class DataStorage:
     # adapted from https://github.com/google/active-learning/blob/master/sampling_methods/graph_density.py#L47-L72
     # original idea: https://www.mpi-inf.mpg.de/fileadmin/inf/d2/Research_projects_files/EbertCVPR2012.pdf
     def compute_graph_density(self, n_neighbor=10):
+        self.initial_unlabeled_mask = self.unlabeled_mask
         shape = np.shape(self.X[self.unlabeled_mask])
         flat_X = self.X[self.unlabeled_mask]
         if len(shape) > 2:
@@ -534,12 +535,12 @@ class DataStorage:
                 plt.clf()
                 self.i += 1
         # remove before performance measurements -> only a development safety measure
-        assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
         #  print(query_indices)
         #  print(self.test_mask)
         #  print(self.unlabeled_mask)
         #  print(self.labeled_mask)
-        #  print(np.intersect1d(query_indices, self.test_mask))
+        #  print(np.intersect1d(query_indices, self.labeled_mask))
+        assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
         assert len(np.intersect1d(query_indices, self.test_mask)) == 0
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
             query_indices
@@ -553,6 +554,8 @@ class DataStorage:
                     self.graph_density[neighbors] - self.graph_density[selected]
                 )
             self.graph_density[query_indices] = min(self.graph_density) - 1
+
+        #  print("1988", self.graph_density[1988])
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
 
