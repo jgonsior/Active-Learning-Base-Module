@@ -7,7 +7,7 @@ class RandomClusterStrategy(BaseClusterStrategy):
     def _get_random_cluster(self):
         # randomly select cluster
         random_cluster = random.choice(
-            list(self.data_storage.train_unlabeled_cluster_indices.keys())
+            list(self.data_storage.train_unlabeled_cluster_indices.keys()),
         )
 
         #  for cluster, cluster_indices in self.dataset_storage.X_train_unlabeled_cluster_indices.items(

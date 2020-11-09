@@ -532,9 +532,6 @@ class DataStorage:
         # remove before performance measurements -> only a development safety measure
         assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
         assert len(np.intersect1d(query_indices, self.test_mask)) == 0
-        print(query_indices)
-        print(self.unlabeled_mask)
-        print(np.intersect1d(query_indices, self.unlabeled_mask))
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
             query_indices
         )
