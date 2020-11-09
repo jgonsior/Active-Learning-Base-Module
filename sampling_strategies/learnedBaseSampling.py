@@ -92,7 +92,7 @@ class LearnedBaseSampling(ActiveLearner):
                 graph_density[initial_sample_indexes] = min(graph_density) - 1
 
             X_query_index = self.data_storage.unlabeled_mask[initial_sample_indexes]
-            print(X_query_index)
+            #  print(X_query_index)
 
         return X_query_index
 

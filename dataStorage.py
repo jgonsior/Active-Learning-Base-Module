@@ -544,7 +544,7 @@ class DataStorage:
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
             query_indices
         )
-        print("Label: ", query_indices)
+        #  print("Label: ", query_indices)
 
         if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
             for selected in query_indices:
