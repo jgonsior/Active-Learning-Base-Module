@@ -23,13 +23,13 @@ from .learnedBaseSampling import LearnedBaseSampling
 class LearnedBaseBatchSampling(LearnedBaseSampling):
     def sample_unlabeled_X(
         self,
-        sample_size,
+        SAMPLE_SIZE,
         INITIAL_BATCH_SAMPLING_METHOD,
         INITIAL_BATCH_SAMPLING_ARG,
     ):
         index_batches = []
         if INITIAL_BATCH_SAMPLING_METHOD == "random":
-            for _ in range(0, sample_size):
+            for _ in range(0, SAMPLE_SIZE):
                 index_batches.append(
                     np.random.choice(
                         self.data_storage.unlabeled_mask,
@@ -37,57 +37,60 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                         replace=False,
                     )
                 )
-        print(index_batches)
+        elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
+            index_batches = []
+            for _ in range(0, SAMPLE_SIZE):
+                max_sum = 0
+                for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
+                    random_index = np.random.choice(
+                        self.data_storage.unlabeled_mask,
+                        size=self.nr_queries_per_iteration,
+                        replace=False,
+                    )
+                    random_sample = self.data_storage.X[random_index]
+
+                    # calculate distance to each other
+                    total_distance = np.sum(
+                        pairwise_distances(random_sample, random_sample)
+                    )
+
+                    total_distance += np.sum(
+                        pairwise_distances(
+                            random_sample,
+                            self.data_storage.X[self.data_storage.labeled_mask],
+                        )
+                    )
+                    if total_distance > max_sum:
+                        max_sum = total_distance
+                        X_query_index = random_index
+                index_batches.append(X_query_index)
+
+        elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+            index_batches = []
+            graph_density = copy.deepcopy(self.data_storage.graph_density)
+            for _ in range(0, SAMPLE_SIZE):
+
+                initial_sample_indexes = []
+
+                for _ in range(1, SAMPLE_SIZE):
+                    selected = np.argmax(graph_density)
+                    neighbors = (
+                        self.data_storage.connect_lil[selected, :] > 0
+                    ).nonzero()[1]
+                    graph_density[neighbors] = (
+                        graph_density[neighbors] - graph_density[selected]
+                    )
+                    initial_sample_indexes.append(selected)
+                    graph_density[initial_sample_indexes] = min(graph_density) - 1
+
+                index_batches.append(
+                    self.data_storage.initial_unlabeled_mask[initial_sample_indexes]
+                )
         return index_batches
-        #  elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
-        #      max_sum = 0
-        #      for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
-        #          random_index = np.random.choice(
-        #              self.data_storage.unlabeled_mask, size=sample_size, replace=False
-        #          )
-        #          random_sample = self.data_storage.X[random_index]
-        #
-        #          # calculate distance to each other
-        #          total_distance = np.sum(
-        #              pairwise_distances(random_sample, random_sample)
-        #          )
-        #
-        #          total_distance += np.sum(
-        #              pairwise_distances(
-        #                  random_sample,
-        #                  self.data_storage.X[self.data_storage.labeled_mask],
-        #              )
-        #          )
-        #          if total_distance > max_sum:
-        #              max_sum = total_distance
-        #              X_query_index = random_index
-        #
-        #  elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-        #      graph_density = copy.deepcopy(self.data_storage.graph_density)
-        #
-        #      initial_sample_indexes = []
-        #
-        #      for _ in range(1, sample_size):
-        #          selected = np.argmax(graph_density)
-        #          neighbors = (self.data_storage.connect_lil[selected, :] > 0).nonzero()[
-        #              1
-        #          ]
-        #          graph_density[neighbors] = (
-        #              graph_density[neighbors] - graph_density[selected]
-        #          )
-        #          initial_sample_indexes.append(selected)
-        #          graph_density[initial_sample_indexes] = min(graph_density) - 1
-        #
-        #      X_query_index = self.data_storage.initial_unlabeled_mask[
-        #          initial_sample_indexes
-        #      ]
-        #
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         self.calculate_next_query_indices_pre_hook()
         batch_indices = self.get_X_query_index()
-        print(self.get_sorting(None))
-        print(self.get_sorting(None).argmax())
         return batch_indices[self.get_sorting(None).argmax()]
 
         if self.data_storage.PLOT_EVOLUTION:
