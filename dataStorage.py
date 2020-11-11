@@ -1,5 +1,5 @@
-from numba import jit
 import copy
+from numba import jit
 import pandas as pd
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import kneighbors_graph
@@ -99,7 +99,10 @@ class DataStorage:
             self.labeled_mask = self.labeled_mask[
                 math.floor(len(self.labeled_mask) * TEST_FRACTION) :
             ]
-            if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+            if (
+                self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
+                or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+            ):
                 # compute k-nearest neighbors graph
                 self.compute_graph_density()
 
@@ -110,7 +113,10 @@ class DataStorage:
             self.test_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
-            if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+            if (
+                self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
+                or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+            ):
                 # compute k-nearest neighbors graph
                 self.compute_graph_density()
 
@@ -557,7 +563,10 @@ class DataStorage:
         )
         #  print("Label: ", query_indices)
 
-        if self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
+        if (
+            self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
+            or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+        ):
             graph_density_query_indices = []
             for selected in query_indices:
                 graph_density_query_index = _find_first(

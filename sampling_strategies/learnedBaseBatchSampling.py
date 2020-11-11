@@ -1,4 +1,5 @@
 import os
+from numba import jit
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -18,6 +19,19 @@ from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import MinMaxScaler
 import abc
 from .learnedBaseSampling import LearnedBaseSampling
+import math
+
+
+@jit(nopython=True)
+def _find_firsts(items, vec):
+    """return the index of the first occurence of item in vec"""
+    result = []
+    for item in items:
+        for i in range(len(vec)):
+            if item == vec[i]:
+                result.append(i)
+                break
+    return result
 
 
 class LearnedBaseBatchSampling(LearnedBaseSampling):
@@ -37,36 +51,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                         replace=False,
                     )
                 )
-        elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
-            index_batches = []
-            for _ in range(0, SAMPLE_SIZE):
-                max_sum = 0
-                for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
-                    random_index = np.random.choice(
-                        self.data_storage.unlabeled_mask,
-                        size=self.nr_queries_per_iteration,
-                        replace=False,
-                    )
-                    random_sample = self.data_storage.X[random_index]
-
-                    # calculate distance to each other
-                    total_distance = np.sum(
-                        pairwise_distances(random_sample, random_sample)
-                    )
-
-                    total_distance += np.sum(
-                        pairwise_distances(
-                            random_sample,
-                            self.data_storage.X[self.data_storage.labeled_mask],
-                        )
-                    )
-                    if total_distance > max_sum:
-                        max_sum = total_distance
-                        X_query_index = random_index
-                index_batches.append(X_query_index)
-
         elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            index_batches = []
             graph_density = copy.deepcopy(self.data_storage.graph_density)
             for _ in range(0, SAMPLE_SIZE):
 
@@ -86,6 +71,55 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 index_batches.append(
                     self.data_storage.initial_unlabeled_mask[initial_sample_indexes]
                 )
+
+        elif (
+            INITIAL_BATCH_SAMPLING_METHOD == "furthest"
+            or INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab"
+            or INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+        ):
+            possible_batches = [
+                np.random.choice(
+                    self.data_storage.unlabeled_mask,
+                    size=self.nr_queries_per_iteration,
+                    replace=False,
+                )
+                for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
+            ]
+
+            if INITIAL_BATCH_SAMPLING_METHOD == "furthest":
+                metric_values = [
+                    np.sum(pairwise_distances(self.data_storage.X[a]))
+                    for a in possible_batches
+                ]
+            elif INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab":
+                metric_values = [
+                    np.sum(
+                        pairwise_distances(
+                            self.data_storage.X[a],
+                            self.data_storage.X[self.data_storage.labeled_mask],
+                        )
+                    )
+                    for a in possible_batches
+                ]
+            elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density2":
+                metric_values = [
+                    np.sum(
+                        self.data_storage.graph_density[
+                            _find_firsts(a, self.data_storage.initial_unlabeled_mask)
+                        ]
+                    )
+                    for a in possible_batches
+                ]
+
+            index_batches = [
+                x for _, x in sorted(zip(metric_values, possible_batches), reverse=True)
+            ][:SAMPLE_SIZE]
+        #  elif INITIAL_BATCH_SAMPLING_METHOD == "UNCERTAINTY":
+        # randomly select 5 times as many samples as needed
+        # select those with the highest average uncertainty
+        else:
+            raise ("NON EXISTENT INITIAL_SAMPLING_METHOD")
+
         return index_batches
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
