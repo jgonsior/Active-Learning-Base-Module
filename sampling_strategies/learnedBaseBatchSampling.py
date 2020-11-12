@@ -35,6 +35,11 @@ def _find_firsts(items, vec):
 
 
 class LearnedBaseBatchSampling(LearnedBaseSampling):
+    def calculate_max_margin_uncertainty(self, a):
+        Y_proba = self.clf.predict_proba(self.data_storage.X[a])
+        margin = np.partition(-Y_proba, 1, axis=1)
+        return -np.abs(margin[:, 0] - margin[:, 1])
+
     def sample_unlabeled_X(
         self,
         SAMPLE_SIZE,
@@ -76,6 +81,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             INITIAL_BATCH_SAMPLING_METHOD == "furthest"
             or INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab"
             or INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+            or INITIAL_BATCH_SAMPLING_METHOD == "uncertainty"
         ):
             possible_batches = [
                 np.random.choice(
@@ -110,9 +116,18 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     )
                     for a in possible_batches
                 ]
-
+            elif INITIAL_BATCH_SAMPLING_METHOD == "uncertainty":
+                metric_values = [
+                    np.sum(self.calculate_max_margin_uncertainty(a))
+                    for a in possible_batches
+                ]
             index_batches = [
-                x for _, x in sorted(zip(metric_values, possible_batches), reverse=True)
+                x
+                for _, x in sorted(
+                    zip(metric_values, possible_batches),
+                    key=lambda t: t[0],
+                    reverse=True,
+                )
             ][:SAMPLE_SIZE]
         #  elif INITIAL_BATCH_SAMPLING_METHOD == "UNCERTAINTY":
         # randomly select 5 times as many samples as needed
