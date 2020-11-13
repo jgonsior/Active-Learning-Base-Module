@@ -35,10 +35,28 @@ def _find_firsts(items, vec):
 
 
 class LearnedBaseBatchSampling(LearnedBaseSampling):
-    def calculate_max_margin_uncertainty(self, a):
-        Y_proba = self.clf.predict_proba(self.data_storage.X[a])
+    def _calculate_furthest_metric(self, batch_indices):
+        return np.sum(pairwise_distances(self.data_storage.X[batch_indices]))
+
+    def _calculate_furthest_lab_metric(self, batch_indices):
+        return np.sum(
+            pairwise_distances(
+                self.data_storage.X[batch_indices],
+                self.data_storage.X[self.data_storage.labeled_mask],
+            )
+        )
+
+    def _calculate_graph_density_metric(self, batch_indices):
+        return np.sum(
+            self.data_storage.graph_density[
+                _find_firsts(batch_indices, self.data_storage.initial_unlabeled_mask)
+            ]
+        )
+
+    def _calculate_uncertainty_metric(self, batch_indices):
+        Y_proba = self.clf.predict_proba(self.data_storage.X[batch_indices])
         margin = np.partition(-Y_proba, 1, axis=1)
-        return -np.abs(margin[:, 0] - margin[:, 1])
+        return np.sum(-np.abs(margin[:, 0] - margin[:, 1]))
 
     def sample_unlabeled_X(
         self,
@@ -93,34 +111,16 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             ]
 
             if INITIAL_BATCH_SAMPLING_METHOD == "furthest":
-                metric_values = [
-                    np.sum(pairwise_distances(self.data_storage.X[a]))
-                    for a in possible_batches
-                ]
+                metric_function = self._calculate_furthest_metric
             elif INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab":
-                metric_values = [
-                    np.sum(
-                        pairwise_distances(
-                            self.data_storage.X[a],
-                            self.data_storage.X[self.data_storage.labeled_mask],
-                        )
-                    )
-                    for a in possible_batches
-                ]
+                metric_function = self._calculate_furthest_lab_metric
             elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density2":
-                metric_values = [
-                    np.sum(
-                        self.data_storage.graph_density[
-                            _find_firsts(a, self.data_storage.initial_unlabeled_mask)
-                        ]
-                    )
-                    for a in possible_batches
-                ]
+                metric_function = self._calculate_graph_density_metric_metric
             elif INITIAL_BATCH_SAMPLING_METHOD == "uncertainty":
-                metric_values = [
-                    np.sum(self.calculate_max_margin_uncertainty(a))
-                    for a in possible_batches
-                ]
+                metric_function = self._calculate_uncertainty_metric
+            metric_values = [metric_function(a) for a in possible_batches]
+
+            # take n samples based on the sorting metric, the rest randomly
             index_batches = [
                 x
                 for _, x in sorted(
@@ -129,9 +129,35 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     reverse=True,
                 )
             ][:SAMPLE_SIZE]
-        #  elif INITIAL_BATCH_SAMPLING_METHOD == "UNCERTAINTY":
-        # randomly select 5 times as many samples as needed
-        # select those with the highest average uncertainty
+        elif INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid":
+            possible_batches = [
+                np.random.choice(
+                    self.data_storage.unlabeled_mask,
+                    size=self.nr_queries_per_iteration,
+                    replace=False,
+                )
+                for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
+            ]
+
+            test_lists = {}
+            for function in [
+                self._calculate_furthest_metric,
+                self._calculate_uncertainty_metric,
+                self._calculate_furthest_lab_metric,
+                self._calculate_graph_density_metric,
+            ]:
+                test_lists[function] = [function(a) for a in possible_batches]
+            print(test_lists)
+
+            index_batches = [
+                x
+                for _, x in sorted(
+                    zip(metric_values, possible_batches),
+                    key=lambda t: t[0],
+                    reverse=True,
+                )
+            ][:SAMPLE_SIZE]
+
         else:
             raise ("NON EXISTENT INITIAL_SAMPLING_METHOD")
 
@@ -140,13 +166,12 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         self.calculate_next_query_indices_pre_hook()
         batch_indices = self.get_X_query_index()
-        return batch_indices[self.get_sorting(None).argmax()]
 
+        return batch_indices[self.get_sorting(None).argmax()]
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.X_query_index = batch_indices
-
         X_state = self.calculate_state(
-            self.data_storage.X[X_query_index],
+            batch_indices,
             STATE_ARGSECOND_PROBAS=self.STATE_ARGSECOND_PROBAS,
             STATE_DIFF_PROBAS=self.STATE_DIFF_PROBAS,
             STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
@@ -157,78 +182,33 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
 
         self.calculate_next_query_indices_post_hook(X_state)
 
-        # use the optimal values
-        zero_to_one_values_and_index = list(
-            zip(self.get_sorting(X_state), X_query_index)
-        )
-        ordered_list_of_possible_sample_indices = sorted(
-            zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True
-        )
-
-        if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.X_query_index = X_query_index
-
-        return [
-            v
-            for k, v in ordered_list_of_possible_sample_indices[
-                : self.nr_queries_per_iteration
-            ]
-        ]
-
     def calculate_state(
         self,
-        X_query,
+        batch_indices,
         STATE_ARGSECOND_PROBAS,
         STATE_DIFF_PROBAS,
         STATE_ARGTHIRD_PROBAS,
         STATE_DISTANCES_LAB,
         STATE_DISTANCES_UNLAB,
         STATE_PREDICTED_CLASS,
+        STATE_GRAPH_DENSITIES,
+        STATE_UNCERTAINTIES,
+        STATE_DISTANCES,
     ):
-        possible_samples_probas = self.clf.predict_proba(X_query)
+        state_list = []
+        if STATE_UNCERTAINTIES:
+            state_list += [self._calculate_uncertainty_metric(a) for a in batch_indices]
 
-        sorted_probas = -np.sort(-possible_samples_probas, axis=1)
-        argmax_probas = sorted_probas[:, 0]
-
-        state_list = argmax_probas.tolist()
-
-        if STATE_ARGSECOND_PROBAS:
-            argsecond_probas = sorted_probas[:, 1]
-            state_list += argsecond_probas.tolist()
-        if STATE_DIFF_PROBAS:
-            state_list += (argmax_probas - sorted_probas[:, 1]).tolist()
-        if STATE_ARGTHIRD_PROBAS:
-            if np.shape(sorted_probas)[1] < 3:
-                state_list += [0 for _ in range(0, len(X_query))]
-            else:
-                state_list += sorted_probas[:, 2].tolist()
-        if STATE_PREDICTED_CLASS:
-            state_list += self.clf.predict(X_query).tolist()
-
+        if STATE_DISTANCES:
+            state_list += [self._calculate_furthest_metric(a) for a in batch_indices]
         if STATE_DISTANCES_LAB:
-            # calculate average distance to labeled and average distance to unlabeled samples
-            average_distance_labeled = (
-                np.sum(
-                    pairwise_distances(
-                        self.data_storage.X[self.data_storage.labeled_mask], X_query
-                    ),
-                    axis=0,
-                )
-                / len(self.data_storage.X[self.data_storage.labeled_mask])
-            )
-            state_list += average_distance_labeled.tolist()
-
-        if STATE_DISTANCES_UNLAB:
-            # calculate average distance to labeled and average distance to unlabeled samples
-            average_distance_unlabeled = (
-                np.sum(
-                    pairwise_distances(
-                        self.data_storage.X[self.data_storage.unlabeled_mask], X_query
-                    ),
-                    axis=0,
-                )
-                / len(self.data_storage.X[self.data_storage.unlabeled_mask])
-            )
-            state_list += average_distance_unlabeled.tolist()
-
+            state_list += [
+                self._calculate_furthest_lab_metric(a) for a in batch_indices
+            ]
+        if STATE_GRAPH_DENSITIES:
+            state_list += [
+                self._calculate_graph_density_metric(a) for a in batch_indices
+            ]
+        print(state_list)
+        #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
         return np.array(state_list)

@@ -102,6 +102,7 @@ class DataStorage:
             if (
                 self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
                 or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+                or self.INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid"
             ):
                 # compute k-nearest neighbors graph
                 self.compute_graph_density()
@@ -116,6 +117,7 @@ class DataStorage:
             if (
                 self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
                 or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+                or self.INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid"
             ):
                 # compute k-nearest neighbors graph
                 self.compute_graph_density()
@@ -555,7 +557,10 @@ class DataStorage:
         #  print(self.test_mask)
         #  print(self.unlabeled_mask)
         #  print(self.labeled_mask)
-        #  print(np.intersect1d(query_indices, self.labeled_mask))
+        #  print(np.intersect1d(query_indices, self.unlabeled_mask))
+        #  print(len(query_indices))
+        #  print(len(np.intersect1d(query_indices, self.unlabeled_mask)))
+        #  print(np.setdiff1d(query_indices, self.unlabeled_mask))
         assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
         assert len(np.intersect1d(query_indices, self.test_mask)) == 0
         assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
@@ -566,6 +571,7 @@ class DataStorage:
         if (
             self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
             or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
+            or self.INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid"
         ):
             graph_density_query_indices = []
             for selected in query_indices:
