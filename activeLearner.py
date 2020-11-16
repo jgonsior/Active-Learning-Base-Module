@@ -1,6 +1,5 @@
 import abc
 
-from sklearn.utils.class_weight import compute_sample_weight
 from .experiment_setup_lib import (
     conf_matrix_and_acc,
     get_single_al_run_stats_row,

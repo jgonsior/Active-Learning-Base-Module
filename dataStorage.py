@@ -1,16 +1,16 @@
-import copy
-from numba import jit
-import pandas as pd
-from sklearn.metrics import pairwise_distances
-from sklearn.neighbors import kneighbors_graph
-from scipy.sparse import lil_matrix
 import math
-import seaborn as sns
 import random
-from matplotlib.colors import ListedColormap
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.colors import ListedColormap
+from numba import jit
+from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
+from sklearn.metrics import pairwise_distances
+from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
 from .experiment_setup_lib import log_it

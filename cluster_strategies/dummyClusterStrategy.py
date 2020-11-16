@@ -1,5 +1,6 @@
-from .baseClusterStrategy import BaseClusterStrategy
 import numpy as np
+
+from .baseClusterStrategy import BaseClusterStrategy
 
 
 class DummyClusterStrategy(BaseClusterStrategy):

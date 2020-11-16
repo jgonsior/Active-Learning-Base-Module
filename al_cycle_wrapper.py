@@ -1,4 +1,3 @@
-import numpy as np
 import csv
 import datetime
 import hashlib
@@ -6,7 +5,7 @@ import threading
 from pathlib import Path
 from timeit import default_timer as timer
 
-import pandas as pd
+import numpy as np
 
 #  import np.random.distributions as dists
 from json_tricks import dumps

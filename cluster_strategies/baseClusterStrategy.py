@@ -3,7 +3,6 @@ from collections import Counter, defaultdict
 from math import e, log
 
 import numpy as np
-import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 
 

@@ -1,24 +1,23 @@
 import argparse
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
 import datetime
 import os
 import random
 import sys
 import threading
-
 import warnings
 
-from sklearn.exceptions import ConvergenceWarning
 import numpy as np
 
 #  import np.random.distributions as dists
 import numpy.random
 import scipy
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from sklearn.neural_network import MLPClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 
 
 def get_classifier(classifier_name, random_state=None, n_jobs=None):

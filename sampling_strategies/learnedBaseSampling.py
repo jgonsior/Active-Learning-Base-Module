@@ -4,18 +4,10 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-
-import statistics
 import copy
-import random
-from itertools import chain
 
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed, parallel_backend
-from sklearn.metrics import accuracy_score
 from sklearn.metrics import pairwise_distances
-from sklearn.preprocessing import MinMaxScaler
 import abc
 from ..activeLearner import ActiveLearner
 
