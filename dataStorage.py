@@ -10,7 +10,6 @@ from numba import jit
 from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
 from sklearn.metrics import pairwise_distances
-from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
 from .experiment_setup_lib import log_it
@@ -99,13 +98,6 @@ class DataStorage:
             self.labeled_mask = self.labeled_mask[
                 math.floor(len(self.labeled_mask) * TEST_FRACTION) :
             ]
-            if (
-                self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
-                or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
-                or self.INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid"
-            ):
-                # compute k-nearest neighbors graph
-                self.compute_graph_density()
 
         else:
             # split into test, train_labeled, train_unlabeled
@@ -114,13 +106,6 @@ class DataStorage:
             self.test_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
-            if (
-                self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
-                or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
-                or self.INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid"
-            ):
-                # compute k-nearest neighbors graph
-                self.compute_graph_density()
 
             """ 
             1. get start_set from X_labeled
@@ -332,63 +317,6 @@ class DataStorage:
 
         return df.to_numpy(), labels[0].to_numpy()
 
-    # adapted from https://github.com/google/active-learning/blob/master/sampling_methods/graph_density.py#L47-L72
-    # original idea: https://www.mpi-inf.mpg.de/fileadmin/inf/d2/Research_projects_files/EbertCVPR2012.pdf
-    def compute_graph_density(self, n_neighbor=10):
-        self.initial_unlabeled_mask = self.unlabeled_mask
-        shape = np.shape(self.X[self.unlabeled_mask])
-        flat_X = self.X[self.unlabeled_mask]
-        if len(shape) > 2:
-            flat_X = np.reshape(
-                self.X[self.unlabeled_mask], (shape[0], np.product(shape[1:]))
-            )
-
-        gamma = 1.0 / shape[1]
-
-        # kneighbors graph is constructed using k=10
-        connect = kneighbors_graph(
-            flat_X, n_neighbor, metric="manhattan"
-        )  # , n_jobs=self.N_JOBS)
-
-        # Make connectivity matrix symmetric, if a point is a k nearest neighbor of
-        # another point, make it vice versa
-        neighbors = connect.nonzero()
-
-        inds = zip(neighbors[0], neighbors[1])
-
-        # changes as in connect[i, j] = new_weight are much faster for lil_matrix
-        connect_lil = lil_matrix(connect)
-
-        # Graph edges are weighted by applying gaussian kernel to manhattan dist.
-        # By default, gamma for rbf kernel is equal to 1/n_features but may
-        # get better results if gamma is tuned.
-        for entry in inds:
-            i = entry[0]
-            j = entry[1]
-
-            # das hier auf einmal berechnen?!
-            distance = pairwise_distances(
-                flat_X[[i]], flat_X[[j]], metric="manhattan"  # , n_jobs=self.N_JOBS
-            )
-
-            distance = distance[0, 0]
-
-            # gaussian kernel
-            weight = np.exp(-distance * gamma)
-            connect_lil[i, j] = weight
-            connect_lil[j, i] = weight
-
-        # Define graph density for an observation to be sum of weights for all
-        # edges to the node representing the datapoint.  Normalize sum weights
-        # by total number of neighbors.
-
-        self.graph_density = np.zeros(shape[0])
-        for i in np.arange(shape[0]):
-            self.graph_density[i] = (
-                connect_lil[i, :].sum() / (connect_lil[i, :] > 0).sum()
-            )
-        self.connect_lil = connect_lil
-
     def _label_samples_without_clusters(self, query_indices, Y_query, source):
         if self.PLOT_EVOLUTION and source != "P":
             if len(self.train_labeled_Y_predicted) == 0:
@@ -567,30 +495,6 @@ class DataStorage:
             query_indices
         )
         #  print("Label: ", query_indices)
-
-        if (
-            self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density"
-            or self.INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
-            or self.INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid"
-        ):
-            graph_density_query_indices = []
-            for selected in query_indices:
-                graph_density_query_index = _find_first(
-                    selected, self.initial_unlabeled_mask
-                )
-                graph_density_query_indices.append(graph_density_query_index)
-                neighbors = (
-                    self.connect_lil[graph_density_query_index, :] > 0
-                ).nonzero()[1]
-                self.graph_density[neighbors] = (
-                    self.graph_density[neighbors]
-                    - self.graph_density[graph_density_query_index]
-                )
-                self.graph_density[graph_density_query_indices] = (
-                    min(self.graph_density) - 1
-                )
-        #  plt.hist(np.hstack(self.graph_density))
-        #  plt.show()
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
 

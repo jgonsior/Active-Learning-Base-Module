@@ -37,13 +37,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             )
         )
 
-    def _calculate_graph_density_metric(self, batch_indices):
-        return np.sum(
-            self.data_storage.graph_density[
-                _find_firsts(batch_indices, self.data_storage.initial_unlabeled_mask)
-            ]
-        )
-
     def _calculate_uncertainty_metric(self, batch_indices):
         Y_proba = self.clf.predict_proba(self.data_storage.X[batch_indices])
         margin = np.partition(-Y_proba, 1, axis=1)
@@ -65,31 +58,9 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                         replace=False,
                     )
                 )
-        elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density":
-            graph_density = copy.deepcopy(self.data_storage.graph_density)
-            for _ in range(0, SAMPLE_SIZE):
-
-                initial_sample_indexes = []
-
-                for _ in range(1, SAMPLE_SIZE):
-                    selected = np.argmax(graph_density)
-                    neighbors = (
-                        self.data_storage.connect_lil[selected, :] > 0
-                    ).nonzero()[1]
-                    graph_density[neighbors] = (
-                        graph_density[neighbors] - graph_density[selected]
-                    )
-                    initial_sample_indexes.append(selected)
-                    graph_density[initial_sample_indexes] = min(graph_density) - 1
-
-                index_batches.append(
-                    self.data_storage.initial_unlabeled_mask[initial_sample_indexes]
-                )
-
         elif (
             INITIAL_BATCH_SAMPLING_METHOD == "furthest"
             or INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab"
-            or INITIAL_BATCH_SAMPLING_METHOD == "graph_density2"
             or INITIAL_BATCH_SAMPLING_METHOD == "uncertainty"
         ):
             possible_batches = [
@@ -105,8 +76,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 metric_function = self._calculate_furthest_metric
             elif INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab":
                 metric_function = self._calculate_furthest_lab_metric
-            elif INITIAL_BATCH_SAMPLING_METHOD == "graph_density2":
-                metric_function = self._calculate_graph_density_metric_metric
             elif INITIAL_BATCH_SAMPLING_METHOD == "uncertainty":
                 metric_function = self._calculate_uncertainty_metric
             metric_values = [metric_function(a) for a in possible_batches]
@@ -135,7 +104,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 self._calculate_furthest_metric,
                 self._calculate_uncertainty_metric,
                 self._calculate_furthest_lab_metric,
-                self._calculate_graph_density_metric,
             ]:
                 test_lists[function] = [function(a) for a in possible_batches]
             print(test_lists)
@@ -182,7 +150,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         STATE_DISTANCES_LAB,
         STATE_DISTANCES_UNLAB,
         STATE_PREDICTED_CLASS,
-        STATE_GRAPH_DENSITIES,
         STATE_UNCERTAINTIES,
         STATE_DISTANCES,
     ):
@@ -195,10 +162,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         if STATE_DISTANCES_LAB:
             state_list += [
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
-            ]
-        if STATE_GRAPH_DENSITIES:
-            state_list += [
-                self._calculate_graph_density_metric(a) for a in batch_indices
             ]
         print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
