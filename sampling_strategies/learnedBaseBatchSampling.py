@@ -1,3 +1,4 @@
+import math
 import os
 
 from numba import jit
@@ -89,7 +90,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     reverse=True,
                 )
             ][:SAMPLE_SIZE]
-        elif INITIAL_BATCH_SAMPLING_METHOD == "full_hybrid":
+        elif INITIAL_BATCH_SAMPLING_METHOD == "hybrid2":
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
@@ -99,23 +100,34 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
             ]
 
-            test_lists = {}
-            for function in [
-                self._calculate_furthest_metric,
-                self._calculate_uncertainty_metric,
-                self._calculate_furthest_lab_metric,
-            ]:
-                test_lists[function] = [function(a) for a in possible_batches]
-            print(test_lists)
-
-            index_batches = [
+            furthest_index_batches = [
                 x
                 for _, x in sorted(
-                    zip(metric_values, possible_batches),
+                    zip(
+                        [self._calculate_furthest_metric(a) for a in possible_batches],
+                        possible_batches,
+                    ),
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][:SAMPLE_SIZE]
+            ][: math.ceil(SAMPLE_SIZE / 2)]
+
+            uncertainty_index_batches = [
+                x
+                for _, x in sorted(
+                    zip(
+                        [
+                            self._calculate_uncertainty_metric(a)
+                            for a in possible_batches
+                        ],
+                        possible_batches,
+                    ),
+                    key=lambda t: t[0],
+                    reverse=True,
+                )
+            ][: math.floor(SAMPLE_SIZE / 2)]
+
+            index_batches = furthest_index_batches + uncertainty_index_batches
 
         else:
             raise ("NON EXISTENT INITIAL_SAMPLING_METHOD")
@@ -163,6 +175,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             state_list += [
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
             ]
-        print(state_list)
+        #  print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
         return np.array(state_list)
