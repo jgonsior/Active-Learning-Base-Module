@@ -138,7 +138,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         self.calculate_next_query_indices_pre_hook()
         batch_indices = self.get_X_query_index()
 
-        return batch_indices[self.get_sorting(None).argmax()]
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.X_query_index = batch_indices
         X_state = self.calculate_state(
@@ -152,6 +151,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         )
 
         self.calculate_next_query_indices_post_hook(X_state)
+        return batch_indices[self.get_sorting(None).argmax()]
 
     def calculate_state(
         self,
@@ -175,6 +175,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             state_list += [
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
             ]
-        #  print(state_list)
+        print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
         return np.array(state_list)
