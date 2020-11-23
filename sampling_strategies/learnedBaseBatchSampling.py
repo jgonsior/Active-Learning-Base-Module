@@ -79,6 +79,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             INITIAL_BATCH_SAMPLING_METHOD == "furthest"
             or INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab"
             or INITIAL_BATCH_SAMPLING_METHOD == "uncertainty"
+            or INITIAL_BATCH_SAMPLING_METHOD == "predicted_unity"
         ):
             possible_batches = [
                 np.random.choice(
@@ -95,6 +96,8 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 metric_function = self._calculate_furthest_lab_metric
             elif INITIAL_BATCH_SAMPLING_METHOD == "uncertainty":
                 metric_function = self._calculate_uncertainty_metric
+            elif INITIAL_BATCH_SAMPLING_METHOD == "predicted_unity":
+                metric_function = self._calculate_predicted_unity
             metric_values = [metric_function(a) for a in possible_batches]
 
             # take n samples based on the sorting metric, the rest randomly
@@ -146,9 +149,10 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             index_batches = furthest_index_batches + uncertainty_index_batches
 
         else:
-            raise (
+            print(
                 "NON EXISTENT INITIAL_SAMPLING_METHOD: " + INITIAL_BATCH_SAMPLING_METHOD
             )
+            raise ()
 
         return index_batches
 
@@ -181,6 +185,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             ]
         if self.STATE_PREDICTED_UNITY:
             state_list += [self._calculate_predicted_unity(a) for a in batch_indices]
-        print(state_list)
+        #  print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
         return np.array(state_list)

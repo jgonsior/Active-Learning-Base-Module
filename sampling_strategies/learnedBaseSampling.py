@@ -23,7 +23,6 @@ class LearnedBaseSampling(ActiveLearner):
             X_query_index = np.random.choice(
                 self.data_storage.unlabeled_mask, size=sample_size, replace=False
             )
-
         elif INITIAL_BATCH_SAMPLING_METHOD == "furthest":
             max_sum = 0
             for i in range(0, INITIAL_BATCH_SAMPLING_ARG):
@@ -48,10 +47,11 @@ class LearnedBaseSampling(ActiveLearner):
                     X_query_index = random_index
 
         else:
-            raise (
+            print(
                 "No valid INITIAL_BATCH_SAMPLING_METHOD given. Valid for single are random or furthest. You specified: "
                 + INITIAL_BATCH_SAMPLING_METHOD
             )
+            raise ()
         return X_query_index
 
     @abc.abstractmethod

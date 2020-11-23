@@ -181,6 +181,7 @@ def get_active_config(additional_parameters=[]):
             (["--STATE_PREDICTED_UNITY"], {"action": "store_true"}),
             (["--STATE_DISTANCES"], {"action": "store_true"}),
             (["--STATE_UNCERTAINTIES"], {"action": "store_true"}),
+            (["--BATCH_MODE"], {"action": "store_true"}),
             (["--INITIAL_BATCH_SAMPLING_METHOD"], {"default": "furthest"}),
             (["--INITIAL_BATCH_SAMPLING_ARG"], {"type": int, "default": 100}),
             *additional_parameters,
