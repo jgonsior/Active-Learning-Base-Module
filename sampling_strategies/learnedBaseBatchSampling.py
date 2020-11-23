@@ -71,7 +71,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 index_batches.append(
                     np.random.choice(
                         self.data_storage.unlabeled_mask,
-                        size=self.nr_queries_per_iteration,
+                        size=self.NR_QUERIES_PER_ITERATION,
                         replace=False,
                     )
                 )
@@ -83,7 +83,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
-                    size=self.nr_queries_per_iteration,
+                    size=self.NR_QUERIES_PER_ITERATION,
                     replace=False,
                 )
                 for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
@@ -110,7 +110,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
-                    size=self.nr_queries_per_iteration,
+                    size=self.NR_QUERIES_PER_ITERATION,
                     replace=False,
                 )
                 for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
@@ -158,12 +158,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             self.data_storage.X_query_index = batch_indices
         X_state = self.calculate_state(
             batch_indices,
-            STATE_ARGSECOND_PROBAS=self.STATE_ARGSECOND_PROBAS,
-            STATE_DIFF_PROBAS=self.STATE_DIFF_PROBAS,
-            STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
-            STATE_DISTANCES_LAB=self.STATE_DISTANCES_LAB,
-            STATE_DISTANCES_UNLAB=self.STATE_DISTANCES_UNLAB,
-            STATE_PREDICTED_CLASS=self.STATE_PREDICTED_CLASS,
         )
 
         self.calculate_next_query_indices_post_hook(X_state)
@@ -172,27 +166,18 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
     def calculate_state(
         self,
         batch_indices,
-        STATE_ARGSECOND_PROBAS,
-        STATE_DIFF_PROBAS,
-        STATE_ARGTHIRD_PROBAS,
-        STATE_DISTANCES_LAB,
-        STATE_DISTANCES_UNLAB,
-        STATE_PREDICTED_CLASS,
-        STATE_UNCERTAINTIES,
-        STATE_DISTANCES,
-        STATE_PREDICTED_UNITY,
     ):
         state_list = []
-        if STATE_UNCERTAINTIES:
+        if self.STATE_UNCERTAINTIES:
             state_list += [self._calculate_uncertainty_metric(a) for a in batch_indices]
 
-        if STATE_DISTANCES:
+        if self.STATE_DISTANCES:
             state_list += [self._calculate_furthest_metric(a) for a in batch_indices]
-        if STATE_DISTANCES_LAB:
+        if self.STATE_DISTANCES_LAB:
             state_list += [
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
             ]
-        if STATE_PREDICTED_UNITY:
+        if self.STATE_PREDICTED_UNITY:
             state_list += [self._calculate_predicted_unity(a) for a in batch_indices]
         print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!

@@ -29,44 +29,29 @@ def _find_first(item, vec):
 
 
 class DataStorage:
-    def __init__(
-        self,
-        RANDOM_SEED,
-        hyper_parameters,
-        df=None,
-        TEST_FRACTION=0.5,
-        DATASET_NAME=None,
-        DATASETS_PATH=None,
-        PLOT_EVOLUTION=False,
-        INITIAL_BATCH_SAMPLING_METHOD="",
-        **kwargs
-    ):
-        if RANDOM_SEED != -1:
-            np.random.seed(RANDOM_SEED)
-            random.seed(RANDOM_SEED)
-            self.RANDOM_SEED = RANDOM_SEED
-        self.PLOT_EVOLUTION = PLOT_EVOLUTION
+    def __init__(self, df=None, **kwargs):
+        self.__dict__.update(kwargs)
 
-        if PLOT_EVOLUTION:
+        if self.RANDOM_SEED != -1:
+            np.random.seed(self.RANDOM_SEED)
+            random.seed(self.RANDOM_SEED)
+
+        if self.PLOT_EVOLUTION:
             self.possible_samples_indices = []
             self.train_labeled_Y_predicted = []
             self.train_unlabeled_Y_predicted = []
             self.i = 0
             self.deleted = False
 
-        self.INITIAL_BATCH_SAMPLING_METHOD = INITIAL_BATCH_SAMPLING_METHOD
-
         if df is None:
-            log_it("Loading " + DATASET_NAME)
-            if DATASET_NAME == "dwtc":
-                X, Y = self._load_dwtc(DATASETS_PATH)
-            elif DATASET_NAME == "synthetic":
-                X, Y = self._load_synthetic(RANDOM_SEED=RANDOM_SEED, **kwargs)
+            log_it("Loading " + self.DATASET_NAME)
+            if self.DATASET_NAME == "dwtc":
+                X, Y = self._load_dwtc()
+            elif self.DATASET_NAME == "synthetic":
+                X, Y = self._load_synthetic()
             else:
-                X, Y = self._load_uci(DATASET_NAME, DATASETS_PATH)
+                X, Y = self._load_uci()
                 #  df = self._load_alc(DATASET_NAME, DATASETS_PATH)
-
-        self.hyper_parameters = hyper_parameters
 
         self.label_encoder = LabelEncoder()
 
@@ -93,17 +78,19 @@ class DataStorage:
 
             # create test split out of labeled data
             self.test_mask = self.labeled_mask[
-                0 : math.floor(len(self.labeled_mask) * TEST_FRACTION)
+                0 : math.floor(len(self.labeled_mask) * self.TEST_FRACTION)
             ]
             self.labeled_mask = self.labeled_mask[
-                math.floor(len(self.labeled_mask) * TEST_FRACTION) :
+                math.floor(len(self.labeled_mask) * self.TEST_FRACTION) :
             ]
 
         else:
             # split into test, train_labeled, train_unlabeled
             # experiment setting apparently
-            self.unlabeled_mask = np.arange(math.floor(len(Y) * TEST_FRACTION), len(Y))
-            self.test_mask = np.arange(0, math.floor(len(Y) * TEST_FRACTION))
+            self.unlabeled_mask = np.arange(
+                math.floor(len(Y) * self.TEST_FRACTION), len(Y)
+            )
+            self.test_mask = np.arange(0, math.floor(len(Y) * self.TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
 
@@ -152,10 +139,12 @@ class DataStorage:
             % (len_train_unlabeled, len_train_unlabeled / len_total)
         )
 
-        log_it("Loaded " + str(DATASET_NAME))
+        log_it("Loaded " + str(self.DATASET_NAME))
 
-    def _load_uci(self, DATASET_NAME, DATASETS_PATH):
-        df = pd.read_csv(DATASETS_PATH + "uci_cleaned/" + DATASET_NAME + ".csv")
+    def _load_uci(self):
+        df = pd.read_csv(
+            self.DATASETS_PATH + "uci_cleaned/" + self.DATASET_NAME + ".csv"
+        )
 
         # shuffle df
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
@@ -169,8 +158,8 @@ class DataStorage:
 
         return df.loc[:, df.columns != "LABEL"].to_numpy(), Y
 
-    def _load_dwtc(self, DATASETS_PATH):
-        df = pd.read_csv(DATASETS_PATH + "dwtc/aft.csv")
+    def _load_dwtc(self):
+        df = pd.read_csv(self.DATASETS_PATH + "dwtc/aft.csv")
 
         # shuffle df
         df = df.sample(frac=1, random_state=self.RANDOM_SEED).reset_index(drop=True)
@@ -184,18 +173,17 @@ class DataStorage:
 
         return df.loc[:, df.columns != "CLASS"].to_numpy(), Y
 
-    def _load_synthetic(self, RANDOM_SEED, **kwargs):
+    def _load_synthetic(self):
         no_valid_synthetic_arguments_found = True
         while no_valid_synthetic_arguments_found:
-            log_it(kwargs)
-            if not kwargs["NEW_SYNTHETIC_PARAMS"]:
-                if kwargs["VARIABLE_DATASET"]:
+            if not self.NEW_SYNTHETIC_PARAMS:
+                if self.VARIABLE_DATASET:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
                     N_SAMPLES = random.randint(100, 5000)
 
-                if kwargs["AMOUNT_OF_FEATURES"] > 0:
-                    N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
+                if self.AMOUNT_OF_FEATURES > 0:
+                    N_FEATURES = self.AMOUNT_OF_FEATURES
                 else:
                     N_FEATURES = random.randint(10, 100)
 
@@ -217,7 +205,7 @@ class DataStorage:
                     0
                 ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
 
-                if kwargs["GENERATE_NOISE"]:
+                if self.GENERATE_NOISE:
                     FLIP_Y = (
                         np.random.pareto(2.0) + 1
                     ) * 0.01  # amount of noise, larger values make it harder
@@ -227,16 +215,16 @@ class DataStorage:
                 CLASS_SEP = random.uniform(
                     0, 10
                 )  # larger values spread out the clusters and make it easier
-                HYPERCUBE = kwargs["HYPERCUBE"]  # if false random polytope
+                HYPERCUBE = self.HYPERCUBE  # if false random polytope
                 SCALE = 0.01  # features should be between 0 and 1 now
             else:
-                if kwargs["VARIABLE_DATASET"]:
+                if self.VARIABLE_DATASET:
                     N_SAMPLES = random.randint(500, 20000)
                 else:
                     N_SAMPLES = random.randint(100, 5000)
                     #  N_SAMPLES = 1000
-                if kwargs["AMOUNT_OF_FEATURES"] > 0:
-                    N_FEATURES = kwargs["AMOUNT_OF_FEATURES"]
+                if self.AMOUNT_OF_FEATURES > 0:
+                    N_FEATURES = self.AMOUNT_OF_FEATURES
                 else:
                     N_FEATURES = random.randint(2, 10)
                 N_REDUNDANT = N_REPEATED = 0
@@ -256,7 +244,7 @@ class DataStorage:
                     0
                 ]  # list of weights, len(WEIGHTS) = N_CLASSES, sum(WEIGHTS)=1
 
-                if kwargs["GENERATE_NOISE"]:
+                if self.GENERATE_NOISE:
                     FLIP_Y = (
                         np.random.pareto(2.0) + 1
                     ) * 0.01  # amount of noise, larger values make it harder
@@ -267,9 +255,9 @@ class DataStorage:
                     0, 10
                 )  # larger values spread out the clusters and make it easier
 
-                HYPERCUBE = kwargs[
-                    "HYPERCUBE"
-                ]  # if false a random polytope is selected instead
+                HYPERCUBE = (
+                    self.HYPERCUBE
+                )  # if false a random polytope is selected instead
                 SCALE = 0.01  # features should be between 0 and 1 now
 
             synthetic_creation_args = {
@@ -285,7 +273,7 @@ class DataStorage:
                 "class_sep": CLASS_SEP,
                 "hypercube": HYPERCUBE,
                 "scale": SCALE,
-                "random_state": RANDOM_SEED,
+                "random_state": self.RANDOM_SEED,
             }
             self.synthetic_creation_args = synthetic_creation_args
 
@@ -294,22 +282,23 @@ class DataStorage:
 
         return X, Y
 
-    def _load_alc(self, DATASET_NAME, DATASETS_PATH):
+    def _load_alc(self):
         df = pd.read_csv(
-            DATASETS_PATH + "/al_challenge/" + DATASET_NAME + ".data",
+            DATASETS_PATH + "/al_challenge/" + self.DATASET_NAME + ".data",
             header=None,
             sep=" ",
         )
         # feature_columns fehlt
 
         # shuffle df
-        df = df.sample(frac=1, random_state=RANDOM_SEED)
+        df = df.sample(frac=1, random_state=self.RANDOM_SEED)
 
         df = df.replace([np.inf, -np.inf], -1)
         df = df.fillna(0)
 
         labels = pd.read_csv(
-            DATASETS_PATH + "/al_challenge/" + DATASET_NAME + ".label", header=None
+            self.DATASETS_PATH + "/al_challenge/" + self.DATASET_NAME + ".label",
+            header=None,
         )
 
         labels = labels.replace([-1], "A")

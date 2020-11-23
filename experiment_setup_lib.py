@@ -178,6 +178,7 @@ def get_active_config(additional_parameters=[]):
             (["--STATE_DISTANCES_LAB"], {"action": "store_true"}),
             (["--STATE_DISTANCES_UNLAB"], {"action": "store_true"}),
             (["--STATE_PREDICTED_CLASS"], {"action": "store_true"}),
+            (["--STATE_PREDICTED_UNITY"], {"action": "store_true"}),
             (["--STATE_DISTANCES"], {"action": "store_true"}),
             (["--STATE_UNCERTAINTIES"], {"action": "store_true"}),
             (["--INITIAL_BATCH_SAMPLING_METHOD"], {"default": "furthest"}),

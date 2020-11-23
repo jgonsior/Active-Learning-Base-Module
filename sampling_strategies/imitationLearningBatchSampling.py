@@ -8,21 +8,8 @@ from .learnedBaseBatchSampling import LearnedBaseBatchSampling
 
 
 class ImitationBatchLearner(LearnedBaseBatchSampling):
-    def set_amount_of_peaked_objects(self, amount_of_peaked_objects):
-        self.amount_of_peaked_objects = amount_of_peaked_objects
-
-    def init_sampling_classifier(
-        self,
-        DATA_PATH,
-        STATE_DISTANCES_LAB,
-        STATE_DISTANCES_UNLAB,
-        STATE_DIFF_PROBAS,
-        STATE_ARGTHIRD_PROBAS,
-        STATE_ARGSECOND_PROBAS,
-        STATE_PREDICTED_CLASS,
-        INITIAL_BATCH_SAMPLING_METHOD,
-        INITIAL_BATCH_SAMPLING_ARG,
-    ):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.states = pd.DataFrame(
             data=None,
         )
@@ -30,19 +17,8 @@ class ImitationBatchLearner(LearnedBaseBatchSampling):
             data=None,
             columns=[
                 str(i) + "_true_peaked_normalised_acc"
-                for i in range(0, self.amount_of_peaked_objects)
+                for i in range(0, self.AMOUNT_OF_PEAKED_OBJECTS)
             ],
-        )
-
-        super().init_sampling_classifier(
-            STATE_DISTANCES_LAB=STATE_DISTANCES_LAB,
-            STATE_DISTANCES_UNLAB=STATE_DISTANCES_UNLAB,
-            STATE_DIFF_PROBAS=STATE_DIFF_PROBAS,
-            STATE_ARGTHIRD_PROBAS=STATE_ARGTHIRD_PROBAS,
-            STATE_PREDICTED_CLASS=STATE_PREDICTED_CLASS,
-            STATE_ARGSECOND_PROBAS=STATE_ARGSECOND_PROBAS,
-            INITIAL_BATCH_SAMPLING_METHOD=INITIAL_BATCH_SAMPLING_METHOD,
-            INITIAL_BATCH_SAMPLING_ARG=INITIAL_BATCH_SAMPLING_ARG,
         )
 
     def move_labeled_queries(self, X_query, Y_query, query_indices):
@@ -107,7 +83,7 @@ class ImitationBatchLearner(LearnedBaseBatchSampling):
         future_peak_acc = []
 
         index_batches = self.sample_unlabeled_X(
-            self.amount_of_peaked_objects,
+            self.AMOUNT_OF_PEAKED_OBJECTS,
             self.INITIAL_BATCH_SAMPLING_METHOD,
             self.INITIAL_BATCH_SAMPLING_ARG,
         )

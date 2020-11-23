@@ -13,26 +13,6 @@ from ..activeLearner import ActiveLearner
 
 
 class LearnedBaseSampling(ActiveLearner):
-    def init_sampling_classifier(
-        self,
-        STATE_DISTANCES_LAB,
-        STATE_DISTANCES_UNLAB,
-        STATE_DIFF_PROBAS,
-        STATE_ARGTHIRD_PROBAS,
-        STATE_PREDICTED_CLASS,
-        STATE_ARGSECOND_PROBAS,
-        INITIAL_BATCH_SAMPLING_METHOD,
-        INITIAL_BATCH_SAMPLING_ARG,
-    ):
-        self.STATE_DISTANCES_LAB = STATE_DISTANCES_LAB
-        self.STATE_DISTANCES_UNLAB = STATE_DISTANCES_UNLAB
-        self.STATE_DIFF_PROBAS = STATE_DIFF_PROBAS
-        self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
-        self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
-        self.STATE_PREDICTED_CLASS = STATE_PREDICTED_CLASS
-        self.INITIAL_BATCH_SAMPLING_METHOD = INITIAL_BATCH_SAMPLING_METHOD
-        self.INITIAL_BATCH_SAMPLING_ARG = INITIAL_BATCH_SAMPLING_ARG
-
     def sample_unlabeled_X(
         self,
         sample_size,
@@ -67,6 +47,11 @@ class LearnedBaseSampling(ActiveLearner):
                     max_sum = total_distance
                     X_query_index = random_index
 
+        else:
+            print(
+                "No valid INITIAL_BATCH_SAMPLING_METHOD given. Valid for single are random or furthest. You specified: "
+                + INITIAL_BATCH_SAMPLING_METHOD
+            )
         return X_query_index
 
     @abc.abstractmethod
@@ -94,12 +79,6 @@ class LearnedBaseSampling(ActiveLearner):
 
         X_state = self.calculate_state(
             self.data_storage.X[X_query_index],
-            STATE_ARGSECOND_PROBAS=self.STATE_ARGSECOND_PROBAS,
-            STATE_DIFF_PROBAS=self.STATE_DIFF_PROBAS,
-            STATE_ARGTHIRD_PROBAS=self.STATE_ARGTHIRD_PROBAS,
-            STATE_DISTANCES_LAB=self.STATE_DISTANCES_LAB,
-            STATE_DISTANCES_UNLAB=self.STATE_DISTANCES_UNLAB,
-            STATE_PREDICTED_CLASS=self.STATE_PREDICTED_CLASS,
         )
 
         self.calculate_next_query_indices_post_hook(X_state)
@@ -118,19 +97,13 @@ class LearnedBaseSampling(ActiveLearner):
         return [
             v
             for k, v in ordered_list_of_possible_sample_indices[
-                : self.nr_queries_per_iteration
+                : self.NR_QUERIES_PER_ITERATION
             ]
         ]
 
     def calculate_state(
         self,
         X_query,
-        STATE_ARGSECOND_PROBAS,
-        STATE_DIFF_PROBAS,
-        STATE_ARGTHIRD_PROBAS,
-        STATE_DISTANCES_LAB,
-        STATE_DISTANCES_UNLAB,
-        STATE_PREDICTED_CLASS,
     ):
         possible_samples_probas = self.clf.predict_proba(X_query)
 
@@ -139,20 +112,20 @@ class LearnedBaseSampling(ActiveLearner):
 
         state_list = argmax_probas.tolist()
 
-        if STATE_ARGSECOND_PROBAS:
+        if self.STATE_ARGSECOND_PROBAS:
             argsecond_probas = sorted_probas[:, 1]
             state_list += argsecond_probas.tolist()
-        if STATE_DIFF_PROBAS:
+        if self.STATE_DIFF_PROBAS:
             state_list += (argmax_probas - sorted_probas[:, 1]).tolist()
-        if STATE_ARGTHIRD_PROBAS:
+        if self.STATE_ARGTHIRD_PROBAS:
             if np.shape(sorted_probas)[1] < 3:
                 state_list += [0 for _ in range(0, len(X_query))]
             else:
                 state_list += sorted_probas[:, 2].tolist()
-        if STATE_PREDICTED_CLASS:
+        if self.STATE_PREDICTED_CLASS:
             state_list += self.clf.predict(X_query).tolist()
 
-        if STATE_DISTANCES_LAB:
+        if self.STATE_DISTANCES_LAB:
             # calculate average distance to labeled and average distance to unlabeled samples
             average_distance_labeled = (
                 np.sum(
@@ -165,7 +138,7 @@ class LearnedBaseSampling(ActiveLearner):
             )
             state_list += average_distance_labeled.tolist()
 
-        if STATE_DISTANCES_UNLAB:
+        if self.STATE_DISTANCES_UNLAB:
             # calculate average distance to labeled and average distance to unlabeled samples
             average_distance_unlabeled = (
                 np.sum(

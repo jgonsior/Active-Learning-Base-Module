@@ -11,19 +11,17 @@ from .experiment_setup_lib import (
 class ActiveLearner:
     def __init__(
         self,
-        RANDOM_SEED,
         data_storage,
         cluster_strategy,
-        N_JOBS,
-        NR_LEARNING_ITERATIONS,
-        NR_QUERIES_PER_ITERATION,
         oracle,
         clf,
         weak_supervision_label_sources=[],
+        **kwargs,
     ):
+
+        self.__dict__.update(**kwargs)
+
         self.data_storage = data_storage
-        self.NR_LEARNING_ITERATIONS = NR_LEARNING_ITERATIONS
-        self.nr_queries_per_iteration = NR_QUERIES_PER_ITERATION
         self.clf = clf
 
         self.metrics_per_al_cycle = {
@@ -38,8 +36,6 @@ class ActiveLearner:
         self.amount_of_user_asked_queries = 0
         self.oracle = oracle
         self.weak_supervision_label_sources = weak_supervision_label_sources
-        self.N_JOBS = N_JOBS
-        self.RANDOM_SEED = RANDOM_SEED
 
         # fake iteration zero
         X_query = self.data_storage.X[self.data_storage.labeled_mask]
@@ -121,7 +117,7 @@ class ActiveLearner:
 
     def get_newly_labeled_data(self):
         X_train_unlabeled_cluster_indices = self.cluster_strategy.get_cluster_indices(
-            clf=self.clf, nr_queries_per_iteration=self.nr_queries_per_iteration
+            clf=self.clf, nr_queries_per_iteration=self.NR_QUERIES_PER_ITERATION
         )
 
         if self.data_storage.PLOT_EVOLUTION:
@@ -140,10 +136,6 @@ class ActiveLearner:
 
     def learn(
         self,
-        MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS,
-        ALLOW_RECOMMENDATIONS_AFTER_STOP,
-        USER_QUERY_BUDGET_LIMIT,
-        **kwargs,
     ):
         log_it(self.data_storage.label_encoder.classes_)
         log_it("Used Hyperparams:")
@@ -154,9 +146,9 @@ class ActiveLearner:
 
         for i in range(0, self.NR_LEARNING_ITERATIONS):
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
-            if len(self.data_storage.unlabeled_mask) < self.nr_queries_per_iteration:
-                self.nr_queries_per_iteration = len(self.data_storage.unlabeled_mask)
-            if self.nr_queries_per_iteration == 0:
+            if len(self.data_storage.unlabeled_mask) < self.NR_QUERIES_PER_ITERATION:
+                self.NR_QUERIES_PER_ITERATION = len(self.data_storage.unlabeled_mask)
+            if self.NR_QUERIES_PER_ITERATION == 0:
                 break
 
             # first iteration - add everything from ground truth
@@ -164,7 +156,7 @@ class ActiveLearner:
 
             if (
                 self.metrics_per_al_cycle["test_acc"][-1]
-                > MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS
+                > self.MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS
             ):
                 # iterate over existing WS sources
                 for labelSource in self.weak_supervision_label_sources:
@@ -208,22 +200,22 @@ class ActiveLearner:
                 )
             )
 
-            if self.amount_of_user_asked_queries > USER_QUERY_BUDGET_LIMIT:
+            if self.amount_of_user_asked_queries > self.USER_QUERY_BUDGET_LIMIT:
                 early_stop_reached = True
                 log_it("Budget exhausted")
-                if not ALLOW_RECOMMENDATIONS_AFTER_STOP:
+                if not self.ALLOW_RECOMMENDATIONS_AFTER_STOP:
                     break
-            if "STOP_AFTER_MAXIMUM_ACCURACY_REACHED" in kwargs:
-                if kwargs["STOP_AFTER_MAXIMUM_ACCURACY_REACHED"]:
-                    if (
-                        self.metrics_per_al_cycle["test_acc"][-1]
-                        >= kwargs["THEORETICALLY_BEST_ACHIEVABLE_ACCURACY"]
-                    ):
-                        early_stop_reached = True
-                        log_it(
-                            "THEORETICALLY_BEST_ACHIEVABLE_ACCURACY: "
-                            + str(kwargs["THEORETICALLY_BEST_ACHIEVABLE_ACCURACY"])
-                        )
-                        break
+
+            if self.STOP_AFTER_MAXIMUM_ACCURACY_REACHED:
+                if (
+                    self.metrics_per_al_cycle["test_acc"][-1]
+                    >= self.THEORETICALLY_BEST_ACHIEVABLE_ACCURACY
+                ):
+                    early_stop_reached = True
+                    log_it(
+                        "THEORETICALLY_BEST_ACHIEVABLE_ACCURACY: "
+                        + str(self.THEORETICALLY_BEST_ACHIEVABLE_ACCURACY)
+                    )
+                    break
 
         return (self.clf, self.metrics_per_al_cycle)
