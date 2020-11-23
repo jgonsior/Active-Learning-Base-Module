@@ -7,3 +7,4 @@ from .learnedBaseSampling import *
 from .randomSampling import *
 from .trained_nn import *
 from .uncertaintySampling import *
+from .trained_batch_nn import *

@@ -24,6 +24,7 @@ from .sampling_strategies import (
     RandomSampler,
     UncertaintySampler,
     TrainedNNLearner,
+    TrainedBatchNNLearner,
 )
 from .weak_supervision import WeakCert, WeakClust
 
@@ -112,7 +113,14 @@ def train_al(hyper_parameters, oracle, df=None):
         active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
         active_learner.set_uncertainty_strategy("entropy")
     elif hyper_parameters["SAMPLING"] == "trained_nn":
-        active_learner = TrainedNNLearner(**active_learner_params, **hyper_parameters)
+        if hyper_parameters["BATCH_MODE"]:
+            active_learner = TrainedBatchNNLearner(
+                **active_learner_params, **hyper_parameters
+            )
+        else:
+            active_learner = TrainedNNLearner(
+                **active_learner_params, **hyper_parameters
+            )
     #  elif hyper_parameters['sampling'] == 'committee':
     #  active_learner = CommitteeSampler(hyper_parameters['RANDOM_SEED, hyper_parameters.N_JOBS, hyper_parameters.NR_LEARNING_ITERATIONS)
     else:

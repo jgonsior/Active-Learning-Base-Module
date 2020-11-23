@@ -3,10 +3,10 @@ import os
 import dill
 import numpy as np
 
-from .learnedBaseSampling import LearnedBaseSampling
+from .learnedBaseBatchSampling import LearnedBaseBatchSampling
 
 
-class TrainedNNLearner(LearnedBaseSampling):
+class TrainedBatchNNLearner(LearnedBaseBatchSampling):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

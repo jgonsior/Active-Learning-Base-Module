@@ -167,7 +167,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         )
 
         self.calculate_next_query_indices_post_hook(X_state)
-        return batch_indices[self.get_sorting(None).argmax()]
+        return batch_indices[self.get_sorting(X_state).argmax()]
 
     def calculate_state(
         self,
