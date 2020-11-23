@@ -43,6 +43,22 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         margin = np.partition(-Y_proba, 1, axis=1)
         return np.sum(-np.abs(margin[:, 0] - margin[:, 1]))
 
+    def _calculate_predicted_unity(self, unlabeled_sample_indices):
+        Y_pred = self.clf.predict(self.data_storage.X[unlabeled_sample_indices])
+        Y_pred_sorted = sorted(Y_pred)
+        count, unique = np.unique(Y_pred_sorted, return_counts=True)
+        Y_enc = []
+        for i, (c, u) in enumerate(
+            sorted(zip(count, unique), key=lambda t: t[1], reverse=True)
+        ):
+            Y_enc += [i + 1 for _ in range(0, u)]
+
+        Y_enc = np.array(Y_enc)
+        counts, unique = np.unique(Y_enc, return_counts=True)
+        disagreement_score = sum([c * u for c, u in zip(counts, unique)])
+        #  print(Y_pred, "\t -> \t", Y_enc, "\t: ", disagreement_score)
+        return disagreement_score
+
     def sample_unlabeled_X(
         self,
         SAMPLE_SIZE,
@@ -164,6 +180,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         STATE_PREDICTED_CLASS,
         STATE_UNCERTAINTIES,
         STATE_DISTANCES,
+        STATE_PREDICTED_UNITY,
     ):
         state_list = []
         if STATE_UNCERTAINTIES:
@@ -175,6 +192,8 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             state_list += [
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
             ]
+        if STATE_PREDICTED_UNITY:
+            state_list += [self._calculate_predicted_unity(a) for a in batch_indices]
         print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
         return np.array(state_list)
