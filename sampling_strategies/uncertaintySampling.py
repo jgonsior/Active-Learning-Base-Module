@@ -32,4 +32,4 @@ class UncertaintySampler(ActiveLearner):
         query_indices = self.data_storage.unlabeled_mask[argsort]
 
         # return smallest probabilities
-        return query_indices[: self.nr_queries_per_iteration]
+        return query_indices[: self.NR_QUERIES_PER_ITERATION]

@@ -28,19 +28,10 @@ from .sampling_strategies import (
 from .weak_supervision import WeakCert, WeakClust
 
 
-def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH=None):
+def train_al(hyper_parameters, oracle, df=None):
     data_storage = DataStorage(
-        hyper_parameters["RANDOM_SEED"],
-        hyper_parameters,
         df=df,
-        DATASET_NAME=DATASET_NAME,
-        DATASETS_PATH=DATASETS_PATH,
-        VARIABLE_DATASET=hyper_parameters["VARIABLE_DATASET"],
-        NEW_SYNTHETIC_PARAMS=hyper_parameters["NEW_SYNTHETIC_PARAMS"],
-        HYPERCUBE=hyper_parameters["HYPERCUBE"],
-        AMOUNT_OF_FEATURES=hyper_parameters["AMOUNT_OF_FEATURES"],
-        PLOT_EVOLUTION=hyper_parameters["PLOT_EVOLUTION"],
-        GENERATE_NOISE=hyper_parameters["GENERATE_NOISE"],
+        **hyper_parameters,
     )
     hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.unlabeled_mask) + len(
         data_storage.labeled_mask
@@ -100,55 +91,35 @@ def train_al(hyper_parameters, oracle, df=None, DATASET_NAME=None, DATASETS_PATH
     active_learner_params = {
         "data_storage": data_storage,
         "cluster_strategy": cluster_strategy,
-        "N_JOBS": hyper_parameters["N_JOBS"],
-        "RANDOM_SEED": hyper_parameters["RANDOM_SEED"],
-        "NR_LEARNING_ITERATIONS": hyper_parameters["NR_LEARNING_ITERATIONS"],
-        "NR_QUERIES_PER_ITERATION": hyper_parameters["NR_QUERIES_PER_ITERATION"],
         "oracle": oracle,
         "clf": classifier,
         "weak_supervision_label_sources": weak_supervision_label_sources,
     }
 
     if hyper_parameters["SAMPLING"] == "random":
-        active_learner = RandomSampler(**active_learner_params)
+        active_learner = RandomSampler(**active_learner_params, **hyper_parameters)
     elif hyper_parameters["SAMPLING"] == "boundary":
-        active_learner = BoundaryPairSampler(**active_learner_params)
+        active_learner = BoundaryPairSampler(
+            **active_learner_params, **hyper_parameters
+        )
     elif hyper_parameters["SAMPLING"] == "uncertainty_lc":
-        active_learner = UncertaintySampler(**active_learner_params)
+        active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
         active_learner.set_uncertainty_strategy("least_confident")
     elif hyper_parameters["SAMPLING"] == "uncertainty_max_margin":
-        active_learner = UncertaintySampler(**active_learner_params)
+        active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
         active_learner.set_uncertainty_strategy("max_margin")
     elif hyper_parameters["SAMPLING"] == "uncertainty_entropy":
-        active_learner = UncertaintySampler(**active_learner_params)
+        active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
         active_learner.set_uncertainty_strategy("entropy")
     elif hyper_parameters["SAMPLING"] == "trained_nn":
-        active_learner = TrainedNNLearner(**active_learner_params)
-        active_learner.init_sampling_classifier(
-            NN_BINARY_PATH=hyper_parameters["NN_BINARY_PATH"],
-            STATE_DISTANCES_LAB=hyper_parameters["STATE_DISTANCES_LAB"],
-            STATE_DISTANCES_UNLAB=hyper_parameters["STATE_DISTANCES_UNLAB"],
-            STATE_DIFF_PROBAS=hyper_parameters["STATE_DIFF_PROBAS"],
-            STATE_PREDICTED_CLASS=hyper_parameters["STATE_PREDICTED_CLASS"],
-            STATE_ARGTHIRD_PROBAS=hyper_parameters["STATE_ARGTHIRD_PROBAS"],
-            STATE_ARGSECOND_PROBAS=hyper_parameters["STATE_ARGSECOND_PROBAS"],
-            INITIAL_BATCH_SAMPLING_METHOD=hyper_parameters[
-                "INITIAL_BATCH_SAMPLING_METHOD"
-            ],
-            INITIAL_BATCH_SAMPLING_ARG=hyper_parameters["INITIAL_BATCH_SAMPLING_ARG"],
-        )
-        active_learner.MAX_AMOUNT_OF_WS_PEAKS = hyper_parameters[
-            "MAX_AMOUNT_OF_WS_PEAKS"
-        ]
+        active_learner = TrainedNNLearner(**active_learner_params, **hyper_parameters)
     #  elif hyper_parameters['sampling'] == 'committee':
     #  active_learner = CommitteeSampler(hyper_parameters['RANDOM_SEED, hyper_parameters.N_JOBS, hyper_parameters.NR_LEARNING_ITERATIONS)
     else:
         ("No Active Learning Strategy specified")
 
     start = timer()
-    trained_active_clf_list, metrics_per_al_cycle = active_learner.learn(
-        **hyper_parameters
-    )
+    trained_active_clf_list, metrics_per_al_cycle = active_learner.learn()
     end = timer()
 
     return (
@@ -329,8 +300,6 @@ def train_and_eval_dataset(
     hyper_parameters,
     oracle,
     df=None,
-    DATASET_NAME=None,
-    DATASETS_PATH=None,
 ):
     (
         trained_active_clf_list,
@@ -340,8 +309,6 @@ def train_and_eval_dataset(
         active_learner,
     ) = train_al(
         df=df,
-        DATASET_NAME=DATASET_NAME,
-        DATASETS_PATH=DATASETS_PATH,
         hyper_parameters=hyper_parameters,
         oracle=oracle,
     )
