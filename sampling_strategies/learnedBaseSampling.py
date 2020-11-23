@@ -48,7 +48,7 @@ class LearnedBaseSampling(ActiveLearner):
                     X_query_index = random_index
 
         else:
-            print(
+            raise (
                 "No valid INITIAL_BATCH_SAMPLING_METHOD given. Valid for single are random or furthest. You specified: "
                 + INITIAL_BATCH_SAMPLING_METHOD
             )

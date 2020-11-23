@@ -146,7 +146,9 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             index_batches = furthest_index_batches + uncertainty_index_batches
 
         else:
-            raise ("NON EXISTENT INITIAL_SAMPLING_METHOD")
+            raise (
+                "NON EXISTENT INITIAL_SAMPLING_METHOD: " + INITIAL_BATCH_SAMPLING_METHOD
+            )
 
         return index_batches
 
