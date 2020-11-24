@@ -156,6 +156,39 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
 
         return index_batches
 
+    def _get_normalized_unity_encoding_mapping(self):
+        # adopted from https://stackoverflow.com/a/44209393
+        def partitions(n, I=1):
+            yield (n,)
+            for i in range(I, n // 2 + 1):
+                for p in partitions(n - i, i):
+                    yield (i,) + p
+
+        BATCH_SIZE = self.NR_QUERIES_PER_ITERATION
+        N_CLASSES = len(self.data_storage.label_encoder.classes_)
+
+        if N_CLASSES >= BATCH_SIZE:
+            N_CLASSES = BATCH_SIZE
+        possible_lengths = set()
+
+        for possible_partition in partitions(BATCH_SIZE):
+            if len(possible_partition) <= N_CLASSES:
+                possible_lengths.add(
+                    sum(
+                        [
+                            c * u
+                            for c, u in zip(
+                                sorted(possible_partition, reverse=True),
+                                range(1, len(possible_partition) + 1),
+                            )
+                        ]
+                    )
+                )
+        mapping = {}
+        for i, possible_length in enumerate(sorted(possible_lengths)):
+            mapping[possible_length] = i / (len(possible_lengths) - 1)
+        return mapping
+
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
         self.calculate_next_query_indices_pre_hook()
         batch_indices = self.get_X_query_index()
@@ -184,7 +217,13 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
             ]
         if self.STATE_PREDICTED_UNITY:
-            state_list += [self._calculate_predicted_unity(a) for a in batch_indices]
+            pred_unity_mapping = self._get_normalized_unity_encoding_mapping()
+            state_list += [
+                pred_unity_mapping[self._calculate_predicted_unity(a)]
+                for a in batch_indices
+            ]
+        print(state_list)
+        exit(-1)
         #  print(state_list)
         #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
         return np.array(state_list)
