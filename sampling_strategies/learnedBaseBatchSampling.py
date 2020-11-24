@@ -208,22 +208,37 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
     ):
         state_list = []
         if self.STATE_UNCERTAINTIES:
-            state_list += [self._calculate_uncertainty_metric(a) for a in batch_indices]
+            # normalize by batch size
+            state_list += [
+                (self.NR_QUERIES_PER_ITERATION + self._calculate_uncertainty_metric(a))
+                / self.NR_QUERIES_PER_ITERATION
+                for a in batch_indices
+            ]
 
         if self.STATE_DISTANCES:
-            state_list += [self._calculate_furthest_metric(a) for a in batch_indices]
+            state_list += [
+                self._calculate_furthest_metric(a)
+                / (
+                    2
+                    * math.sqrt(np.shape(self.data_storage.X)[1])
+                    * self.NR_QUERIES_PER_ITERATION
+                )
+                for a in batch_indices
+            ]
         if self.STATE_DISTANCES_LAB:
             state_list += [
                 self._calculate_furthest_lab_metric(a) for a in batch_indices
             ]
         if self.STATE_PREDICTED_UNITY:
             pred_unity_mapping = self._get_normalized_unity_encoding_mapping()
+            # normalize in a super complicated fashion due to the encoding
             state_list += [
                 pred_unity_mapping[self._calculate_predicted_unity(a)]
                 for a in batch_indices
             ]
-        print(state_list)
-        exit(-1)
-        #  print(state_list)
-        #  @todo normalise this here somehow! maybe calculate max distance first? or guess max distance as i normalized everything to 0-1 first!
+
+        for x in state_list:
+            if x > 1.0:
+                print(state_list)
+                exit(1)
         return np.array(state_list)
