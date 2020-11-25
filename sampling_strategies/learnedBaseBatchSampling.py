@@ -1,3 +1,4 @@
+import random
 import math
 import os
 
@@ -109,7 +110,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     reverse=True,
                 )
             ][:SAMPLE_SIZE]
-        elif INITIAL_BATCH_SAMPLING_METHOD == "hybrid2":
+        elif INITIAL_BATCH_SAMPLING_METHOD == "hybrid":
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
@@ -129,7 +130,26 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][: math.ceil(SAMPLE_SIZE / 2)]
+            ][: math.floor(SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_FURTHEST)]
+
+            furthest_lab_index_batches = [
+                x
+                for _, x in sorted(
+                    zip(
+                        [
+                            self._calculate_furthest_lab_metric(a)
+                            for a in possible_batches
+                        ],
+                        possible_batches,
+                    ),
+                    key=lambda t: t[0],
+                    reverse=True,
+                )
+            ][
+                : math.floor(
+                    SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_FURTHEST_LAB
+                )
+            ]
 
             uncertainty_index_batches = [
                 x
@@ -144,16 +164,46 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][: math.floor(SAMPLE_SIZE / 2)]
+            ][: math.floor(SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_UNCERT)]
 
-            index_batches = furthest_index_batches + uncertainty_index_batches
+            predicted_unity_index_batches = [
+                x
+                for _, x in sorted(
+                    zip(
+                        [self._calculate_predicted_unity(a) for a in possible_batches],
+                        possible_batches,
+                    ),
+                    key=lambda t: t[0],
+                    reverse=True,
+                )
+            ][: math.floor(SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_PRED_UNITY)]
 
+            index_batches = [
+                tuple(i.tolist())
+                for i in (
+                    furthest_index_batches
+                    + furthest_lab_index_batches
+                    + uncertainty_index_batches
+                    + predicted_unity_index_batches
+                )
+            ]
+            index_batches = set(index_batches)
+
+            # add some random batches as padding
+            index_batches = [np.array(list(i)) for i in index_batches] + [
+                np.array(i)
+                for i in random.sample(
+                    set([tuple(i.tolist()) for i in possible_batches]).difference(
+                        index_batches
+                    ),
+                    SAMPLE_SIZE - len(index_batches),
+                )
+            ]
         else:
             print(
                 "NON EXISTENT INITIAL_SAMPLING_METHOD: " + INITIAL_BATCH_SAMPLING_METHOD
             )
             raise ()
-
         return index_batches
 
     def _get_normalized_unity_encoding_mapping(self):
@@ -216,6 +266,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             ]
 
         if self.STATE_DISTANCES:
+            # normalize based on the assumption, that the whole vector space got first normalized to -1 to +1, then we can calculate the maximum possible distance like this:
             state_list += [
                 self._calculate_furthest_metric(a)
                 / (
@@ -227,7 +278,13 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             ]
         if self.STATE_DISTANCES_LAB:
             state_list += [
-                self._calculate_furthest_lab_metric(a) for a in batch_indices
+                self._calculate_furthest_lab_metric(a)
+                / (
+                    2
+                    * math.sqrt(np.shape(self.data_storage.X)[1])
+                    * self.NR_QUERIES_PER_ITERATION
+                )
+                for a in batch_indices
             ]
         if self.STATE_PREDICTED_UNITY:
             pred_unity_mapping = self._get_normalized_unity_encoding_mapping()
@@ -237,8 +294,4 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 for a in batch_indices
             ]
 
-        for x in state_list:
-            if x > 1.0:
-                print(state_list)
-                exit(1)
         return np.array(state_list)

@@ -184,6 +184,22 @@ def get_active_config(additional_parameters=[]):
             (["--BATCH_MODE"], {"action": "store_true"}),
             (["--INITIAL_BATCH_SAMPLING_METHOD"], {"default": "furthest"}),
             (["--INITIAL_BATCH_SAMPLING_ARG"], {"type": int, "default": 100}),
+            (
+                ["--INITIAL_BATCH_SAMPLING_HYBRID_UNCERT"],
+                {"type": float, "default": 0.2},
+            ),
+            (
+                ["--INITIAL_BATCH_SAMPLING_HYBRID_FURTHEST"],
+                {"type": float, "default": 0.2},
+            ),
+            (
+                ["--INITIAL_BATCH_SAMPLING_HYBRID_FURTHEST_LAB"],
+                {"type": float, "default": 0.2},
+            ),
+            (
+                ["--INITIAL_BATCH_SAMPLING_HYBRID_PRED_UNITY"],
+                {"type": float, "default": 0.2},
+            ),
             *additional_parameters,
         ]
     )

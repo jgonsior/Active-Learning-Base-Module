@@ -469,7 +469,6 @@ class DataStorage:
                 )
                 plt.clf()
                 self.i += 1
-        # remove before performance measurements -> only a development safety measure
         #  print(query_indices)
         #  print(self.test_mask)
         #  print(self.unlabeled_mask)
@@ -478,11 +477,13 @@ class DataStorage:
         #  print(len(query_indices))
         #  print(len(np.intersect1d(query_indices, self.unlabeled_mask)))
         #  print(np.setdiff1d(query_indices, self.unlabeled_mask))
-        assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
-        assert len(np.intersect1d(query_indices, self.test_mask)) == 0
-        assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
-            query_indices
-        )
+
+        # remove before performance measurements -> only a development safety measure
+        #  assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
+        #  assert len(np.intersect1d(query_indices, self.test_mask)) == 0
+        #  assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
+        #      query_indices
+        #  )
         #  print("Label: ", query_indices)
 
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
@@ -494,11 +495,11 @@ class DataStorage:
         # is not working with initial labels, after that it works, but isn't needed
         #  self.Y[query_indices] = Y_query
         # remove before performance measurements -> only a development safety measure
-        assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == 0
-        assert len(np.intersect1d(query_indices, self.test_mask)) == 0
-        assert len(np.intersect1d(query_indices, self.labeled_mask)) == len(
-            query_indices
-        )
+        #  assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == 0
+        #  assert len(np.intersect1d(query_indices, self.test_mask)) == 0
+        #  assert len(np.intersect1d(query_indices, self.labeled_mask)) == len(
+        #      query_indices
+        #  )
 
     def label_samples(self, query_indices, Y_query, source):
         # remove from train_unlabeled_data and add to train_labeled_data
