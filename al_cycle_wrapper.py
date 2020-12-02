@@ -268,7 +268,8 @@ def eval_al(
     if hyper_parameters["output_directory"].endswith(".csv"):
         output_hyper_parameter_file = hyper_parameters["output_directory"]
     else:
-        output_hyper_parameter_file = hyper_parameters["output_directory"] + "/dataset_creation.csv"
+        output_hyper_parameter_file = (
+            hyper_parameters["output_directory"] + "/dataset_creation.csv"
         )
     hyper_parameters_df = pd.DataFrame(hyper_parameters)
     if not os.path.isfile(output_hyper_parameter_file):
