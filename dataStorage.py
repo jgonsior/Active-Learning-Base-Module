@@ -178,7 +178,7 @@ class DataStorage:
         while no_valid_synthetic_arguments_found:
             if not self.NEW_SYNTHETIC_PARAMS:
                 if self.VARIABLE_DATASET:
-                    N_SAMPLES = random.randint(500, 20000)
+                    N_SAMPLES = random.randint(100, 20000)
                 else:
                     N_SAMPLES = random.randint(100, 5000)
 
@@ -219,14 +219,14 @@ class DataStorage:
                 SCALE = 0.01  # features should be between 0 and 1 now
             else:
                 if self.VARIABLE_DATASET:
-                    N_SAMPLES = random.randint(500, 20000)
+                    N_SAMPLES = random.randint(100, 20000)
                 else:
                     N_SAMPLES = random.randint(100, 5000)
                     #  N_SAMPLES = 1000
                 if self.AMOUNT_OF_FEATURES > 0:
                     N_FEATURES = self.AMOUNT_OF_FEATURES
                 else:
-                    N_FEATURES = random.randint(2, 10)
+                    N_FEATURES = random.randint(10, 100)
                 N_REDUNDANT = N_REPEATED = 0
                 N_INFORMATIVE = N_FEATURES
 
