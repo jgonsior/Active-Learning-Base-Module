@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 import csv
 import datetime
 import hashlib
@@ -266,20 +265,21 @@ def eval_al(
 
     # save hyper parameter results in csv file
     if hyper_parameters["output_directory"].endswith(".csv"):
-        output_hyper_parameter_file = hyper_parameters["output_directory"]
+        output_hyper_parameter_file = Path(hyper_parameters["output_directory"])
     else:
-        output_hyper_parameter_file = (
+        output_hyper_parameter_file = Path(
             hyper_parameters["output_directory"] + "/dataset_creation.csv"
         )
-    hyper_parameters_df = pd.DataFrame(hyper_parameters)
-    if not os.path.isfile(output_hyper_parameter_file):
-        hyper_parameters_df.to_csv(
-            output_hyper_parameter_file, index=False, header=True
-        )
-    else:
-        hyper_parameters_df.to_csv(
-            output_hyper_parameter_file, index=False, header=False, mode="a"
-        )
+
+    if not output_hyper_parameter_file.is_file():
+        output_hyper_parameter_file.touch()
+        with output_hyper_parameter_file.open("a") as f:
+            csv_writer = csv.DictWriter(f, fieldnames=hyper_parameters.keys())
+            csv_writer.writeheader()
+
+    with output_hyper_parameter_file.open("a") as f:
+        csv_writer = csv.DictWriter(f, fieldnames=hyper_parameters.keys())
+        csv_writer.writerow(hyper_parameters)
 
     # save metrics_per_al_cycle in pickle file
     #      metrics_per_al_cycle=dumps(metrics_per_al_cycle, allow_nan=True),
