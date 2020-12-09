@@ -87,9 +87,21 @@ class DataStorage:
         else:
             # split into test, train_labeled, train_unlabeled
             # experiment setting apparently
+
             self.unlabeled_mask = np.arange(
                 math.floor(len(Y) * self.TEST_FRACTION), len(Y)
             )
+
+            # prevent that the first split contains not all labels in the training split, so we just shuffle the data as long as we have every label in their
+            while len(np.unique(Y[self.unlabeled_mask])) != len(
+                self.label_encoder.classes_
+            ):
+                new_shuffled_indices = np.random.permutation(len(Y))
+                X = X[new_shuffled_indices]
+                Y = Y[new_shuffled_indices]
+                self.unlabeled_mask = np.arange(
+                    math.floor(len(Y) * self.TEST_FRACTION), len(Y)
+                )
             self.test_mask = np.arange(0, math.floor(len(Y) * self.TEST_FRACTION))
             self.labeled_mask = np.empty(0, dtype=np.int64)
             self.Y = Y
