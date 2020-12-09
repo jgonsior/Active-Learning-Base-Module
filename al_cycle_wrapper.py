@@ -10,7 +10,7 @@ import numpy as np
 
 #  import np.random.distributions as dists
 from json_tricks import dumps
-from sklearn.metrics import accuracy_score, roc_auc_score, auc
+from sklearn.metrics import accuracy_score, f1_score, auc, recall_score, precision_score
 
 from .cluster_strategies import (
     DummyClusterStrategy,
@@ -187,35 +187,56 @@ def eval_al(
 
     y_pred = active_rf.predict(data_storage.X[data_storage.test_mask])
     acc_test_oracle = accuracy_score(data_storage.Y[data_storage.test_mask], y_pred)
-    y_probas = active_rf.predict_proba(data_storage.X[data_storage.test_mask])
+    f1_test_oracle = f1_score(
+        data_storage.Y[data_storage.test_mask],
+        y_pred,
+        average="weighted",
+        zero_division=0,
+    )
+    precision_test_oracle = precision_score(
+        data_storage.Y[data_storage.test_mask],
+        y_pred,
+        average="weighted",
+        zero_division=0,
+    )
+    recall_test_oracle = recall_score(
+        data_storage.Y[data_storage.test_mask],
+        y_pred,
+        average="weighted",
+        zero_division=0,
+    )
+    #  y_probas = active_rf.predict_proba(data_storage.X[data_storage.test_mask])
 
-    if data_storage.synthetic_creation_args["n_classes"] > 2:
-        roc_auc_macro_oracle = roc_auc_score(
-            data_storage.Y[data_storage.test_mask],
-            y_probas,
-            average="macro",
-            multi_class="ovo",
-        )
-        roc_auc_weighted_oracle = roc_auc_score(
-            data_storage.Y[data_storage.test_mask],
-            y_probas,
-            average="weighted",
-            multi_class="ovo",
-        )
-    else:
-        y_probas = np.max(y_probas, axis=1)
-        roc_auc_macro_oracle = roc_auc_score(
-            data_storage.Y[data_storage.test_mask],
-            y_probas,
-            average="macro",
-            multi_class="ovo",
-        )
-        roc_auc_weighted_oracle = roc_auc_score(
-            data_storage.Y[data_storage.test_mask],
-            y_probas,
-            average="weighted",
-            multi_class="ovo",
-        )
+    #  if data_storage.synthetic_creation_args["n_classes"] > 2:
+    #      print(np.unique(data_storage.Y[data_storage.test_mask]))
+    #      print(y_pred)
+    #      print(np.unique(y_pred))
+    #      roc_auc_macro_oracle = roc_auc_score(
+    #          data_storage.Y[data_storage.test_mask],
+    #          y_probas,
+    #          average="macro",
+    #          multi_class="ovo",
+    #      )
+    #      roc_auc_weighted_oracle = roc_auc_score(
+    #          data_storage.Y[data_storage.test_mask],
+    #          y_probas,
+    #          average="weighted",
+    #          multi_class="ovo",
+    #      )
+    #  else:
+    #      y_probas = np.max(y_probas, axis=1)
+    #      roc_auc_macro_oracle = roc_auc_score(
+    #          data_storage.Y[data_storage.test_mask],
+    #          y_probas,
+    #          average="macro",
+    #          multi_class="ovo",
+    #      )
+    #      roc_auc_weighted_oracle = roc_auc_score(
+    #          data_storage.Y[data_storage.test_mask],
+    #          y_probas,
+    #          average="weighted",
+    #          multi_class="ovo",
+    #      )
 
     acc_auc = (
         auc(
@@ -224,6 +245,15 @@ def eval_al(
         )
         / (len(metrics_per_al_cycle["test_acc"]) - 1)
     )
+    hyper_parameters["acc_auc"] = acc_auc
+    f1_auc = (
+        auc(
+            [i for i in range(0, len(metrics_per_al_cycle["test_f1"]))],
+            metrics_per_al_cycle["test_f1"],
+        )
+        / (len(metrics_per_al_cycle["test_f1"]) - 1)
+    )
+
     # save labels
     #  Y_train_al.to_pickle(
     #  "pickles/" + str(len(Y_train_al)) + "_" + param_list_id + ".pickle"
@@ -251,9 +281,11 @@ def eval_al(
     hyper_parameters["acc_train"] = metrics_per_al_cycle["train_acc"][-1]
     hyper_parameters["acc_test"] = metrics_per_al_cycle["test_acc"][-1]
     hyper_parameters["acc_test_oracle"] = acc_test_oracle
-    hyper_parameters["roc_auc_weighted_oracle"] = roc_auc_weighted_oracle
-    hyper_parameters["roc_auc_macro_oracle"] = roc_auc_macro_oracle
+    hyper_parameters["f1_test_oracle"] = f1_test_oracle
+    hyper_parameters["precision_test_oracle"] = precision_test_oracle
+    hyper_parameters["recall_test_oracle"] = recall_test_oracle
     hyper_parameters["acc_auc"] = acc_auc
+    hyper_parameters["f1_auc"] = f1_auc
     hyper_parameters["fit_score"] = score
     hyper_parameters["param_list_id"] = param_list_id
     hyper_parameters["thread_id"] = threading.get_ident()

@@ -1,7 +1,7 @@
 import abc
 
 from .experiment_setup_lib import (
-    conf_matrix_and_acc,
+    conf_matrix_and_acc_and_f1,
     get_single_al_run_stats_row,
     get_single_al_run_stats_table_header,
     log_it,
@@ -26,8 +26,10 @@ class ActiveLearner:
 
         self.metrics_per_al_cycle = {
             "test_acc": [],
+            "test_f1": [],
             "test_conf_matrix": [],
             "train_acc": [],
+            "train_f1": [],
             "train_conf_matrix": [],
             "query_length": [],
             "source": [],
@@ -81,31 +83,32 @@ class ActiveLearner:
     def calculate_post_metrics(self, X_query, Y_query):
         if len(self.data_storage.test_mask) > 0:
             # experiment
-            conf_matrix, acc = conf_matrix_and_acc(
+            conf_matrix, acc, f1 = conf_matrix_and_acc_and_f1(
                 self.clf,
                 self.data_storage.X[self.data_storage.test_mask],
                 self.data_storage.Y[self.data_storage.test_mask],
                 self.data_storage.label_encoder,
             )
         else:
-            conf_matrix, acc = None, 0
-
+            conf_matrix, acc, f1 = None, 0, 0
         self.metrics_per_al_cycle["test_conf_matrix"].append(conf_matrix)
         self.metrics_per_al_cycle["test_acc"].append(acc)
+        self.metrics_per_al_cycle["test_f1"].append(f1)
 
         if len(self.data_storage.test_mask) > 0:
             # experiment
-            conf_matrix, acc = conf_matrix_and_acc(
+            conf_matrix, acc, f1 = conf_matrix_and_acc_and_f1(
                 self.clf,
                 self.data_storage.X[self.data_storage.labeled_mask],
                 self.data_storage.Y[self.data_storage.labeled_mask],
                 self.data_storage.label_encoder,
             )
         else:
-            conf_matrix, acc = None, 0
+            conf_matrix, acc, f1 = None, 0, 0
 
         self.metrics_per_al_cycle["train_conf_matrix"].append(conf_matrix)
         self.metrics_per_al_cycle["train_acc"].append(acc)
+        self.metrics_per_al_cycle["train_f1"].append(f1)
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.train_unlabeled_Y_predicted = self.clf.predict(

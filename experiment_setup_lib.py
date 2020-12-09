@@ -14,7 +14,7 @@ import scipy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
@@ -231,11 +231,12 @@ def get_best_hyper_params(clf):
     return best_hyper_params
 
 
-def conf_matrix_and_acc(clf, X, Y_true, label_encoder):
+def conf_matrix_and_acc_and_f1(clf, X, Y_true, label_encoder):
     Y_pred = clf.predict(X)
     conf_matrix = confusion_matrix(Y_true, Y_pred)
     acc = accuracy_score(Y_true, Y_pred)
-    return conf_matrix, acc
+    f1 = f1_score(Y_true, Y_pred, average="weighted", zero_division=0)
+    return conf_matrix, acc, f1
 
 
 class Logger(object):
