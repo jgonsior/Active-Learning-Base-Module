@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 from .learnedBaseSampling import LearnedBaseSampling
 
@@ -183,8 +183,10 @@ class ImitationLearner(LearnedBaseSampling):
         Y_pred_test = copy_of_classifier.predict(data_storage.X)
         Y_true = data_storage.Y
 
-        accuracy_with_that_label = accuracy_score(Y_pred_test, Y_true)
-
+        #  accuracy_with_that_label = accuracy_score(Y_pred_test, Y_true)
+        accuracy_with_that_label = f1_score(
+            Y_pred_test, Y_true, average="weighted", zero_division=0
+        )
         #  print(
         #      "Testing out : {}, test acc: {}".format(
         #          unlabeled_sample_index, accuracy_with_that_label
