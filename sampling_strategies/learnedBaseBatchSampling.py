@@ -40,12 +40,14 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         )
 
     def _calculate_uncertainty_metric(self, batch_indices):
-        Y_proba = self.clf.predict_proba(self.data_storage.X[batch_indices])
+        Y_proba = self.Y_probas[batch_indices]
+        #  Y_proba = self.clf.predict_proba(self.data_storage.X[batch_indices])
         margin = np.partition(-Y_proba, 1, axis=1)
         return np.sum(-np.abs(margin[:, 0] - margin[:, 1]))
 
     def _calculate_predicted_unity(self, unlabeled_sample_indices):
-        Y_pred = self.clf.predict(self.data_storage.X[unlabeled_sample_indices])
+        Y_pred = self.Y_preds[unlabeled_sample_indices]
+        #  Y_pred = self.clf.predict(self.data_storage.X[unlabeled_sample_indices])
         Y_pred_sorted = sorted(Y_pred)
         count, unique = np.unique(Y_pred_sorted, return_counts=True)
         Y_enc = []
@@ -61,10 +63,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         return disagreement_score
 
     def sample_unlabeled_X(
-        self,
-        SAMPLE_SIZE,
-        INITIAL_BATCH_SAMPLING_METHOD,
-        INITIAL_BATCH_SAMPLING_ARG,
+        self, SAMPLE_SIZE, INITIAL_BATCH_SAMPLING_METHOD, INITIAL_BATCH_SAMPLING_ARG,
     ):
         index_batches = []
         if INITIAL_BATCH_SAMPLING_METHOD == "random":
@@ -240,21 +239,20 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         return mapping
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
+        self.Y_probas = self.clf.predict_proba(self.data_storage.X)
+        self.Y_preds = self.clf.predict(self.data_storage.X)
         self.calculate_next_query_indices_pre_hook()
         batch_indices = self.get_X_query_index()
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.X_query_index = batch_indices
-        X_state = self.calculate_state(
-            batch_indices,
-        )
+        X_state = self.calculate_state(batch_indices,)
 
         self.calculate_next_query_indices_post_hook(X_state)
         return batch_indices[self.get_sorting(X_state).argmax()]
 
     def calculate_state(
-        self,
-        batch_indices,
+        self, batch_indices,
     ):
         state_list = []
         if self.STATE_UNCERTAINTIES:
