@@ -43,6 +43,7 @@ class DataStorage:
             self.deleted = False
 
         if df is None:
+            # experiment
             log_it("Loading " + self.DATASET_NAME)
             if self.DATASET_NAME == "dwtc":
                 X, Y = self._load_dwtc()
@@ -51,12 +52,12 @@ class DataStorage:
             else:
                 X, Y = self._load_uci()
                 #  df = self._load_alc(DATASET_NAME, DATASETS_PATH)
+        else:
+            # real data
+            X = df.loc[:, df.columns != "label"]
+            Y = df["label"].to_numpy().reshape(len(X))
 
         self.label_encoder = LabelEncoder()
-
-        # ignore nan as labels
-        Y = self.label_encoder.fit_transform(Y[~np.isnan(Y)])
-
         # feature normalization
         scaler = RobustScaler()
         X = scaler.fit_transform(X)
@@ -68,22 +69,32 @@ class DataStorage:
         self.X = X
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
-        if sum(np.isnan(Y) > 0):
-            self.unlabeled_mask = np.argwhere(np.isnan(Y))
-            self.labeled_mask = np.argwhere(~np.isnan(Y))
+        if df is not None:
+            self.unlabeled_mask = np.argwhere(pd.isnull(Y)).flatten()
+            self.labeled_mask = np.argwhere(~pd.isnull(Y)).flatten()
             self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
-            self.Y = np.full(len(self.labeled_mask), np.nan, dtype=np.int64)
-            self.Y[self.labeled_mask] = Y
+            #  self.Y = Y
 
             # create test split out of labeled data
-            self.test_mask = self.labeled_mask[
-                0 : math.floor(len(self.labeled_mask) * self.TEST_FRACTION)
-            ]
-            self.labeled_mask = self.labeled_mask[
-                math.floor(len(self.labeled_mask) * self.TEST_FRACTION) :
-            ]
+            self.test_mask = []  # self.labeled_mask[
+            #                0 : math.floor(len(self.labeled_mask) * self.TEST_FRACTION)
+            #           ]
+            #  self.labeled_mask = self.labeled_mask[
+            #      math.floor(len(self.labeled_mask) * self.TEST_FRACTION) :
+            #  ]
+            #  self.labeled_mask = np.empty(0, dtype=np.int64)
+
+            Y_encoded = self.label_encoder.fit_transform(Y[~pd.isnull(Y)])
+            self.Y = Y
+            self.Y[self.labeled_mask] = Y_encoded
+
+            self.Y[pd.isnull(self.Y)] = -1
+            self.Y = self.Y.astype("int64")
 
         else:
+            # ignore nan as labels
+            Y = self.label_encoder.fit_transform(Y[~np.isnan(Y)])
+
             # split into test, train_labeled, train_unlabeled
             # experiment setting apparently
 
@@ -151,6 +162,14 @@ class DataStorage:
         )
 
         log_it("Loaded " + str(self.DATASET_NAME))
+
+        print("#" * 1000)
+        print(self.X)
+        print(self.Y)
+        print("lm", self.labeled_mask)
+        print("um", self.unlabeled_mask)
+        print("tm", self.test_mask)
+        print("ls", self.label_source)
 
     def _load_uci(self):
         df = pd.read_csv(
@@ -503,6 +522,7 @@ class DataStorage:
             self.unlabeled_mask = self.unlabeled_mask[self.unlabeled_mask != element]
 
         self.label_source[query_indices] = source
+        self.Y[query_indices] = Y_query[0].to_numpy()
         # is not working with initial labels, after that it works, but isn't needed
         #  self.Y[query_indices] = Y_query
         # remove before performance measurements -> only a development safety measure

@@ -137,16 +137,13 @@ class ActiveLearner:
         Y_query = self.oracle.get_labeled_samples(query_indices, self.data_storage)
         return Y_query, query_indices, "A"
 
-    def learn(
-        self,
-    ):
+    def learn(self,):
         log_it(self.data_storage.label_encoder.classes_)
         log_it("Used Hyperparams:")
         log_it(vars(self))
         log_it(locals())
 
         early_stop_reached = False
-
         for i in range(0, self.NR_LEARNING_ITERATIONS):
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
             if len(self.data_storage.unlabeled_mask) < self.NR_QUERIES_PER_ITERATION:

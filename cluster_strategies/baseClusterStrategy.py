@@ -70,8 +70,7 @@ class BaseClusterStrategy:
         self.data_storage.train_labeled_cluster_indices = defaultdict(lambda: list())
 
         for cluster_index, X_train_index in zip(
-            cluster,
-            self.data_storage.train_unlabeled_X.index,
+            cluster, self.data_storage.unlabeled_mask,
         ):
             self.data_storage.train_unlabeled_cluster_indices[cluster_index].append(
                 X_train_index
