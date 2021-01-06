@@ -29,13 +29,18 @@ def _find_firsts(items, vec):
 
 class LearnedBaseBatchSampling(LearnedBaseSampling):
     def _calculate_furthest_metric(self, batch_indices):
-        return np.sum(pairwise_distances(self.data_storage.X[batch_indices]))
+        return np.sum(
+            pairwise_distances(
+                self.data_storage.X[batch_indices], metric=self.DISTANCE_METRIC
+            )
+        )
 
     def _calculate_furthest_lab_metric(self, batch_indices):
         return np.sum(
             pairwise_distances(
                 self.data_storage.X[batch_indices],
                 self.data_storage.X[self.data_storage.labeled_mask],
+                metric=self.DISTANCE_METRIC,
             )
         )
 
@@ -63,7 +68,10 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         return disagreement_score
 
     def sample_unlabeled_X(
-        self, SAMPLE_SIZE, INITIAL_BATCH_SAMPLING_METHOD, INITIAL_BATCH_SAMPLING_ARG,
+        self,
+        SAMPLE_SIZE,
+        INITIAL_BATCH_SAMPLING_METHOD,
+        INITIAL_BATCH_SAMPLING_ARG,
     ):
         index_batches = []
         if INITIAL_BATCH_SAMPLING_METHOD == "random":
@@ -246,13 +254,16 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.X_query_index = batch_indices
-        X_state = self.calculate_state(batch_indices,)
+        X_state = self.calculate_state(
+            batch_indices,
+        )
 
         self.calculate_next_query_indices_post_hook(X_state)
         return batch_indices[self.get_sorting(X_state).argmax()]
 
     def calculate_state(
-        self, batch_indices,
+        self,
+        batch_indices,
     ):
         state_list = []
         if self.STATE_UNCERTAINTIES:
@@ -265,23 +276,31 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
 
         if self.STATE_DISTANCES:
             # normalize based on the assumption, that the whole vector space got first normalized to -1 to +1, then we can calculate the maximum possible distance like this:
-            state_list += [
-                self._calculate_furthest_metric(a)
-                / (
+            if self.DISTANCE_METRIC == "euclidean":
+                normalization_denominator = (
                     2
                     * math.sqrt(np.shape(self.data_storage.X)[1])
                     * self.NR_QUERIES_PER_ITERATION
                 )
+            elif self.DISTANCE_METRIC == "cosine":
+                normalization_denominator = self.NR_QUERIES_PER_ITERATION
+
+            state_list += [
+                self._calculate_furthest_metric(a) / normalization_denominator
                 for a in batch_indices
             ]
         if self.STATE_DISTANCES_LAB:
-            state_list += [
-                self._calculate_furthest_lab_metric(a)
-                / (
+            if self.DISTANCE_METRIC == "euclidean":
+                normalization_denominator = (
                     2
                     * math.sqrt(np.shape(self.data_storage.X)[1])
                     * self.NR_QUERIES_PER_ITERATION
                 )
+            elif self.DISTANCE_METRIC == "cosine":
+                normalization_denominator = self.NR_QUERIES_PER_ITERATION
+
+            state_list += [
+                self._calculate_furthest_lab_metric(a) / (normalization_denominator)
                 for a in batch_indices
             ]
         if self.STATE_PREDICTED_UNITY:
@@ -292,4 +311,6 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 for a in batch_indices
             ]
 
+        if self.STATE_INCLUDE_NR_FEATURES:
+            state_list = [self.data_storage.X.shape[1]] + state_list
         return np.array(state_list)

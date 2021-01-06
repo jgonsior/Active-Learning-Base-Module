@@ -9,7 +9,6 @@ from matplotlib.colors import ListedColormap
 from numba import jit
 from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
-from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
 from .experiment_setup_lib import log_it
@@ -197,7 +196,7 @@ class DataStorage:
                 if self.AMOUNT_OF_FEATURES > 0:
                     N_FEATURES = self.AMOUNT_OF_FEATURES
                 else:
-                    N_FEATURES = random.randint(2, 100)
+                    N_FEATURES = random.randint(2, 200)
 
                 N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
                     int(N_FEATURES * i)

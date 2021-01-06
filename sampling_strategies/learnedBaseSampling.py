@@ -33,13 +33,16 @@ class LearnedBaseSampling(ActiveLearner):
 
                 # calculate distance to each other
                 total_distance = np.sum(
-                    pairwise_distances(random_sample, random_sample)
+                    pairwise_distances(
+                        random_sample, random_sample, metric=self.DISTANCE_METRIC
+                    )
                 )
 
                 total_distance += np.sum(
                     pairwise_distances(
                         random_sample,
                         self.data_storage.X[self.data_storage.labeled_mask],
+                        metric=self.DISTANCE_METRIC,
                     )
                 )
                 if total_distance > max_sum:
@@ -130,7 +133,9 @@ class LearnedBaseSampling(ActiveLearner):
             average_distance_labeled = (
                 np.sum(
                     pairwise_distances(
-                        self.data_storage.X[self.data_storage.labeled_mask], X_query
+                        self.data_storage.X[self.data_storage.labeled_mask],
+                        X_query,
+                        metric=self.DISTANCE_METRIC,
                     ),
                     axis=0,
                 )
@@ -143,7 +148,9 @@ class LearnedBaseSampling(ActiveLearner):
             average_distance_unlabeled = (
                 np.sum(
                     pairwise_distances(
-                        self.data_storage.X[self.data_storage.unlabeled_mask], X_query
+                        self.data_storage.X[self.data_storage.unlabeled_mask],
+                        X_query,
+                        metric=self.DISTANCE_METRIC,
                     ),
                     axis=0,
                 )
@@ -151,4 +158,6 @@ class LearnedBaseSampling(ActiveLearner):
             )
             state_list += average_distance_unlabeled.tolist()
 
+        if self.STATE_INCLUDE_NR_FEATURES:
+            state_list = [self.data_storage.X.shape[1]] + state_list
         return np.array(state_list)
