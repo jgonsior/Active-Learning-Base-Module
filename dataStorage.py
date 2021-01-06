@@ -56,7 +56,8 @@ class DataStorage:
             # real data
             X = df.loc[:, df.columns != "label"]
             Y = df["label"].to_numpy().reshape(len(X))
-
+        #  X, Y = self._load_synthetic()
+        #  df = None
         self.label_encoder = LabelEncoder()
         # feature normalization
         scaler = RobustScaler()
@@ -522,7 +523,7 @@ class DataStorage:
             self.unlabeled_mask = self.unlabeled_mask[self.unlabeled_mask != element]
 
         self.label_source[query_indices] = source
-        self.Y[query_indices] = Y_query[0].to_numpy()
+        self.Y[query_indices] = Y_query
         # is not working with initial labels, after that it works, but isn't needed
         #  self.Y[query_indices] = Y_query
         # remove before performance measurements -> only a development safety measure
