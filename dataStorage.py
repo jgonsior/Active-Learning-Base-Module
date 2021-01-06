@@ -208,7 +208,7 @@ class DataStorage:
                 if self.AMOUNT_OF_FEATURES > 0:
                     N_FEATURES = self.AMOUNT_OF_FEATURES
                 else:
-                    N_FEATURES = random.randint(2, 200)
+                    N_FEATURES = random.randint(2, 100)
 
                 N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
                     int(N_FEATURES * i)
