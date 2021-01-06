@@ -164,14 +164,6 @@ class DataStorage:
 
         log_it("Loaded " + str(self.DATASET_NAME))
 
-        print("#" * 1000)
-        print(self.X)
-        print(self.Y)
-        print("lm", self.labeled_mask)
-        print("um", self.unlabeled_mask)
-        print("tm", self.test_mask)
-        print("ls", self.label_source)
-
     def _load_uci(self):
         df = pd.read_csv(
             self.DATASETS_PATH + "uci_cleaned/" + self.DATASET_NAME + ".csv"
