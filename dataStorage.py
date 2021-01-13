@@ -525,6 +525,20 @@ class DataStorage:
         #      query_indices
         #  )
 
+    def unlabel_samples(self, query_indices):
+        
+        self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
+ 
+        for sample in query_indices:
+            self.labeled_mask = self.labeled_mask[self.labeled_mask != sample]
+
+        self.Y[query_indices] = -1
+    
+    def update_samples(self, query_indices, Y_query):
+        self.Y[query_indices] = Y_query
+        
+
+
     def label_samples(self, query_indices, Y_query, source):
         # remove from train_unlabeled_data and add to train_labeled_data
         self._label_samples_without_clusters(query_indices, Y_query, source)
