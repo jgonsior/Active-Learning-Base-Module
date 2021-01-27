@@ -134,10 +134,14 @@ class ActiveLearner:
         )
 
         # ask oracle for new query
-        Y_query = self.oracle.get_labeled_samples(query_indices, self.data_storage)
+        Y_query = self.oracle.get_labeled_samples(
+            query_indices, self.data_storage, self.metrics_per_al_cycle
+        )
         return Y_query, query_indices, "A"
 
-    def learn(self,):
+    def learn(
+        self,
+    ):
         log_it(self.data_storage.label_encoder.classes_)
         log_it("Used Hyperparams:")
         log_it(vars(self))
