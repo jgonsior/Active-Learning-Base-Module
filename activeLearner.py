@@ -1,28 +1,30 @@
 import abc
 from sklearn.base import BaseEstimator
-from oracles import Oracle
-from callbacks import Callbacks
+from oracles import BaseOracle
+from callbacks import BaseCallback
 from dataStorage import DataStorage
+from stopping_criteria import BaseStoppingCriteria
+from logger.logger import log_it
 
 
 class ActiveLearner:
     def __init__(
         self,
         data_storage: DataStorage,
-        oracle_list: List[Oracle],
+        oracles: List[BaseOracle],
         learner: BaseEstimator,
-        callbacks: List[Callbacks],
+        callbacks: List[BaseCallback],
+        stopping_criteria: BaseStoppingCriteria,
         **kwargs,
-    ):
+    ) -> None:
 
         self.__dict__.update(**kwargs)
 
         self.data_storage = data_storage
         self.learner = learner
-
-        self.amount_of_user_asked_queries = 0
-        self.oracle = oracle
-        self.weak_supervision_label_sources = weak_supervision_label_sources
+        self.oracles = oracles
+        self.callbacks = List[BaseCallback]
+        self.stopping_criteria = stopping_criteria
 
         # fake iteration zero
         X_query = self.data_storage.X[self.data_storage.labeled_mask]
