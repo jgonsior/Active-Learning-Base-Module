@@ -18,4 +18,4 @@ class MetricValueReachedStoppingCriteria(BaseStoppingCriteria):
             return False
 
     def update(self, active_learner: ActiveLearner) -> None:
-        self.current_metric_value = active_learner.callback_values[self.METRIC][-1]
+        self.current_metric_value = active_learner.callbacks[self.METRIC].values[-1]

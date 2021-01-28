@@ -1,4 +1,3 @@
-
 import math
 import random
 
@@ -13,6 +12,7 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
 from .experiment_setup_lib import log_it
 
+
 class DataStorage:
     def __init__(self, df=None, **kwargs):
         self.__dict__.update(kwargs)
@@ -21,7 +21,7 @@ class DataStorage:
             np.random.seed(self.RANDOM_SEED)
             random.seed(self.RANDOM_SEED)
 
-               len_train_labeled = len(self.labeled_mask)
+        len_train_labeled = len(self.labeled_mask)
         len_train_unlabeled = len(self.unlabeled_mask)
         #  len_test = len(self.X_test)
 
@@ -37,9 +37,22 @@ class DataStorage:
         )
 
         log_it("Loaded " + str(self.DATASET_NAME))
-   
-    def _label_samples_without_clusters(self, query_indices, Y_query, source):
-       #  print(query_indices)
+
+           def unlabel_samples(self, query_indices):
+
+        self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
+
+        for sample in query_indices:
+            self.labeled_mask = self.labeled_mask[self.labeled_mask != sample]
+
+        self.Y[query_indices] = -1
+
+    def update_samples(self, query_indices, Y_query):
+        self.Y[query_indices] = Y_query
+
+    def label_samples(self, query_indices, Y_query, source):
+        # remove from train_unlabeled_data and add to train_labeled_data
+         #  print(query_indices)
         #  print(self.test_mask)
         #  print(self.unlabeled_mask)
         #  print(self.labeled_mask)
@@ -71,42 +84,6 @@ class DataStorage:
         #  assert len(np.intersect1d(query_indices, self.labeled_mask)) == len(
         #      query_indices
         #  )
-
-    def unlabel_samples(self, query_indices):
-        
-        self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
- 
-        for sample in query_indices:
-            self.labeled_mask = self.labeled_mask[self.labeled_mask != sample]
-
-        self.Y[query_indices] = -1
-    
-    def update_samples(self, query_indices, Y_query):
-        self.Y[query_indices] = Y_query
-        
-
-
-    def label_samples(self, query_indices, Y_query, source):
-        # remove from train_unlabeled_data and add to train_labeled_data
-        self._label_samples_without_clusters(query_indices, Y_query, source)
-
-        # removed clustering code
-        # remove indices from all clusters in unlabeled and add to labeled
-        #  for cluster_id in self.train_unlabeled_cluster_indices.keys():
-        #      list_to_be_removed_and_appended = []
-        #      for indice in query_indices:
-        #          if indice in self.train_unlabeled_cluster_indices[cluster_id]:
-        #              list_to_be_removed_and_appended.append(indice)
-        #
-        #      # don't change a list you're iterating over!
-        #      for indice in list_to_be_removed_and_appended:
-        #          self.train_unlabeled_cluster_indices[cluster_id].remove(indice)
-        #          self.train_labeled_cluster_indices[cluster_id].append(indice)
-        #
-        #  # remove possible empty clusters
-        #  self.train_unlabeled_cluster_indices = {
-        #      k: v for k, v in self.train_unlabeled_cluster_indices.items() if len(v) != 0
-        #  }
 
     def get_true_label(self, query_indice):
         return self.Y[query_indice]
