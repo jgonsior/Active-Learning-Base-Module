@@ -1,40 +1,25 @@
 import abc
-
-from .experiment_setup_lib import (
-    conf_matrix_and_acc_and_f1,
-    get_single_al_run_stats_row,
-    get_single_al_run_stats_table_header,
-    log_it,
-)
+from sklearn.base import BaseEstimator
+from oracles import Oracle
+from callbacks import Callbacks
+from dataStorage import DataStorage
 
 
 class ActiveLearner:
     def __init__(
         self,
-        data_storage,
-        cluster_strategy,
-        oracle,
-        clf,
-        weak_supervision_label_sources=[],
+        data_storage: DataStorage,
+        oracle_list: List[Oracle],
+        learner: BaseEstimator,
+        callbacks: List[Callbacks],
         **kwargs,
     ):
 
         self.__dict__.update(**kwargs)
 
         self.data_storage = data_storage
-        self.clf = clf
+        self.learner = learner
 
-        self.metrics_per_al_cycle = {
-            "test_acc": [],
-            "test_f1": [],
-            "test_conf_matrix": [],
-            "train_acc": [],
-            "train_f1": [],
-            "train_conf_matrix": [],
-            "query_length": [],
-            "source": [],
-        }
-        self.cluster_strategy = cluster_strategy
         self.amount_of_user_asked_queries = 0
         self.oracle = oracle
         self.weak_supervision_label_sources = weak_supervision_label_sources
@@ -49,7 +34,7 @@ class ActiveLearner:
         self.calculate_pre_metrics(X_query, Y_query)
 
         # retrain CLASSIFIER
-        self.fit_clf()
+        self.fit_learner()
 
         self.calculate_post_metrics(X_query, Y_query)
 
@@ -67,8 +52,8 @@ class ActiveLearner:
     def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices, *args):
         pass
 
-    def fit_clf(self):
-        self.clf.fit(
+    def fit_learner(self):
+        self.learner.fit(
             self.data_storage.X[self.data_storage.labeled_mask],
             self.data_storage.Y[self.data_storage.labeled_mask],
             #  sample_weight=compute_sample_weight(
@@ -77,56 +62,15 @@ class ActiveLearner:
             #  ),
         )
 
-    def calculate_pre_metrics(self, X_query, Y_query):
-        pass
-
-    def calculate_post_metrics(self, X_query, Y_query):
-        if len(self.data_storage.test_mask) > 0:
-            # experiment
-            conf_matrix, acc, f1 = conf_matrix_and_acc_and_f1(
-                self.clf,
-                self.data_storage.X[self.data_storage.test_mask],
-                self.data_storage.Y[self.data_storage.test_mask],
-                self.data_storage.label_encoder,
-            )
-        else:
-            conf_matrix, acc, f1 = None, 0, 0
-        self.metrics_per_al_cycle["test_conf_matrix"].append(conf_matrix)
-        self.metrics_per_al_cycle["test_acc"].append(acc)
-        self.metrics_per_al_cycle["test_f1"].append(f1)
-
-        if len(self.data_storage.test_mask) > 0:
-            # experiment
-            conf_matrix, acc, f1 = conf_matrix_and_acc_and_f1(
-                self.clf,
-                self.data_storage.X[self.data_storage.labeled_mask],
-                self.data_storage.Y[self.data_storage.labeled_mask],
-                self.data_storage.label_encoder,
-            )
-        else:
-            conf_matrix, acc, f1 = None, 0, 0
-
-        self.metrics_per_al_cycle["train_conf_matrix"].append(conf_matrix)
-        self.metrics_per_al_cycle["train_acc"].append(acc)
-        self.metrics_per_al_cycle["train_f1"].append(f1)
-
-        if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.train_unlabeled_Y_predicted = self.clf.predict(
-                self.data_storage.X[self.data_storage.unlabeled_mask]
-            )
-            self.data_storage.train_labeled_Y_predicted = self.clf.predict(
-                self.data_storage.X[self.data_storage.labeled_mask]
-            )
-
     def get_newly_labeled_data(self):
         X_train_unlabeled_cluster_indices = self.cluster_strategy.get_cluster_indices(
-            clf=self.clf, nr_queries_per_iteration=self.NR_QUERIES_PER_ITERATION
+            learner=self.learner, nr_queries_per_iteration=self.NR_QUERIES_PER_ITERATION
         )
 
         if self.data_storage.PLOT_EVOLUTION:
             self.data_storage.possible_samples_indices = []
             self.data_storage.test_accuracy = self.metrics_per_al_cycle["test_acc"][-1]
-            self.data_storage.clf = self.clf
+            self.data_storage.learner = self.learner
 
         # ask strategy for new datapoint
         query_indices = self.calculate_next_query_indices(
@@ -191,7 +135,7 @@ class ActiveLearner:
             self.calculate_pre_metrics(X_query, Y_query)
 
             # retrain CLASSIFIER
-            self.fit_clf()
+            self.fit_learner()
 
             self.calculate_post_metrics(X_query, Y_query)
 
@@ -222,4 +166,4 @@ class ActiveLearner:
                     )
                     break
 
-        return (self.clf, self.metrics_per_al_cycle)
+        return (self.learner, self.metrics_per_al_cycle)
