@@ -13,6 +13,19 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
 from .experiment_setup_lib import log_it
 
+# @todo implement
+class ALEvolutionPlots(BaseCallback):
+    def __init__(self):
+        self.values = []
+
+    @abc.abstractmethod
+    def pre_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:
+        pass
+
+    @abc.abstractmethod
+    def post_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:
+        pass
+
 
 if self.PLOT_EVOLUTION:
     self.possible_samples_indices = []
