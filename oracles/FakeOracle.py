@@ -1,3 +1,4 @@
+# early stop: when stopping criteria says STOP, then we always return that we have no labels left
 import abc
 from ..active_learner import ActiveLearner
 
@@ -10,7 +11,10 @@ class BaseOracle:
     def has_new_labels(
         self, query_indices: list[QueryIndice], active_learner: ActiveLearner
     ) -> bool:
-        pass
+        if active_learner.stopping_criteria.stop_is_reached():
+            return False
+        else:
+            return True
 
     @abc.abstractmethod
     def get_labels(

@@ -7,7 +7,7 @@ class BaseStoppingCriteria:
         self.STOP_LIMIT = STOP_LIMIT
 
     @abc.abstractmethod
-    def stop_is_reached(self) -> Bool:
+    def stop_is_reached(self) -> bool:
         pass
 
     @abc.abstractmethod

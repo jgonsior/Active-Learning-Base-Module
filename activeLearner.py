@@ -58,7 +58,7 @@ class ActiveLearner:
     def al_cycle(
         self,
     ) -> None:
-        while not self.stopping_criteria.stop_is_reached:
+        while not self.stopping_criteria.stop_is_reached():
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
             if len(self.data_storage.unlabeled_mask) < self.NR_QUERIES_PER_ITERATION:
                 self.NR_QUERIES_PER_ITERATION = len(self.data_storage.unlabeled_mask)
@@ -68,7 +68,9 @@ class ActiveLearner:
 
             Y_query = None
 
-            query_indices = self.sampling_strategy.what_to_label_next(self)
+            query_indices = self.sampling_strategy.what_to_label_next(
+                self.NR_QUERIES_PER_ITERATION, self.learner, self.data_storage
+            )
 
             # @todo what about weak supervision and multiple oracle?
             # should MY net decide, which oracle to trust, or is my oracle still only there to decide, which label to take,
@@ -76,11 +78,11 @@ class ActiveLearner:
             # or does my NN also specifies which oracle to ask?!?!
             for oracle in self.oracles:
                 # decide somehow which oracle to ask
-                if oracle.has_new_labels(query_indices):
+                if oracle.has_new_labels(query_indices, self):
                     (
                         self.current_query_indices,
                         self.current_Y_query,
-                    ) = oracle.get_newly_labeled_data(self)
+                    ) = oracle.get_labels(query_indices,self)
                     self.current_oracle = oracle
                     break
             self.data_storage.label_samples(query_indices, Y_query, source)
@@ -93,3 +95,5 @@ class ActiveLearner:
 
             for callback in self.callbacks:
                 callback.post_learning_cycle_hook(self)
+:
+            self.stopping_criteria.update(self)

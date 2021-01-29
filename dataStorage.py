@@ -9,9 +9,11 @@ from matplotlib.colors import ListedColormap
 from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
-
+from typing import NewType
 from .experiment_setup_lib import log_it
 
+QueryIndice = NewType('QueryIndice', int)
+Label = NewType('Label', int)
 
 class DataStorage:
     def __init__(self, df=None, **kwargs):
