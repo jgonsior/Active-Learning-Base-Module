@@ -12,8 +12,10 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 from typing import NewType
 from .experiment_setup_lib import log_it
 
-QueryIndice = NewType('QueryIndice', int)
-Label = NewType('Label', int)
+QueryIndice = NewType("QueryIndice", int)
+Label = NewType("Label", int)
+Features = NewType("Features", float)
+
 
 class DataStorage:
     def __init__(self, df=None, **kwargs):
@@ -40,7 +42,7 @@ class DataStorage:
 
         log_it("Loaded " + str(self.DATASET_NAME))
 
-           def unlabel_samples(self, query_indices):
+    def unlabel_samples(self, query_indices):
 
         self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
 
@@ -54,7 +56,7 @@ class DataStorage:
 
     def label_samples(self, query_indices, Y_query, source):
         # remove from train_unlabeled_data and add to train_labeled_data
-         #  print(query_indices)
+        #  print(query_indices)
         #  print(self.test_mask)
         #  print(self.unlabeled_mask)
         #  print(self.labeled_mask)
@@ -87,5 +89,5 @@ class DataStorage:
         #      query_indices
         #  )
 
-    def get_true_label(self, query_indice):
+    def get_experiment_labels(self, query_indice: list[QueryIndice]):
         return self.Y[query_indice]

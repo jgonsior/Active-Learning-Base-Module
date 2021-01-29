@@ -1,22 +1,23 @@
 import abc
 from ..active_learner import ActiveLearner
 from .BaseOracle import BaseOracle
-import random
 
 
-class RandomOracle(BaseOracle):
-    identifier = "R"
-    cost = -1
+class LabeledStartSetOracle(BaseOracle):
+    identifier = "S"
+    cost = 0
 
     def has_new_labels(
         self, query_indices: list[QueryIndice], active_learner: ActiveLearner
     ) -> bool:
-        return True
+        if active_learner.stopping_criteria.stop_is_reached():
+            return False
+        else:
+            return True
 
     def get_labels(
         self, query_indices: list[QueryIndice], active_learner: ActiveLearner
     ) -> tuple[list[QueryIndice], list[Label]]:
-        return query_indices, [
-            random.randint(0, len(active_learner.data_storage.label_encoder.classes_))
-            for _ in range(0, len(query_indices))
-        ]
+        return query_indices, active_learner.data_storage.get_experiment_labels(
+            query_indices
+        )

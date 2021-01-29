@@ -1,13 +1,12 @@
-# early stop: when stopping criteria says STOP, then we always return that we have no labels left
 import abc
 from ..active_learner import ActiveLearner
+from .BaseOracle import BaseOracle
 
 
-class BaseOracle:
-    def __init__(self):
-        self.values = []
+class FakeExperimentOracle(BaseOracle):
+    identifier = "E"
+    cost = 1
 
-    @abc.abstractmethod
     def has_new_labels(
         self, query_indices: list[QueryIndice], active_learner: ActiveLearner
     ) -> bool:
@@ -16,8 +15,9 @@ class BaseOracle:
         else:
             return True
 
-    @abc.abstractmethod
     def get_labels(
         self, query_indices: list[QueryIndice], active_learner: ActiveLearner
     ) -> tuple[list[QueryIndice], list[Label]]:
-        pass
+        return query_indices, active_learner.data_storage.get_experiment_labels(
+            query_indices
+        )

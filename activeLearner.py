@@ -82,10 +82,12 @@ class ActiveLearner:
                     (
                         self.current_query_indices,
                         self.current_Y_query,
-                    ) = oracle.get_labels(query_indices,self)
+                    ) = oracle.get_labels(query_indices, self)
                     self.current_oracle = oracle
                     break
-            self.data_storage.label_samples(query_indices, Y_query, source)
+            self.data_storage.label_samples(
+                query_indices, Y_query, self.current_oracle.get_oracle_identifier()
+            )
 
             for callback in self.callbacks:
                 callback.pre_learning_cycle_hook(self)
@@ -95,5 +97,4 @@ class ActiveLearner:
 
             for callback in self.callbacks:
                 callback.post_learning_cycle_hook(self)
-:
             self.stopping_criteria.update(self)
