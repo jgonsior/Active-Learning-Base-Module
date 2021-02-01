@@ -1,12 +1,30 @@
 import abc
-from sklearn.base import BaseEstimator
-from oracles import BaseOracle
+import numpy as np
+from typing import List
+
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+
 from callbacks import BaseCallback
 from dataStorage import DataStorage
-from stopping_criteria import BaseStoppingCriteria
 from logger.logger import log_it
-from sampling_strategy import BaseSamplingStrategy
-from oracles import LabeledStartSetOracle
+from oracles import BaseOracle
+from oracles import BaseOracle, LabeledStartSetOracle
+from sampling_strategies import BaseSamplingStrategy
+from stopping_criterias import BaseStoppingCriteria
+from typing import NewType, Union, TypeVar, Type
+
+Learner = TypeVar(
+    "Learner",
+    MLPClassifier,
+    SVC,
+    DecisionTreeClassifier,
+    RandomForestClassifier,
+    GaussianNB,
+)
 
 
 class ActiveLearner:
@@ -15,13 +33,11 @@ class ActiveLearner:
         sampling_strategy: BaseSamplingStrategy,
         data_storage: DataStorage,
         oracles: List[BaseOracle],
-        learner: BaseEstimator,
+        learner: Learner,
         callbacks: List[BaseCallback],
         stopping_criteria: BaseStoppingCriteria,
-        **kwargs,
+        NR_QUERIES_PER_ITERATION,
     ) -> None:
-
-        self.__dict__.update(**kwargs)
 
         self.sampling_strategy = sampling_strategy
         self.data_storage = data_storage
@@ -29,12 +45,14 @@ class ActiveLearner:
         self.oracles = oracles
         self.callbacks = callbacks
         self.stopping_criteria = stopping_criteria
+        self.NR_QUERIES_PER_ITERATION = NR_QUERIES_PER_ITERATION
 
         # fake iteration zero
         self.current_query_indices = self.data_storage.labeled_mask
+
         self.current_Y_query = self.data_storage.Y[self.data_storage.labeled_mask]
 
-        self.current_oracle = LabeledStartSetOracle()
+        self.current_oracle: BaseOracle = LabeledStartSetOracle()
 
         for callback in self.callbacks:
             callback.pre_learning_cycle_hook(self)
@@ -66,7 +84,7 @@ class ActiveLearner:
                 # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
 
-            Y_query = None
+            Y_query: np.ndarray[np.int64] = np.empty(0, dtype=np.int64)
 
             query_indices = self.sampling_strategy.what_to_label_next(
                 self.NR_QUERIES_PER_ITERATION, self.learner, self.data_storage

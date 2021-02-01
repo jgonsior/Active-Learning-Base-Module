@@ -1,30 +1,115 @@
 import math
-import random
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.colors import ListedColormap
 from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
-from typing import NewType
-from .experiment_setup_lib import log_it
-
-QueryIndice = NewType("QueryIndice", int)
-Label = NewType("Label", int)
-Features = NewType("Features", float)
+from typing import NewType, List, Sequence
+from logger import log_it
 
 
 class DataStorage:
-    def __init__(self, df=None, **kwargs):
-        self.__dict__.update(kwargs)
+    unlabeled_mask: np.ndarray[np.int64]
+    labeled_mask: np.ndarray[np.int64]
+    test_mask: np.ndarray[np.int64]
+    X: np.ndarray[np.float64]
+    Y: np.ndarray[np.int64]
 
-        if self.RANDOM_SEED != -1:
-            np.random.seed(self.RANDOM_SEED)
-            random.seed(self.RANDOM_SEED)
+    def __init__(self, df: pd.DataFrame, TEST_FRACTION: float = 0.3) -> None:
+        self.TEST_FRACTION: float = TEST_FRACTION
 
+        # type: ignore
+        self.X = df.loc[:, df.columns != "label"].to_numpy()
+        self.Y = df["label"].to_numpy().reshape(len(self.X))
+
+        self.label_encoder = LabelEncoder()
+        # feature normalization
+        scaler = RobustScaler()
+        self.X = scaler.fit_transform(self.X)
+
+        # scale back to [0,1]
+        scaler = MinMaxScaler()
+        self.X = scaler.fit_transform(self.X)
+        self.label_source = np.full(len(self.Y), "N")
+
+        # check if we are in an experiment setting or are dealing with real, unlabeled data
+        if -1 in df["label"]:
+            # type: ignore
+            self.unlabeled_mask = np.argwhere(pd.isnull(Y)).flatten()
+            # type: ignore
+            self.labeled_mask = np.argwhere(~pd.isnull(Y)).flatten()
+            self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
+            #  self.Y = Y
+
+            # create test split out of labeled data
+            self.test_mask = np.empty(0, dtype=np.int64)
+
+            Y_encoded = self.label_encoder.fit_transform(self.Y[~pd.isnull(self.Y)])
+            self.Y = self.Y.astype(np.int64)
+            self.Y[self.labeled_mask] = Y_encoded
+
+            self.Y[pd.isnull(self.Y)] = -1
+
+        else:
+            # ignore nan as labels
+            self.Y = self.label_encoder.fit_transform(self.Y[~np.isnan(self.Y)])
+
+            # split into test, train_labeled, train_unlabeled
+            # experiment setting apparently
+
+            self.unlabeled_mask = np.arange(
+                math.floor(len(self.Y) * self.TEST_FRACTION), len(self.Y)
+            )
+
+            # prevent that the first split contains not all labels in the training split, so we just shuffle the data as long as we have every label in their
+            while len(np.unique(self.Y[self.unlabeled_mask])) != len(
+                self.label_encoder.classes_
+            ):
+                new_shuffled_indices = np.random.permutation(len(self.Y))
+                self.X = self.X[new_shuffled_indices]
+                self.Y = self.Y[new_shuffled_indices]
+                self.unlabeled_mask = np.arange(
+                    math.floor(len(self.Y) * self.TEST_FRACTION), len(self.Y)
+                )
+            self.test_mask = np.arange(0, math.floor(len(self.Y) * self.TEST_FRACTION))
+            self.labeled_mask = np.empty(0, dtype=np.int64)
+
+            """ 
+            1. get start_set from X_labeled
+            2. if X_unlabeled is None : experiment!
+                2.1 if X_test: rest von X_labeled wird X_train_unlabeled
+                2.2 if X_test is none: split rest von X_labeled in X_train_unlabeled und X_test
+               else (kein experiment):
+               X_unlabeled wird X_unlabeled, rest von X_labeled wird X_train_unlabeled_
+            
+            """
+            # separate X_labeled into start_set and labeled _rest
+            # check if the minimum amount of labeled data is present in the start set size
+            labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))
+            all_label_in_start_set = False
+
+            if not all_label_in_start_set:
+                #  if len(self.train_labeled_data) == 0:
+                #      print("Please specify at least one labeled example of each class")
+                #      exit(-1)
+
+                # move more data here from the classes not present
+                for label in labels_not_in_start_set:
+                    # select a random sample of this labelwhich is NOT yet labeled
+                    random_index = np.where(self.Y[self.unlabeled_mask] == label)[0][0]
+
+                    # the random_index before is an index on Y[unlabeled_mask], and therefore NOT the same as an index on purely Y
+                    # therefore it needs to be converted first
+                    random_index = self.unlabeled_mask[random_index]
+
+                    self.label_samples(
+                        np.array([random_index]),
+                        np.array([label]),
+                        "G",
+                    )
         len_train_labeled = len(self.labeled_mask)
         len_train_unlabeled = len(self.unlabeled_mask)
         #  len_test = len(self.X_test)
@@ -42,7 +127,7 @@ class DataStorage:
 
         log_it("Loaded " + str(self.DATASET_NAME))
 
-    def unlabel_samples(self, query_indices):
+    def unlabel_samples(self, query_indices: np.ndarray[np.int64]) -> None:
 
         self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
 
@@ -51,28 +136,17 @@ class DataStorage:
 
         self.Y[query_indices] = -1
 
-    def update_samples(self, query_indices, Y_query):
+    def update_samples(
+        self, query_indices: np.ndarray[np.int64], Y_query: np.ndarray[np.int64]
+    ) -> None:
         self.Y[query_indices] = Y_query
 
-    def label_samples(self, query_indices, Y_query, source):
-        # remove from train_unlabeled_data and add to train_labeled_data
-        #  print(query_indices)
-        #  print(self.test_mask)
-        #  print(self.unlabeled_mask)
-        #  print(self.labeled_mask)
-        #  print(np.intersect1d(query_indices, self.unlabeled_mask))
-        #  print(len(query_indices))
-        #  print(len(np.intersect1d(query_indices, self.unlabeled_mask)))
-        #  print(np.setdiff1d(query_indices, self.unlabeled_mask))
-
-        # remove before performance measurements -> only a development safety measure
-        #  assert len(np.intersect1d(query_indices, self.labeled_mask)) == 0
-        #  assert len(np.intersect1d(query_indices, self.test_mask)) == 0
-        #  assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == len(
-        #      query_indices
-        #  )
-        #  print("Label: ", query_indices)
-
+    def label_samples(
+        self,
+        query_indices: np.ndarray[np.int64],
+        Y_query: np.ndarray[np.int64],
+        source: str,
+    ):
         self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
 
         for element in query_indices:
@@ -80,14 +154,8 @@ class DataStorage:
 
         self.label_source[query_indices] = source
         self.Y[query_indices] = Y_query
-        # is not working with initial labels, after that it works, but isn't needed
-        #  self.Y[query_indices] = Y_query
-        # remove before performance measurements -> only a development safety measure
-        #  assert len(np.intersect1d(query_indices, self.unlabeled_mask)) == 0
-        #  assert len(np.intersect1d(query_indices, self.test_mask)) == 0
-        #  assert len(np.intersect1d(query_indices, self.labeled_mask)) == len(
-        #      query_indices
-        #  )
 
-    def get_experiment_labels(self, query_indice: list[QueryIndice]):
+    def get_experiment_labels(
+        self, query_indice: np.ndarray[np.int64]
+    ) -> np.ndarray[np.int64]:
         return self.Y[query_indice]

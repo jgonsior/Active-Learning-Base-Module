@@ -1,4 +1,6 @@
 import abc
+import numpy as np
+from typing import Tuple, List
 from ..active_learner import ActiveLearner
 from .BaseOracle import BaseOracle
 import itertools
@@ -10,7 +12,9 @@ class LabeleingFunctionsOracle(BaseOracle):
 
     def __init__(
         self,
-        labeling_function: Callable[[Features], Tuple[[QueryIndice], [Label]]],
+        labeling_function: Callable[
+            [np.float64], Tuple[np.ndarray[np.int64], np.ndarray[np.int64]]
+        ],
         cost: float,
     ):
         super().__init__()
@@ -19,7 +23,7 @@ class LabeleingFunctionsOracle(BaseOracle):
         self.cost = cost
 
     def has_new_labels(
-        self, query_indices: list[QueryIndice], active_learner: ActiveLearner
+        self, query_indices: np.ndarray[np.int64], active_learner: ActiveLearner
     ) -> bool:
         self.potentially_labeled_query_indices, self.Y_lf = self.labeling_function(
             active_learner.data_storage.X[active_learner.data_storage.unlabeled_mask]
@@ -30,6 +34,6 @@ class LabeleingFunctionsOracle(BaseOracle):
             return True
 
     def get_labels(
-        self, query_indices: list[QueryIndice], active_learner: ActiveLearner
-    ) -> tuple[list[QueryIndice], list[Label]]:
+        self, query_indices: np.ndarray[np.int64], active_learner: ActiveLearner
+    ) -> Tuple[np.ndarray[np.int64], np.ndarray[np.int64]]:
         return self.potentially_labeled_query_indices, self.Y_lf

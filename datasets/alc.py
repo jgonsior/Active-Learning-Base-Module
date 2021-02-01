@@ -1,25 +1,29 @@
+import pandas as pd
+import numpy as np
 
- def _load_alc(self):
-        df = pd.read_csv(
-            DATASETS_PATH + "/al_challenge/" + self.DATASET_NAME + ".data",
-            header=None,
-            sep=" ",
-        )
-        # feature_columns fehlt
 
-        # shuffle df
-        df = df.sample(frac=1, random_state=self.RANDOM_SEED)
+def load_alc(DATASETS_PATH: str, DATASET_NAME: str, RANDOM_SEED: int) -> pd.DataFrame:
+    df = pd.read_csv(
+        DATASETS_PATH + "/al_challenge/" + DATASET_NAME + ".data",
+        header=None,
+        sep=" ",
+    )
+    # feature_columns fehlt
 
-        df = df.replace([np.inf, -np.inf], -1)
-        df = df.fillna(0)
+    # shuffle df
+    df = df.sample(frac=1, random_state=RANDOM_SEED)
 
-        labels = pd.read_csv(
-            self.DATASETS_PATH + "/al_challenge/" + self.DATASET_NAME + ".label",
-            header=None,
-        )
+    df = df.replace(str(-np.inf), "-1")
+    df = df.replace(str(np.inf), "-1")
+    df = df.fillna(0)
 
-        labels = labels.replace([-1], "A")
-        labels = labels.replace([1], "B")
+    labels = pd.read_csv(
+        DATASETS_PATH + "/al_challenge/" + DATASET_NAME + ".label",
+        header=None,
+    )
 
-        return df.to_numpy(), labels[0].to_numpy()
+    labels = labels.replace("-1", "A")
+    labels = labels.replace("1", "B")
+    df["label"] = labels
 
+    return df

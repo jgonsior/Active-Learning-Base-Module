@@ -4,10 +4,10 @@ import os
 import random
 import sys
 import threading
+from typing import Callable
 import warnings
 
 import numpy as np
-
 import numpy.random
 import scipy
 from sklearn.ensemble import RandomForestClassifier
@@ -17,8 +17,9 @@ from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
+
 from .BaseCallback import BaseCallback
-from typing import Callable
+from ..activeLearner import ActiveLearner
 
 
 class MetricCallback(BaseCallback):
@@ -29,7 +30,7 @@ class MetricCallback(BaseCallback):
         pass
 
     def post_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:
-        self.values.append(metric_function(active_learner))
+        self.values.append(self.metric_function(active_learner))
 
 
 def test_f1_metric(active_learner: ActiveLearner) -> List[float]:
