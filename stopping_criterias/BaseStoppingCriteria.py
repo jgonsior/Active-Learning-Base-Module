@@ -1,5 +1,5 @@
 import abc
-from ..active_learner import ActiveLearner
+from ..activeLearner import ActiveLearner
 
 
 class BaseStoppingCriteria:

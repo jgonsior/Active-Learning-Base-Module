@@ -1,10 +1,10 @@
 import abc
-from ..active_learner import ActiveLearner
+from ..activeLearner import ActiveLearner
+from typing import List, Any
 
 
 class BaseCallback:
-    def __init__(self):
-        self.values = []
+    values: List[Any] = []
 
     @abc.abstractmethod
     def pre_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:

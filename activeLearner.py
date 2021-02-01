@@ -8,14 +8,14 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 
-from callbacks import BaseCallback
-from dataStorage import DataStorage
-from logger.logger import log_it
-from oracles import BaseOracle
-from oracles import BaseOracle, LabeledStartSetOracle
-from sampling_strategies import BaseSamplingStrategy
-from stopping_criterias import BaseStoppingCriteria
-from typing import NewType, Union, TypeVar, Type
+from .callbacks.BaseCallback import BaseCallback
+from .dataStorage import DataStorage
+from .logger.logger import log_it
+from .oracles.BaseOracle import BaseOracle
+from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
+from .sampling_strategies import BaseSamplingStrategy
+from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
+from typing import NewType, Union, TypeVar, Type, Dict
 
 Learner = TypeVar(
     "Learner",
@@ -34,7 +34,7 @@ class ActiveLearner:
         data_storage: DataStorage,
         oracles: List[BaseOracle],
         learner: Learner,
-        callbacks: List[BaseCallback],
+        callbacks: Dict[str, BaseCallback],
         stopping_criteria: BaseStoppingCriteria,
         NR_QUERIES_PER_ITERATION,
     ) -> None:
@@ -54,13 +54,13 @@ class ActiveLearner:
 
         self.current_oracle: BaseOracle = LabeledStartSetOracle()
 
-        for callback in self.callbacks:
+        for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
 
         # retrain CLASSIFIER
         self.fit_learner()
 
-        for callback in self.callbacks:
+        for callback in self.callbacks.values():
             callback.post_learning_cycle_hook(self)
 
     def fit_learner(self) -> None:
@@ -84,11 +84,13 @@ class ActiveLearner:
                 # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
 
-            Y_query: np.ndarray[np.int64] = np.empty(0, dtype=np.int64)
+            Y_query: np.ndarray = np.empty(0, dtype=np.int64)
 
             query_indices = self.sampling_strategy.what_to_label_next(
                 self.NR_QUERIES_PER_ITERATION, self.learner, self.data_storage
             )
+
+            oracle: Union[BaseOracle, None] = None
 
             # @todo what about weak supervision and multiple oracle?
             # should MY net decide, which oracle to trust, or is my oracle still only there to decide, which label to take,
@@ -103,16 +105,26 @@ class ActiveLearner:
                     ) = oracle.get_labels(query_indices, self)
                     self.current_oracle = oracle
                     break
+
+            if oracle is None:
+                log_it(
+                    "No oracle available, exiting, implement logic for that corner case later"
+                )
+                exit(-1)
+
             self.data_storage.label_samples(
-                query_indices, Y_query, self.current_oracle.get_oracle_identifier()
+                query_indices,
+                Y_query,
+                self.current_oracle.get_oracle_identifier(),
+                oracle.cost,
             )
 
-            for callback in self.callbacks:
+            for callback in self.callbacks.values():
                 callback.pre_learning_cycle_hook(self)
 
             # retrain CLASSIFIER
             self.fit_learner()
 
-            for callback in self.callbacks:
+            for callback in self.callbacks.values():
                 callback.post_learning_cycle_hook(self)
             self.stopping_criteria.update(self)

@@ -8,21 +8,22 @@ from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 from typing import NewType, List, Sequence
-from logger import log_it
+from .logger.logger import log_it
 
 
 class DataStorage:
-    unlabeled_mask: np.ndarray[np.int64]
-    labeled_mask: np.ndarray[np.int64]
-    test_mask: np.ndarray[np.int64]
-    X: np.ndarray[np.float64]
-    Y: np.ndarray[np.int64]
+    unlabeled_mask: np.ndarray
+    labeled_mask: np.ndarray
+    test_mask: np.ndarray
+
+    X: np.ndarray
+    Y: np.ndarray
+    costs_spend: List[float] = []
 
     def __init__(self, df: pd.DataFrame, TEST_FRACTION: float = 0.3) -> None:
         self.TEST_FRACTION: float = TEST_FRACTION
 
-        # type: ignore
-        self.X = df.loc[:, df.columns != "label"].to_numpy()
+        self.X = df.loc[:, df.columns != "label"].to_numpy()  # type: ignore
         self.Y = df["label"].to_numpy().reshape(len(self.X))
 
         self.label_encoder = LabelEncoder()
@@ -37,10 +38,8 @@ class DataStorage:
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if -1 in df["label"]:
-            # type: ignore
-            self.unlabeled_mask = np.argwhere(pd.isnull(Y)).flatten()
-            # type: ignore
-            self.labeled_mask = np.argwhere(~pd.isnull(Y)).flatten()
+            self.unlabeled_mask = np.argwhere(pd.isnull(self.Y)).flatten()  # type: ignore
+            self.labeled_mask = np.argwhere(~pd.isnull(self.Y)).flatten()  # type: ignore
             self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
             #  self.Y = Y
 
@@ -109,25 +108,10 @@ class DataStorage:
                         np.array([random_index]),
                         np.array([label]),
                         "G",
+                        0,
                     )
-        len_train_labeled = len(self.labeled_mask)
-        len_train_unlabeled = len(self.unlabeled_mask)
-        #  len_test = len(self.X_test)
 
-        len_total = len_train_unlabeled + len_train_labeled  # + len_test
-
-        log_it(
-            "size of train  labeled set: %i = %1.2f"
-            % (len_train_labeled, len_train_labeled / len_total)
-        )
-        log_it(
-            "size of train unlabeled set: %i = %1.2f"
-            % (len_train_unlabeled, len_train_unlabeled / len_total)
-        )
-
-        log_it("Loaded " + str(self.DATASET_NAME))
-
-    def unlabel_samples(self, query_indices: np.ndarray[np.int64]) -> None:
+    def unlabel_samples(self, query_indices: np.ndarray) -> None:
 
         self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
 
@@ -136,26 +120,24 @@ class DataStorage:
 
         self.Y[query_indices] = -1
 
-    def update_samples(
-        self, query_indices: np.ndarray[np.int64], Y_query: np.ndarray[np.int64]
-    ) -> None:
+    def update_samples(self, query_indices: np.ndarray, Y_query: np.ndarray) -> None:
         self.Y[query_indices] = Y_query
 
     def label_samples(
         self,
-        query_indices: np.ndarray[np.int64],
-        Y_query: np.ndarray[np.int64],
+        query_indices: np.ndarray,
+        Y_query: np.ndarray,
         source: str,
+        cost: float,
     ):
-        self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)
+        self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)  # type: ignore
 
         for element in query_indices:
             self.unlabeled_mask = self.unlabeled_mask[self.unlabeled_mask != element]
 
         self.label_source[query_indices] = source
         self.Y[query_indices] = Y_query
+        self.costs_spend.append(cost)
 
-    def get_experiment_labels(
-        self, query_indice: np.ndarray[np.int64]
-    ) -> np.ndarray[np.int64]:
+    def get_experiment_labels(self, query_indice: np.ndarray) -> np.ndarray:
         return self.Y[query_indice]

@@ -1,12 +1,14 @@
 import threading
+import datetime
+
+global logfile_path
 
 # really dirty hack to provide logging as functions instead of objects
-def init_logger(logfilepath):
-    global logfile_path
+def init_logger(logfilepath: str) -> None:
     logfile_path = logfilepath
 
 
-def log_it(message):
+def log_it(message: str) -> None:
     message = (
         "["
         + str(threading.get_ident())
@@ -16,8 +18,8 @@ def log_it(message):
         + str(message)
     )
 
-    if logfile_path == "console":
+    if logfile_path == "console":  # type: ignore
         print(message)
     else:
-        with open(logfile_path, "a") as f:
+        with open(logfile_path, "a") as f:  # type: ignore
             f.write(message + "\n")
