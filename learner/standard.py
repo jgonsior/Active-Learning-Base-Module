@@ -4,7 +4,13 @@ import os
 import random
 import sys
 import threading
+from typing import Any, Dict, Union
 import warnings
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
 
 import numpy as np
 
@@ -19,14 +25,22 @@ from sklearn.metrics import confusion_matrix, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
+Learner = Union[
+    MLPClassifier,
+    SVC,
+    DecisionTreeClassifier,
+    RandomForestClassifier,
+    GaussianNB,
+    LogisticRegression
+]
 
-def get_classifier(classifier_name, random_state=None, n_jobs=None):
+def get_classifier(classifier_name: str, random_state:Union[int, None]=None, n_jobs: int=None)-> Learner:
     if classifier_name == "RF":
         return RandomForestClassifier(
             n_jobs=n_jobs, random_state=random_state, warm_start=False
         )
     elif classifier_name == "SVM":
-        return SVC(probability=True, random_state=random_state, warm_start=False)
+        return SVC(probability=True, random_state=random_state)
     elif classifier_name == "MLP":
         warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
         return MLPClassifier(random_state=random_state, verbose=0, warm_start=False)
@@ -34,9 +48,13 @@ def get_classifier(classifier_name, random_state=None, n_jobs=None):
         return LogisticRegression(
             random_state=random_state, verbose=0, warm_start=False, max_iter=10000
         )
+    else:
+        print("No suitable classifier found for config option, exiting")
+        exit(1)
+        
 
 
-def get_best_hyper_params(clf):
+def get_best_hyper_params(clf:str)->Dict[str, Any]:
     if clf == "RF":
         best_hyper_params = {
             "criterion": "gini",
@@ -58,5 +76,8 @@ def get_best_hyper_params(clf):
             "gamma": 0.1,
             "kernel": "rbf",
         }
+    else:
+        print("No suitable classifier found for config option, exiting")
+        exit(-1)
 
     return best_hyper_params

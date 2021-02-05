@@ -1,15 +1,9 @@
-import math
+
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from numba import jit
-from scipy.sparse import lil_matrix
 from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
-
 
 def load_synthetic(
     DATASETS_PATH: str,
@@ -121,7 +115,7 @@ def load_synthetic(
             "random_state": RANDOM_SEED,
         }
         synthetic_creation_args = synthetic_creation_args
-
+    
     X, Y = make_classification(**synthetic_creation_args)  # type: ignore
     df = pd.DataFrame(X)
     df["label"] = Y

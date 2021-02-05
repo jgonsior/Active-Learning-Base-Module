@@ -1,14 +1,5 @@
-import math
-import random
-
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import seaborn as sns
-from numba import jit
-from scipy.sparse import lil_matrix
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
+from sklearn.preprocessing import LabelEncoder
 
 
 def load_uci(DATASETS_PATH: str, DATASET_NAME: str, RANDOM_SEED: int) -> pd.DataFrame:

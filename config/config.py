@@ -1,28 +1,16 @@
 import argparse
-import datetime
-import os
 import random
 import sys
-import threading
-import warnings
-
+from scipy.stats import uniform # type: ignore
 import numpy as np
+from ..logger.logger import init_logger
+from typing import Any, List, Tuple, Union, Dict
 
-#  import np.random.distributions as dists
-import numpy.random
-import scipy
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.metrics import confusion_matrix, roc_auc_score
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-
+CliConfigParameters = List[Tuple[List[str], Dict[str,Any]]]
 
 def standard_config(
-    additional_parameters=None, standard_args=True, return_argparse=False
-):
+    additional_parameters: CliConfigParameters=None, standard_args:bool=True, return_argparse:bool=False
+) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
     parser = argparse.ArgumentParser()
     if standard_args:
         parser.add_argument("--DATASETS_PATH", default="../datasets/")
@@ -42,7 +30,7 @@ def standard_config(
         for additional_parameter in additional_parameters:
             parser.add_argument(*additional_parameter[0], **additional_parameter[1])
 
-    config = parser.parse_args()
+    config: argparse.Namespace = parser.parse_args()
 
     if len(sys.argv[:-1]) == 0:
         parser.print_help()
@@ -59,7 +47,7 @@ def standard_config(
         return config
 
 
-def get_active_config(additional_parameters=[]):
+def get_active_config(additional_parameters: CliConfigParameters=[]) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
     return standard_config(
         [
             (
@@ -168,7 +156,7 @@ def get_active_config(additional_parameters=[]):
     )
 
 
-def calculate_unique_config_id(config):
+def calculate_unique_config_id(config: argparse.Namespace):
     pass
 
 
@@ -184,8 +172,8 @@ def get_param_distribution(
     **kwargs
 ):
     if hyper_search_type == "random":
-        zero_to_one = scipy.stats.uniform(loc=0, scale=1)
-        half_to_one = scipy.stats.uniform(loc=0.5, scale=0.5)
+        zero_to_one = uniform(loc=0, scale=1)
+        half_to_one = uniform(loc=0.5, scale=0.5)
         #  nr_queries_per_iteration = scipy.stats.randint(1, 151)
         NR_QUERIES_PER_ITERATION = [10]
         #  START_SET_SIZE = scipy.stats.uniform(loc=0.001, scale=0.1)

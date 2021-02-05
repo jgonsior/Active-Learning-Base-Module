@@ -1,14 +1,5 @@
-import math
-import random
-
-import matplotlib.pyplot as plt
-from numba import jit
-import numpy as np
 import pandas as pd
-from scipy.sparse import lil_matrix
-import seaborn as sns
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
+from sklearn.preprocessing import LabelEncoder
 
 
 def load_dwtc(DATASETS_PATH: str, RANDOM_SEED: int) -> pd.DataFrame:

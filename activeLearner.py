@@ -1,31 +1,16 @@
-import abc
 import numpy as np
 from typing import List
 
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB
 
 from .callbacks.BaseCallback import BaseCallback
-from .dataStorage import DataStorage
+from .dataStorage import DataStorage, IndiceMask, LabelList
 from .logger.logger import log_it
 from .oracles.BaseOracle import BaseOracle
 from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
-from .sampling_strategies import BaseSamplingStrategy
+from .sampling_strategies.BaseSamplingStrategy import BaseSamplingStrategy
 from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
-from typing import NewType, Union, TypeVar, Type, Dict
-
-Learner = TypeVar(
-    "Learner",
-    MLPClassifier,
-    SVC,
-    DecisionTreeClassifier,
-    RandomForestClassifier,
-    GaussianNB,
-)
-
+from typing import Union, TypeVar, Dict
+from .learner.standard import Learner
 
 class ActiveLearner:
     def __init__(
@@ -36,21 +21,23 @@ class ActiveLearner:
         learner: Learner,
         callbacks: Dict[str, BaseCallback],
         stopping_criteria: BaseStoppingCriteria,
-        NR_QUERIES_PER_ITERATION,
+        NR_QUERIES_PER_ITERATION: int,
     ) -> None:
 
-        self.sampling_strategy = sampling_strategy
-        self.data_storage = data_storage
-        self.learner = learner
-        self.oracles = oracles
-        self.callbacks = callbacks
-        self.stopping_criteria = stopping_criteria
-        self.NR_QUERIES_PER_ITERATION = NR_QUERIES_PER_ITERATION
+        self.sampling_strategy: BaseSamplingStrategy = sampling_strategy
+        self.data_storage: DataStorage = data_storage
+        self.learner: Learner = learner
+        self.oracles: List[BaseOracle] = oracles
+        self.callbacks: Dict[str, BaseCallback] = callbacks
+        self.stopping_criteria: BaseStoppingCriteria = stopping_criteria
+        self.NR_QUERIES_PER_ITERATION: int = NR_QUERIES_PER_ITERATION
 
         # fake iteration zero
-        self.current_query_indices = self.data_storage.labeled_mask
+        self.current_query_indices: IndiceMask = self.data_storage.labeled_mask
 
-        self.current_Y_query = self.data_storage.Y[self.data_storage.labeled_mask]
+        self.current_Y_query: LabelList = self.data_storage.Y[
+            self.data_storage.labeled_mask
+        ]
 
         self.current_oracle: BaseOracle = LabeledStartSetOracle()
 
@@ -58,7 +45,7 @@ class ActiveLearner:
             callback.pre_learning_cycle_hook(self)
 
         # retrain CLASSIFIER
-        self.fit_learner()
+        self.fit_learner() 
 
         for callback in self.callbacks.values():
             callback.post_learning_cycle_hook(self)
@@ -84,7 +71,7 @@ class ActiveLearner:
                 # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
 
-            Y_query: np.ndarray = np.empty(0, dtype=np.int64)
+            Y_query: LabelList = np.empty(0, dtype=np.int64)
 
             query_indices = self.sampling_strategy.what_to_label_next(
                 self.NR_QUERIES_PER_ITERATION, self.learner, self.data_storage
