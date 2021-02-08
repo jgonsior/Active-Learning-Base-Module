@@ -1,12 +1,17 @@
+from active_learning.dataStorage import DataStorage, IndiceMask
+from active_learning.learner.standard import Learner
+from active_learning.sampling_strategies.BaseSamplingStrategy import (
+    BaseSamplingStrategy,
+)
 import numpy as np
 
-from ..activeLearner import ActiveLearner
 
-
-class RandomSampler(ActiveLearner):
-    def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices):
+class RandomSampler(BaseSamplingStrategy):
+    def what_to_label_next(
+        self, NR_QUERIES_PER_ITERATION: int, _, data_storage: DataStorage
+    ) -> IndiceMask:
         return np.random.choice(
-            self.data_storage.unlabeled_mask,
-            size=self.NR_QUERIES_PER_ITERATION,
+            data_storage.unlabeled_mask,
+            size=NR_QUERIES_PER_ITERATION,
             replace=False,
         )

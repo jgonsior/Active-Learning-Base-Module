@@ -19,10 +19,10 @@ class TrainedBatchNNLearner(LearnedBaseBatchSampling):
         self.sampling_classifier = model
 
     def get_X_query_index(self):
-        return self.sample_unlabeled_X(
+        return self.pre_sample_potential_X_queries(
             self.sampling_classifier.n_outputs_,
-            INITIAL_BATCH_SAMPLING_ARG=self.INITIAL_BATCH_SAMPLING_ARG,
-            INITIAL_BATCH_SAMPLING_METHOD=self.INITIAL_BATCH_SAMPLING_METHOD,
+            INITIAL_BATCH_SAMPLING_ARG=self.PRE_SAMPLING_ARG,
+            INITIAL_BATCH_SAMPLING_METHOD=self.PRE_SAMPLING_METHOD,
         )
 
     def get_sorting(self, X_state):

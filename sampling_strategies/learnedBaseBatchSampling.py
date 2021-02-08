@@ -1,8 +1,8 @@
+from typing import Any, List
+from active_learning.dataStorage import IndiceMask, LabelList
 import random
 import math
 import os
-
-from numba import jit
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -15,27 +15,60 @@ from sklearn.metrics import pairwise_distances
 from .learnedBaseSampling import LearnedBaseSampling
 
 
-@jit(nopython=True)
-def _find_firsts(items, vec):
-    """return the index of the first occurence of item in vec"""
-    result = []
-    for item in items:
-        for i in range(len(vec)):
-            if item == vec[i]:
-                result.append(i)
-                break
-    return result
-
-
 class LearnedBaseBatchSampling(LearnedBaseSampling):
-    def _calculate_furthest_metric(self, batch_indices):
+    STATE_PREDICTED_UNITY: bool
+    STATE_DISTANCES: bool
+    STATE_UNCERTAINTIES: bool
+    PRE_SAMPLING_BATCH_FRACTION_HYBRID_UNCERT: float
+    PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST: float
+    PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST_LAB: float
+    PRE_SAMPLING_BATCH_FRACTION_HYBRID_PRED_UNITY: float
+
+    def __init__(
+        self,
+        PRE_SAMPLING_METHOD: str,
+        PRE_SAMPLING_ARG: Any,
+        DISTANCE_METRIC: str = "euclidean",
+        STATE_PREDICTED_UNITY: bool = False,
+        STATE_DISTANCES: bool = True,
+        STATE_UNCERTAINTIES: bool = True,
+        PRE_SAMPLING_BATCH_FRACTION_HYBRID_UNCERT: float = 0.33,
+        PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST: float = 0.33,
+        PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST_LAB: float = 0,
+        PRE_SAMPLING_BATCH_FRACTION_HYBRID_PRED_UNITY: float = 0.33,
+    ) -> None:
+        super().__init__(
+            PRE_SAMPLING_METHOD=PRE_SAMPLING_METHOD,
+            PRE_SAMPLING_ARG=PRE_SAMPLING_ARG,
+            DISTANCE_METRIC=DISTANCE_METRIC,
+        )
+
+        self.STATE_PREDICTED_UNITY = STATE_PREDICTED_UNITY
+        self.STATE_DISTANCES = STATE_DISTANCES
+        self.STATE_UNCERTAINTIES = STATE_UNCERTAINTIES
+        self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_UNCERT = (
+            PRE_SAMPLING_BATCH_FRACTION_HYBRID_UNCERT
+        )
+        self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST = (
+            PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST
+        )
+        self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST_LAB = (
+            PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST_LAB
+        )
+        self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_PRED_UNITY = (
+            PRE_SAMPLING_BATCH_FRACTION_HYBRID_PRED_UNITY
+        )
+
+    def _calculate_furthest_metric(self, batch_indices: IndiceMask) -> float:
         return np.sum(
             pairwise_distances(
-                self.data_storage.X[batch_indices], metric=self.DISTANCE_METRIC
+                self.data_storage.X[batch_indices],
+                self.data_storage.X[batch_indices],
+                metric=self.DISTANCE_METRIC,
             )
         )
 
-    def _calculate_furthest_lab_metric(self, batch_indices):
+    def _calculate_furthest_lab_metric(self, batch_indices: IndiceMask) -> float:
         return np.sum(
             pairwise_distances(
                 self.data_storage.X[batch_indices],
@@ -44,16 +77,16 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             )
         )
 
-    def _calculate_uncertainty_metric(self, batch_indices):
+    def _calculate_uncertainty_metric(self, batch_indices: IndiceMask) -> float:
         Y_proba = self.Y_probas[batch_indices]
         #  Y_proba = self.clf.predict_proba(self.data_storage.X[batch_indices])
-        margin = np.partition(-Y_proba, 1, axis=1)
+        margin = np.partition(-Y_proba, 1, axis=1)  # type: ignore
         return np.sum(-np.abs(margin[:, 0] - margin[:, 1]))
 
-    def _calculate_predicted_unity(self, unlabeled_sample_indices):
-        Y_pred = self.Y_preds[unlabeled_sample_indices]
+    def _calculate_predicted_unity(self, unlabeled_sample_indices: IndiceMask) -> float:
+        Y_pred: LabelList = self.Y_preds[unlabeled_sample_indices]
         #  Y_pred = self.clf.predict(self.data_storage.X[unlabeled_sample_indices])
-        Y_pred_sorted = sorted(Y_pred)
+        Y_pred_sorted: LabelList = np.sort(Y_pred)
         count, unique = np.unique(Y_pred_sorted, return_counts=True)
         Y_enc = []
         for i, (c, u) in enumerate(
@@ -67,15 +100,15 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         #  print(Y_pred, "\t -> \t", Y_enc, "\t: ", disagreement_score)
         return disagreement_score
 
-    def sample_unlabeled_X(
+    def pre_sample_potential_X_queries(
         self,
-        SAMPLE_SIZE,
-        INITIAL_BATCH_SAMPLING_METHOD,
-        INITIAL_BATCH_SAMPLING_ARG,
-    ):
+        AMOUNT_OF_PEAKED_OBJECTS: int,
+    ) -> IndiceMask:
         index_batches = []
-        if INITIAL_BATCH_SAMPLING_METHOD == "random":
-            for _ in range(0, SAMPLE_SIZE):
+        possible_batches: List[IndiceMask]
+
+        if self.PRE_SAMPLING_METHOD == "random":
+            for _ in range(0, AMOUNT_OF_PEAKED_OBJECTS):
                 index_batches.append(
                     np.random.choice(
                         self.data_storage.unlabeled_mask,
@@ -84,10 +117,10 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     )
                 )
         elif (
-            INITIAL_BATCH_SAMPLING_METHOD == "furthest"
-            or INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab"
-            or INITIAL_BATCH_SAMPLING_METHOD == "uncertainty"
-            or INITIAL_BATCH_SAMPLING_METHOD == "predicted_unity"
+            self.PRE_SAMPLING_METHOD == "furthest"
+            or self.PRE_SAMPLING_METHOD == "furthest_lab"
+            or self.PRE_SAMPLING_METHOD == "uncertainty"
+            or self.PRE_SAMPLING_METHOD == "predicted_unity"
         ):
             possible_batches = [
                 np.random.choice(
@@ -95,17 +128,20 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     size=self.NR_QUERIES_PER_ITERATION,
                     replace=False,
                 )
-                for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
+                for _ in range(0, self.PRE_SAMPLING_ARG)
             ]
 
-            if INITIAL_BATCH_SAMPLING_METHOD == "furthest":
+            if self.PRE_SAMPLING_METHOD == "furthest":
                 metric_function = self._calculate_furthest_metric
-            elif INITIAL_BATCH_SAMPLING_METHOD == "furthest_lab":
+            elif self.PRE_SAMPLING_METHOD == "furthest_lab":
                 metric_function = self._calculate_furthest_lab_metric
-            elif INITIAL_BATCH_SAMPLING_METHOD == "uncertainty":
+            elif self.PRE_SAMPLING_METHOD == "uncertainty":
                 metric_function = self._calculate_uncertainty_metric
-            elif INITIAL_BATCH_SAMPLING_METHOD == "predicted_unity":
+            elif self.PRE_SAMPLING_METHOD == "predicted_unity":
                 metric_function = self._calculate_predicted_unity
+            else:
+                print("The defined PRE_SAMPLING_METHOD does not exist, exiting…")
+                exit(-1)
             metric_values = [metric_function(a) for a in possible_batches]
 
             # take n samples based on the sorting metric, the rest randomly
@@ -116,15 +152,15 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][:SAMPLE_SIZE]
-        elif INITIAL_BATCH_SAMPLING_METHOD == "hybrid":
+            ][:AMOUNT_OF_PEAKED_OBJECTS]
+        elif self.PRE_SAMPLING_METHOD == "hybrid":
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
                     size=self.NR_QUERIES_PER_ITERATION,
                     replace=False,
                 )
-                for x in range(0, INITIAL_BATCH_SAMPLING_ARG)
+                for _ in range(0, self.PRE_SAMPLING_ARG)
             ]
 
             furthest_index_batches = [
@@ -137,7 +173,12 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][: math.floor(SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_FURTHEST)]
+            ][
+                : math.floor(
+                    AMOUNT_OF_PEAKED_OBJECTS
+                    * self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST
+                )
+            ]
 
             furthest_lab_index_batches = [
                 x
@@ -154,7 +195,8 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                 )
             ][
                 : math.floor(
-                    SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_FURTHEST_LAB
+                    AMOUNT_OF_PEAKED_OBJECTS
+                    * self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_FURTHEST_LAB
                 )
             ]
 
@@ -171,7 +213,12 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][: math.floor(SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_UNCERT)]
+            ][
+                : math.floor(
+                    AMOUNT_OF_PEAKED_OBJECTS
+                    * self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_UNCERT
+                )
+            ]
 
             predicted_unity_index_batches = [
                 x
@@ -183,7 +230,12 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     key=lambda t: t[0],
                     reverse=True,
                 )
-            ][: math.floor(SAMPLE_SIZE * self.INITIAL_BATCH_SAMPLING_HYBRID_PRED_UNITY)]
+            ][
+                : math.floor(
+                    AMOUNT_OF_PEAKED_OBJECTS
+                    * self.PRE_SAMPLING_BATCH_FRACTION_HYBRID_PRED_UNITY
+                )
+            ]
 
             index_batches = [
                 tuple(i.tolist())
@@ -203,15 +255,13 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     set([tuple(i.tolist()) for i in possible_batches]).difference(
                         index_batches
                     ),
-                    SAMPLE_SIZE - len(index_batches),
+                    AMOUNT_OF_PEAKED_OBJECTS - len(index_batches),
                 )
             ]
         else:
-            print(
-                "NON EXISTENT INITIAL_SAMPLING_METHOD: " + INITIAL_BATCH_SAMPLING_METHOD
-            )
-            raise ()
-        return index_batches
+            print("NON EXISTENT INITIAL_SAMPLING_METHOD: " + self.PRE_SAMPLING_METHOD)
+            exit(-1)
+        return np.array(list(index_batches))
 
     def _get_normalized_unity_encoding_mapping(self):
         # adopted from https://stackoverflow.com/a/44209393
@@ -222,7 +272,7 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
                     yield (i,) + p
 
         BATCH_SIZE = self.NR_QUERIES_PER_ITERATION
-        N_CLASSES = len(self.data_storage.label_encoder.classes_)
+        N_CLASSES = len(self.data_storage.label_encoder.classes_)  # type: ignore
 
         if N_CLASSES >= BATCH_SIZE:
             N_CLASSES = BATCH_SIZE
@@ -247,19 +297,17 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
         return mapping
 
     def calculate_next_query_indices(self, train_unlabeled_X_cluster_indices, *args):
-        self.Y_probas = self.clf.predict_proba(self.data_storage.X)
-        self.Y_preds = self.clf.predict(self.data_storage.X)
-        self.calculate_next_query_indices_pre_hook()
+        self.Y_probas = self.learner.predict_proba(self.data_storage.X)
+        self.Y_preds = self.learner.predict(self.data_storage.X)
+
         batch_indices = self.get_X_query_index()
 
-        if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.X_query_index = batch_indices
         X_state = self.calculate_state(
             batch_indices,
         )
 
         self.calculate_next_query_indices_post_hook(X_state)
-        return batch_indices[self.get_sorting(X_state).argmax()]
+        return batch_indices[np.argmax(self.get_sorting(X_state))]
 
     def calculate_state(
         self,
@@ -279,12 +327,14 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             if self.DISTANCE_METRIC == "euclidean":
                 normalization_denominator = (
                     2
-                    * math.sqrt(np.shape(self.data_storage.X)[1])
+                    * math.sqrt(self.data_storage.X.shape[1])
                     * self.NR_QUERIES_PER_ITERATION
                 )
             elif self.DISTANCE_METRIC == "cosine":
                 normalization_denominator = self.NR_QUERIES_PER_ITERATION
-
+            else:
+                print("The defined distance metric is not implemented, exiting…")
+                exit(-1)
             state_list += [
                 self._calculate_furthest_metric(a) / normalization_denominator
                 for a in batch_indices
@@ -293,12 +343,14 @@ class LearnedBaseBatchSampling(LearnedBaseSampling):
             if self.DISTANCE_METRIC == "euclidean":
                 normalization_denominator = (
                     2
-                    * math.sqrt(np.shape(self.data_storage.X)[1])
+                    * math.sqrt(self.data_storage.X.shape[1])
                     * self.NR_QUERIES_PER_ITERATION
                 )
             elif self.DISTANCE_METRIC == "cosine":
                 normalization_denominator = self.NR_QUERIES_PER_ITERATION
-
+            else:
+                print("The defined distance metric is not implemented, exiting…")
+                exit(-1)
             state_list += [
                 self._calculate_furthest_lab_metric(a) / (normalization_denominator)
                 for a in batch_indices

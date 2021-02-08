@@ -1,9 +1,6 @@
 import abc
-from active_learning.dataStorage import DataStorage
-from ..activeLearner import ActiveLearner
-import numpy as np
-from typing import Tuple
-from ..activeLearner import Learner
+from active_learning.dataStorage import DataStorage, IndiceMask
+from ..learner.standard import Learner
 
 
 class BaseSamplingStrategy:
@@ -13,5 +10,5 @@ class BaseSamplingStrategy:
     @abc.abstractmethod
     def what_to_label_next(
         self, NR_QUERIES_PER_ITERATION: int, learner: Learner, data_storage: DataStorage
-    ) -> np.ndarray:
+    ) -> IndiceMask:
         pass

@@ -82,10 +82,10 @@ class ImitationBatchLearner(LearnedBaseBatchSampling):
     def get_X_query_index(self):
         future_peak_acc = []
 
-        index_batches = self.sample_unlabeled_X(
+        index_batches = self.pre_sample_potential_X_queries(
             self.AMOUNT_OF_PEAKED_OBJECTS,
-            self.INITIAL_BATCH_SAMPLING_METHOD,
-            self.INITIAL_BATCH_SAMPLING_ARG,
+            self.PRE_SAMPLING_METHOD,
+            self.PRE_SAMPLING_ARG,
         )
 
         future_peak_acc = []
