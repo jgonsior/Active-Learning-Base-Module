@@ -1,6 +1,7 @@
 import abc
+from typing import Any, List
+
 from ..activeLearner import ActiveLearner
-from typing import List, Any
 
 
 class BaseCallback:

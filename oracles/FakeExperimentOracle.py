@@ -1,8 +1,10 @@
 import abc
+from typing import Tuple
+
 import numpy as np
+
 from ..activeLearner import ActiveLearner
 from .BaseOracle import BaseOracle
-from typing import Tuple
 
 
 class FakeExperimentOracle(BaseOracle):

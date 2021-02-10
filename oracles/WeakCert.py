@@ -1,10 +1,11 @@
 import abc
-import numpy as np
+import random
 from typing import Tuple
+
+import numpy as np
+
 from ..activeLearner import ActiveLearner
 from .BaseOracle import BaseOracle
-import random
-import numpy as np
 
 
 class WeakCert(BaseOracle):

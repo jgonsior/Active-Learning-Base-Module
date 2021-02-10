@@ -1,9 +1,9 @@
-
 import random
 
 import numpy as np
 import pandas as pd
 from sklearn.datasets import make_classification
+
 
 def load_synthetic(
     DATASETS_PATH: str,
@@ -115,7 +115,7 @@ def load_synthetic(
             "random_state": RANDOM_SEED,
         }
         synthetic_creation_args = synthetic_creation_args
-    
+
     X, Y = make_classification(**synthetic_creation_args)  # type: ignore
     df = pd.DataFrame(X)
     df["label"] = Y

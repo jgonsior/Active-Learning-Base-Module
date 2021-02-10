@@ -1,7 +1,7 @@
-import os
 import csv
 import datetime
 import hashlib
+import os
 import threading
 from pathlib import Path
 from timeit import default_timer as timer
@@ -10,7 +10,7 @@ import numpy as np
 
 #  import np.random.distributions as dists
 from json_tricks import dumps
-from sklearn.metrics import accuracy_score, f1_score, auc, recall_score, precision_score
+from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
 
 from .cluster_strategies import (
     DummyClusterStrategy,
@@ -19,13 +19,13 @@ from .cluster_strategies import (
     RoundRobinClusterStrategy,
 )
 from .dataStorage import DataStorage
-from .experiment_setup_lib import get_param_distribution, get_classifier
+from .experiment_setup_lib import get_classifier, get_param_distribution
 from .sampling_strategies import (
     BoundaryPairSampler,
     RandomSampler,
-    UncertaintySampler,
-    TrainedNNLearner,
     TrainedBatchNNLearner,
+    TrainedNNLearner,
+    UncertaintySampler,
 )
 from .weak_supervision import WeakCert, WeakClust
 

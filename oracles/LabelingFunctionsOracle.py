@@ -1,10 +1,11 @@
 import abc
+import itertools
+from typing import Callable, List, Tuple
+
 import numpy as np
-from typing import Tuple, List
+
 from ..activeLearner import ActiveLearner
 from .BaseOracle import BaseOracle
-import itertools
-from typing import Callable
 
 
 class LabeleingFunctionsOracle(BaseOracle):

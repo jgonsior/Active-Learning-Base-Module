@@ -1,28 +1,26 @@
-from typing import Any, List, Sequence
-
-from sklearn.naive_bayes import BernoulliNB
-from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask
-from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import (
-    BaseSamplingStrategy,
-)
-import os
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
+import abc
+import copy
+from math import trunc
+from typing import Any, List
 
 import numpy as np
-from sklearn.metrics import pairwise_distances
-import abc
+import pandas as pd
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics.pairwise import pairwise_distances
+from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
 
-State = np.ndarray
+from active_learning.activeLearner import ActiveLearner
+from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
+from active_learning.learner.standard import Learner
+
+from .ImitationLearningBaseSampling import (
+    ImitationLearningBaseSampling,
+    InputState,
+    PreSampledIndices,
+)
 
 
-class LearnedBaseSampling(BaseSamplingStrategy):
-    PRE_SAMPLING_METHOD: str
-    PRE_SAMPLING_ARG: Any
+class SingleStateEncoding(ImitationLearningBaseSampling):
     STATE_ARGSECOND_PROBAS: bool
     STATE_ARGTHIRD_PROBAS: bool
     STATE_DIFF_PROBAS: bool
@@ -30,12 +28,9 @@ class LearnedBaseSampling(BaseSamplingStrategy):
     STATE_DISTANCES_LAB: bool
     STATE_DISTANCES_UNLAB: bool
     STATE_INCLUDE_NR_FEATURES: bool
-    DISTANCE_METRIC: str
 
     def __init__(
         self,
-        PRE_SAMPLING_METHOD: str,
-        PRE_SAMPLING_ARG: Any,
         STATE_ARGSECOND_PROBAS: bool = False,
         STATE_ARGTHIRD_PROBAS: bool = False,
         STATE_DIFF_PROBAS: bool = False,
@@ -43,12 +38,11 @@ class LearnedBaseSampling(BaseSamplingStrategy):
         STATE_DISTANCES_LAB: bool = False,
         STATE_DISTANCES_UNLAB: bool = False,
         STATE_INCLUDE_NR_FEATURES: bool = False,
-        DISTANCE_METRIC: str = "euclidean",
+        *args,
+        **kwargs,
     ) -> None:
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
-        self.PRE_SAMPLING_METHOD = PRE_SAMPLING_METHOD
-        self.PRE_SAMPLING_ARG = PRE_SAMPLING_ARG
         self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
         self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
         self.STATE_DIFF_PROBAS = STATE_DIFF_PROBAS
@@ -56,54 +50,24 @@ class LearnedBaseSampling(BaseSamplingStrategy):
         self.STATE_DISTANCES_LAB = STATE_DISTANCES_LAB
         self.STATE_DISTANCES_UNLAB = STATE_DISTANCES_UNLAB
         self.STATE_INCLUDE_NR_FEATURES = STATE_INCLUDE_NR_FEATURES
-        self.DISTANCE_METRIC = DISTANCE_METRIC
-
-    def what_to_label_next(
-        self, NR_QUERIES_PER_ITERATION: int, learner: Learner, data_storage: DataStorage
-    ) -> IndiceMask:
-        self.data_storage: DataStorage = data_storage
-        self.learner: Learner = learner
-        self.NR_QUERIES_PER_ITERATION: int = NR_QUERIES_PER_ITERATION
-
-        X_query_index = self.get_X_query_index()
-
-        X_state: State = self.calculate_state(
-            data_storage.X[X_query_index]
-        )
-        
-        self.calculate_next_query_indices_post_hook(X_state)
-
-        # use the optimal values
-        zero_to_one_values_and_index = list(
-            zip(self.get_sorting(X_state), X_query_index)
-        )
-        ordered_list_of_possible_sample_indices = sorted(
-            zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True
-        )
-
-        return np.array(
-            [
-                v
-                for _, v in ordered_list_of_possible_sample_indices[
-                    :NR_QUERIES_PER_ITERATION
-                ]
-            ]
-        )
 
     def pre_sample_potential_X_queries(
         self,
-        AMOUNT_OF_PEAKED_OBJECTS: int,
-    ) -> IndiceMask:
+    ) -> PreSampledIndices:
         if self.PRE_SAMPLING_METHOD == "random":
-            X_query_index: IndiceMask = np.random.choice(
-                self.data_storage.unlabeled_mask, size=AMOUNT_OF_PEAKED_OBJECTS, replace=False
+            X_query_index: PreSampledIndices = np.random.choice(
+                self.data_storage.unlabeled_mask,
+                size=AMOUNT_OF_PEAKED_OBJECTS,
+                replace=False,
             )
         elif self.PRE_SAMPLING_METHOD == "furthest":
             max_sum = 0
-            X_query_index: IndiceMask = np.empty(0)
+            X_query_index: PreSampledIndices = np.empty(0, dtype=np.int64)
             for _ in range(0, self.PRE_SAMPLING_ARG):
-                random_index: IndiceMask = np.random.choice(
-                    self.data_storage.unlabeled_mask, size=AMOUNT_OF_PEAKED_OBJECTS, replace=False
+                random_index: PreSampledIndices = np.random.choice(
+                    self.data_storage.unlabeled_mask,
+                    size=AMOUNT_OF_PEAKED_OBJECTS,
+                    replace=False,
                 )
                 random_sample = self.data_storage.X[random_index]
 
@@ -132,26 +96,16 @@ class LearnedBaseSampling(BaseSamplingStrategy):
             )
             exit(-1)
 
+        # return np.reshape(X_query_index,(1, len(X_query_index))) # type: ignore
         return X_query_index
-   
-    @abc.abstractmethod
-    def get_X_query_index(self) -> IndiceMask:
-        pass
 
-    @abc.abstractmethod
-    def calculate_next_query_indices_post_hook(self, X_state: State):
-        pass
-
-    @abc.abstractmethod
-    def get_sorting(self, X_state: State) -> List[float]:
-        pass
-
-    def calculate_state(
-        self, X_query: FeatureList, 
-    ) -> State:
+    def encode_input_state(
+        self, pre_sampled_X_queries_indices: PreSampledIndices
+    ) -> InputState:
+        X_query = self.data_storage.X[pre_sampled_X_queries_indices]
         possible_samples_probas = self.learner.predict_proba(X_query)
 
-        sorted_probas = -np.sort(-possible_samples_probas, axis=1) # type: ignore
+        sorted_probas = -np.sort(-possible_samples_probas, axis=1)  # type: ignore
         argmax_probas = sorted_probas[:, 0]
 
         state_list: List[float] = list(argmax_probas.tolist())

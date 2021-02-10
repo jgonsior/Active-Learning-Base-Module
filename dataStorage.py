@@ -1,14 +1,15 @@
 import math
+from typing import List
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
-from typing import  List
 
 # type aliases
 IndiceMask = np.ndarray
 LabelList = np.ndarray
 FeatureList = np.ndarray
+
 
 class DataStorage:
     unlabeled_mask: IndiceMask
@@ -64,7 +65,7 @@ class DataStorage:
 
             # prevent that the first split contains not all labels in the training split, so we just shuffle the data as long as we have every label in their
             while len(np.unique(self.Y[self.unlabeled_mask])) != len(
-                self.label_encoder.classes_ # type: ignore
+                self.label_encoder.classes_  # type: ignore
             ):
                 new_shuffled_indices = np.random.permutation(len(self.Y))
                 self.X = self.X[new_shuffled_indices]
@@ -86,7 +87,7 @@ class DataStorage:
             """
             # separate X_labeled into start_set and labeled _rest
             # check if the minimum amount of labeled data is present in the start set size
-            labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_))) # type: ignore
+            labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))  # type: ignore
             all_label_in_start_set = False
 
             if not all_label_in_start_set:

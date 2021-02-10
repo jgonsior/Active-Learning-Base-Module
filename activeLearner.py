@@ -1,16 +1,16 @@
-import numpy as np
-from typing import List
+from typing import Dict, List, TypeVar, Union
 
+import numpy as np
 
 from .callbacks.BaseCallback import BaseCallback
 from .dataStorage import DataStorage, IndiceMask, LabelList
+from .learner.standard import Learner
 from .logger.logger import log_it
 from .oracles.BaseOracle import BaseOracle
 from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
 from .sampling_strategies.BaseSamplingStrategy import BaseSamplingStrategy
 from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
-from typing import Union, TypeVar, Dict
-from .learner.standard import Learner
+
 
 class ActiveLearner:
     def __init__(
@@ -21,7 +21,7 @@ class ActiveLearner:
         learner: Learner,
         callbacks: Dict[str, BaseCallback],
         stopping_criteria: BaseStoppingCriteria,
-        NR_QUERIES_PER_ITERATION: int,
+        BATCH_SIZE: int,
     ) -> None:
 
         self.sampling_strategy: BaseSamplingStrategy = sampling_strategy
@@ -30,7 +30,7 @@ class ActiveLearner:
         self.oracles: List[BaseOracle] = oracles
         self.callbacks: Dict[str, BaseCallback] = callbacks
         self.stopping_criteria: BaseStoppingCriteria = stopping_criteria
-        self.NR_QUERIES_PER_ITERATION: int = NR_QUERIES_PER_ITERATION
+        self.BATCH_SIZE: int = BATCH_SIZE
 
         # fake iteration zero
         self.current_query_indices: IndiceMask = self.data_storage.labeled_mask
@@ -45,7 +45,7 @@ class ActiveLearner:
             callback.pre_learning_cycle_hook(self)
 
         # retrain CLASSIFIER
-        self.fit_learner() 
+        self.fit_learner()
 
         for callback in self.callbacks.values():
             callback.post_learning_cycle_hook(self)
@@ -65,16 +65,16 @@ class ActiveLearner:
     ) -> None:
         while not self.stopping_criteria.stop_is_reached():
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
-            if len(self.data_storage.unlabeled_mask) < self.NR_QUERIES_PER_ITERATION:
-                self.NR_QUERIES_PER_ITERATION = len(self.data_storage.unlabeled_mask)
-            if self.NR_QUERIES_PER_ITERATION == 0:
+            if len(self.data_storage.unlabeled_mask) < self.BATCH_SIZE:
+                self.BATCH_SIZE = len(self.data_storage.unlabeled_mask)
+            if self.BATCH_SIZE == 0:
                 # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
 
             Y_query: LabelList = np.empty(0, dtype=np.int64)
 
             query_indices = self.sampling_strategy.what_to_label_next(
-                self.NR_QUERIES_PER_ITERATION, self.learner, self.data_storage
+                self.BATCH_SIZE, self.learner, self.data_storage
             )
 
             oracle: Union[BaseOracle, None] = None

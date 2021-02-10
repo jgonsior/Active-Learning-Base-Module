@@ -1,5 +1,7 @@
 import abc
+
 from active_learning.dataStorage import DataStorage, IndiceMask
+
 from ..learner.standard import Learner
 
 

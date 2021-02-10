@@ -1,5 +1,5 @@
-from .BaseStoppingCriteria import BaseStoppingCriteria
 from ..activeLearner import ActiveLearner
+from .BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class MetricValueReachedStoppingCriteria(BaseStoppingCriteria):

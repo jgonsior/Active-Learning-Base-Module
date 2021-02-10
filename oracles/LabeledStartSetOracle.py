@@ -1,6 +1,8 @@
 import abc
-import numpy as np
 from typing import Tuple
+
+import numpy as np
+
 from ..activeLearner import ActiveLearner
 from .BaseOracle import BaseOracle
 

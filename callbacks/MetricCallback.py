@@ -4,8 +4,8 @@ import os
 import random
 import sys
 import threading
-from typing import Callable
 import warnings
+from typing import Callable, List, Tuple, Union
 
 import numpy as np
 import numpy.random
@@ -13,14 +13,12 @@ import scipy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.metrics import confusion_matrix, roc_auc_score
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
-from .BaseCallback import BaseCallback
 from ..activeLearner import ActiveLearner
-from typing import List, Tuple, Union
+from .BaseCallback import BaseCallback
 
 
 class MetricCallback(BaseCallback):

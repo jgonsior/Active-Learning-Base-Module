@@ -1,15 +1,20 @@
 import argparse
 import random
 import sys
-from scipy.stats import uniform # type: ignore
-import numpy as np
-from ..logger.logger import init_logger
-from typing import Any, List, Tuple, Union, Dict
+from typing import Any, Dict, List, Tuple, Union
 
-CliConfigParameters = List[Tuple[List[str], Dict[str,Any]]]
+import numpy as np
+from scipy.stats import uniform  # type: ignore
+
+from ..logger.logger import init_logger
+
+CliConfigParameters = List[Tuple[List[str], Dict[str, Any]]]
+
 
 def standard_config(
-    additional_parameters: CliConfigParameters=None, standard_args:bool=True, return_argparse:bool=False
+    additional_parameters: CliConfigParameters = None,
+    standard_args: bool = True,
+    return_argparse: bool = False,
 ) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
     parser = argparse.ArgumentParser()
     if standard_args:
@@ -47,7 +52,9 @@ def standard_config(
         return config
 
 
-def get_active_config(additional_parameters: CliConfigParameters=[]) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
+def get_active_config(
+    additional_parameters: CliConfigParameters = [],
+) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
     return standard_config(
         [
             (
