@@ -5,11 +5,11 @@ from typing import List
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
-from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
 
 from active_learning.activeLearner import ActiveLearner
 from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
+from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
 
 from .BatchStateEncoding import BatchStateSampling
 from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
