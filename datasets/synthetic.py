@@ -1,4 +1,5 @@
 import random
+from typing import Any, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,7 +13,7 @@ def load_synthetic(
     AMOUNT_OF_FEATURES: int,
     HYPERCUBE: bool,
     GENERATE_NOISE: bool,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     no_valid_synthetic_arguments_found = True
     while no_valid_synthetic_arguments_found:
         if not NEW_SYNTHETIC_PARAMS:
@@ -97,24 +98,24 @@ def load_synthetic(
             HYPERCUBE = HYPERCUBE  # if false a random polytope is selected instead
             SCALE = 0.01  # features should be between 0 and 1 now
 
-        synthetic_creation_args = {
-            "n_samples": N_SAMPLES,
-            "n_features": N_FEATURES,
-            "n_informative": N_INFORMATIVE,
-            "n_redundant": N_REDUNDANT,
-            "n_repeated": N_REPEATED,
-            "n_classes": N_CLASSES,
-            "n_clusters_per_class": N_CLUSTERS_PER_CLASS,
-            "weights": WEIGHTS,
-            "flip_y": FLIP_Y,
-            "class_sep": CLASS_SEP,
-            "hypercube": HYPERCUBE,
-            "scale": SCALE,
-            "random_state": RANDOM_SEED,
-        }
-        synthetic_creation_args = synthetic_creation_args
+    synthetic_creation_args = {
+        "n_samples": N_SAMPLES,  # type: ignore
+        "n_features": N_FEATURES,  # type: ignore
+        "n_informative": N_INFORMATIVE,  # type: ignore
+        "n_redundant": N_REDUNDANT,  # type: ignore
+        "n_repeated": N_REPEATED,  # type: ignore
+        "n_classes": N_CLASSES,  # type: ignore
+        "n_clusters_per_class": N_CLUSTERS_PER_CLASS,  # type: ignore
+        "weights": WEIGHTS,  # type: ignore
+        "flip_y": FLIP_Y,  # type: ignore
+        "class_sep": CLASS_SEP,  # type: ignore
+        "hypercube": HYPERCUBE,
+        "scale": SCALE,  # type: ignore
+        "random_state": RANDOM_SEED,
+    }
+    synthetic_creation_args
 
     X, Y = make_classification(**synthetic_creation_args)  # type: ignore
     df = pd.DataFrame(X)
     df["label"] = Y
-    return df
+    return df, synthetic_creation_args
