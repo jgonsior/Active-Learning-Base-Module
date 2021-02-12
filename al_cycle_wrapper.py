@@ -5,152 +5,101 @@ import os
 import threading
 from pathlib import Path
 from timeit import default_timer as timer
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
-
 #  import np.random.distributions as dists
 from json_tricks import dumps
-from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
+from sklearn.metrics import (accuracy_score, auc, f1_score, precision_score,
+                             recall_score)
 
-from .cluster_strategies import (
-    DummyClusterStrategy,
-    MostUncertainClusterStrategy,
-    RandomClusterStrategy,
-    RoundRobinClusterStrategy,
-)
+from active_learning import sampling_strategies
+from active_learning.activeLearner import ActiveLearner
+from active_learning.callbacks.BaseCallback import BaseCallback
+from active_learning.callbacks.MetricCallback import (MetricCallback,
+                                                      test_acc_metric,
+                                                      test_f1_metric)
+from active_learning.config import get_active_config
+from active_learning.datasets.synthetic import load_synthetic
+from active_learning.dataStorage import DataStorage
+from active_learning.learner.standard import Learner, get_classifier
+from active_learning.logger import init_logger, log_it
+from active_learning.oracles.BaseOracle import BaseOracle
+from active_learning.oracles.FakeExperimentOracle import FakeExperimentOracle
+from active_learning.sampling_strategies import (RandomSampler,
+                                                 TrainImitALBatch,
+                                                 TrainImitALSingle,
+                                                 UncertaintySampler)
+from active_learning.sampling_strategies.BaseSamplingStrategy import \
+    BaseSamplingStrategy
+from active_learning.stopping_criterias.ALCyclesStoppingCriteria import \
+    ALCyclesStoppingCriteria
+
 from .dataStorage import DataStorage
-from .experiment_setup_lib import get_classifier, get_param_distribution
-from .sampling_strategies import (
-    BoundaryPairSampler,
-    RandomSampler,
-    TrainedBatchNNLearner,
-    TrainedNNLearner,
-    UncertaintySampler,
-)
-from .weak_supervision import WeakCert, WeakClust
 
 
-def train_al(hyper_parameters, oracle, df=None):
-    data_storage = DataStorage(
-        df=df,
-        **hyper_parameters,
-    )
+def train_al(
+    hyper_parameters: Dict[str, Any],
+    oracles: List[BaseOracle],
+    data_storage: DataStorage,
+) -> Tuple[Learner, float, Dict[str, MetricCallback], DataStorage, ActiveLearner]:
+
     hyper_parameters["LEN_TRAIN_DATA"] = len(data_storage.unlabeled_mask) + len(
         data_storage.labeled_mask
     )
 
-    if hyper_parameters["CLUSTER"] == "dummy":
-        cluster_strategy = DummyClusterStrategy()
-    elif hyper_parameters["CLUSTER"] == "random":
-        cluster_strategy = RandomClusterStrategy()
-    elif hyper_parameters["CLUSTER"] == "MostUncertain_lc":
-        cluster_strategy = MostUncertainClusterStrategy()
-        cluster_strategy.set_uncertainty_strategy("least_confident")
-    elif hyper_parameters["CLUSTER"] == "MostUncertain_max_margin":
-        cluster_strategy = MostUncertainClusterStrategy()
-        cluster_strategy.set_uncertainty_strategy("max_margin")
-    elif hyper_parameters["CLUSTER"] == "MostUncertain_entropy":
-        cluster_strategy = MostUncertainClusterStrategy()
-        cluster_strategy.set_uncertainty_strategy("entropy")
-    elif hyper_parameters["CLUSTER"] == "RoundRobin":
-        cluster_strategy = RoundRobinClusterStrategy()
-
-    cluster_strategy.set_data_storage(data_storage, hyper_parameters["N_JOBS"])
-
-    classifier = get_classifier(
-        hyper_parameters["CLASSIFIER"],
-        n_jobs=hyper_parameters["N_JOBS"],
-        random_state=hyper_parameters["RANDOM_SEED"],
-    )
-
-    weak_supervision_label_sources = []
-
-    if hyper_parameters["WITH_CLUSTER_RECOMMENDATION"]:
-        weak_supervision_label_sources.append(
-            WeakClust(
-                data_storage,
-                MINIMUM_CLUSTER_UNITY_SIZE=hyper_parameters[
-                    "CLUSTER_RECOMMENDATION_MINIMUM_CLUSTER_UNITY_SIZE"
-                ],
-                MINIMUM_RATIO_LABELED_UNLABELED=hyper_parameters[
-                    "CLUSTER_RECOMMENDATION_RATIO_LABELED_UNLABELED"
-                ],
-            )
-        )
-
-    if hyper_parameters["WITH_UNCERTAINTY_RECOMMENDATION"]:
-        weak_supervision_label_sources.append(
-            WeakCert(
-                data_storage,
-                CERTAINTY_THRESHOLD=hyper_parameters[
-                    "UNCERTAINTY_RECOMMENDATION_CERTAINTY_THRESHOLD"
-                ],
-                CERTAINTY_RATIO=hyper_parameters["UNCERTAINTY_RECOMMENDATION_RATIO"],
-                clf=classifier,
-            )
-        )
-
-    active_learner_params = {
-        "data_storage": data_storage,
-        "cluster_strategy": cluster_strategy,
-        "oracle": oracle,
-        "clf": classifier,
-        "weak_supervision_label_sources": weak_supervision_label_sources,
-    }
-
+    sampling_strategy: BaseSamplingStrategy
     if hyper_parameters["SAMPLING"] == "random":
-        active_learner = RandomSampler(**active_learner_params, **hyper_parameters)
-    elif hyper_parameters["SAMPLING"] == "boundary":
-        active_learner = BoundaryPairSampler(
-            **active_learner_params, **hyper_parameters
-        )
+        sampling_strategy = RandomSampler()
     elif hyper_parameters["SAMPLING"] == "uncertainty_lc":
-        active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
-        active_learner.set_uncertainty_strategy("least_confident")
+        sampling_strategy = UncertaintySampler("least_confident")
     elif hyper_parameters["SAMPLING"] == "uncertainty_max_margin":
-        active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
-        active_learner.set_uncertainty_strategy("max_margin")
+        sampling_strategy = UncertaintySampler("max_margin")
     elif hyper_parameters["SAMPLING"] == "uncertainty_entropy":
-        active_learner = UncertaintySampler(**active_learner_params, **hyper_parameters)
-        active_learner.set_uncertainty_strategy("entropy")
+        sampling_strategy = UncertaintySampler("entropy")
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         if hyper_parameters["BATCH_MODE"]:
-            active_learner = TrainedBatchNNLearner(
-                **active_learner_params, **hyper_parameters
-            )
+            sampling_strategy = TrainImitALBatch(hyper_parameters["NN_BINARY_PATH"])
         else:
-            active_learner = TrainedNNLearner(
-                **active_learner_params, **hyper_parameters
-            )
-    #  elif hyper_parameters['sampling'] == 'committee':
-    #  active_learner = CommitteeSampler(hyper_parameters['RANDOM_SEED, hyper_parameters.N_JOBS, hyper_parameters.NR_LEARNING_ITERATIONS)
+            sampling_strategy = TrainImitALSingle(hyper_parameters["NN_BINARY_PATH"])
     else:
-        ("No Active Learning Strategy specified")
+        print("No Active Learning Strategy specified, exiting")
+        exit(-1)
+
+    callbacks = {
+        "acc_test": MetricCallback(test_acc_metric),
+        "f1_test": MetricCallback(test_f1_metric),
+    }
+
+    learner = get_classifier(
+        hyper_parameters["CLASSIFIER"], random_state=hyper_parameters["RANDOM_SEED"]
+    )
+
+    active_learner_params = {
+        "sampling_strategy": sampling_strategy,
+        "data_storage": data_storage,
+        "oracles": oracles,
+        "learner": learner,
+        "callbacks": callbacks,
+        "stopping_criteria": ALCyclesStoppingCriteria(50),
+        "BATCH_SIZE": hyper_parameters["PATCH_SIZE"],
+    }
+    active_learner = ActiveLearner(**active_learner_params)
 
     start = timer()
-    trained_active_clf_list, metrics_per_al_cycle = active_learner.learn()
+    active_learner.al_cycle()
     end = timer()
 
-    return (
-        trained_active_clf_list,
-        end - start,
-        metrics_per_al_cycle,
-        data_storage,
-        active_learner,
-    )
+    return learner, end - start, callbacks, data_storage, active_learner
 
 
 def eval_al(
-    data_storage,
-    trained_active_clf_list,
-    fit_time,
-    metrics_per_al_cycle,
-    active_learner,
-    hyper_parameters,
+    data_storage: DataStorage,
+    fit_time: float,
+    callbacks: Dict[str, MetricCallback],
+    active_learner: ActiveLearner,
+    hyper_parameters: Dict[str, Any],
 ):
-    hyper_parameters[
-        "amount_of_user_asked_queries"
-    ] = active_learner.amount_of_user_asked_queries
 
     # normalize by start_set_size
     percentage_user_asked_queries = (
@@ -158,7 +107,7 @@ def eval_al(
         - hyper_parameters["amount_of_user_asked_queries"]
         / hyper_parameters["LEN_TRAIN_DATA"]
     )
-    test_acc = metrics_per_al_cycle["test_acc"][-1]
+    test_acc = callbacks["acc_test"].values[-1]
 
     # score is harmonic mean
     score = (
@@ -173,12 +122,6 @@ def eval_al(
     # calculate accuracy for Random Forest only on oracle human expert queries
     active_rf = get_classifier(hyper_parameters["CLASSIFIER"])
 
-    #  Y_train_al = data_storage.Y[data_storage.labeled_mask]
-    #
-    #  ys_oracle_a = Y_train_al.loc[Y_train_al.source == "A"]
-    #  ys_oracle_g = Y_train_al.loc[Y_train_al.source == "G"]
-    #  ys_oracle = pd.concat([ys_oracle_g, ys_oracle_a])
-
     active_rf.fit(
         data_storage.X[data_storage.labeled_mask],
         data_storage.Y[data_storage.labeled_mask]
@@ -187,6 +130,7 @@ def eval_al(
 
     y_pred = active_rf.predict(data_storage.X[data_storage.test_mask])
     acc_test_oracle = accuracy_score(data_storage.Y[data_storage.test_mask], y_pred)
+
     f1_test_oracle = f1_score(
         data_storage.Y[data_storage.test_mask],
         y_pred,
@@ -205,59 +149,22 @@ def eval_al(
         average="weighted",
         zero_division=0,
     )
-    #  y_probas = active_rf.predict_proba(data_storage.X[data_storage.test_mask])
-
-    #  if data_storage.synthetic_creation_args["n_classes"] > 2:
-    #      print(np.unique(data_storage.Y[data_storage.test_mask]))
-    #      print(y_pred)
-    #      print(np.unique(y_pred))
-    #      roc_auc_macro_oracle = roc_auc_score(
-    #          data_storage.Y[data_storage.test_mask],
-    #          y_probas,
-    #          average="macro",
-    #          multi_class="ovo",
-    #      )
-    #      roc_auc_weighted_oracle = roc_auc_score(
-    #          data_storage.Y[data_storage.test_mask],
-    #          y_probas,
-    #          average="weighted",
-    #          multi_class="ovo",
-    #      )
-    #  else:
-    #      y_probas = np.max(y_probas, axis=1)
-    #      roc_auc_macro_oracle = roc_auc_score(
-    #          data_storage.Y[data_storage.test_mask],
-    #          y_probas,
-    #          average="macro",
-    #          multi_class="ovo",
-    #      )
-    #      roc_auc_weighted_oracle = roc_auc_score(
-    #          data_storage.Y[data_storage.test_mask],
-    #          y_probas,
-    #          average="weighted",
-    #          multi_class="ovo",
-    #      )
 
     acc_auc = (
         auc(
-            [i for i in range(0, len(metrics_per_al_cycle["test_acc"]))],
-            metrics_per_al_cycle["test_acc"],
+            [i for i in range(0, len(callbacks["acc_test"].values))],
+            callbacks["acc_test"].values,
         )
-        / (len(metrics_per_al_cycle["test_acc"]) - 1)
+        / (len(callbacks["acc_test"].values) - 1)
     )
     hyper_parameters["acc_auc"] = acc_auc
     f1_auc = (
         auc(
-            [i for i in range(0, len(metrics_per_al_cycle["test_f1"]))],
-            metrics_per_al_cycle["test_f1"],
+            [i for i in range(0, len(callbacks["f1_test"].values))],
+            callbacks["f1_test"].values,
         )
-        / (len(metrics_per_al_cycle["test_f1"]) - 1)
+        / (len(callbacks["f1_test"].values) - 1)
     )
-
-    # save labels
-    #  Y_train_al.to_pickle(
-    #  "pickles/" + str(len(Y_train_al)) + "_" + param_list_id + ".pickle"
-    #  )
 
     # calculate based on params a unique id which should be the same across all similar cross validation splits
     param_distribution = get_param_distribution(**hyper_parameters)
@@ -312,18 +219,6 @@ def eval_al(
     with output_hyper_parameter_file.open("a") as f:
         csv_writer = csv.DictWriter(f, fieldnames=hyper_parameters.keys())
         csv_writer.writerow(hyper_parameters)
-
-    # save metrics_per_al_cycle in pickle file
-    #      metrics_per_al_cycle=dumps(metrics_per_al_cycle, allow_nan=True),
-    #      fit_time=str(fit_time),
-    #      acc_train=metrics_per_al_cycle["train_acc"][-1],
-    #      acc_test=metrics_per_al_cycle["test_acc"][-1],
-    #      acc_test_oracle=acc_test_oracle,
-    #      fit_score=score,
-    #      param_list_id=param_list_id,
-    #      thread_id=threading.get_ident(),
-    #      end_time=datetime.datetime.now(),
-    #      amount_of_all_labels=amount_of_all_labels,
 
     return score
 

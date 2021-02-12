@@ -13,11 +13,8 @@ from active_learning.activeLearner import ActiveLearner
 from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
 
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
-    InputState,
-    PreSampledIndices,
-)
+from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
+                                            InputState, PreSampledIndices)
 
 
 class SingleStateEncoding(ImitationLearningBaseSampling):

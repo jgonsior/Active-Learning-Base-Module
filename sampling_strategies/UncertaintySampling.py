@@ -3,19 +3,16 @@ from scipy.stats import entropy
 
 from active_learning.dataStorage import DataStorage, IndiceMask
 from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import (
-    BaseSamplingStrategy,
-)
+from active_learning.sampling_strategies.BaseSamplingStrategy import \
+    BaseSamplingStrategy
 
 from ..activeLearner import ActiveLearner
 
 
 class UncertaintySampler(BaseSamplingStrategy):
-    def set_uncertainty_strategy(self, strategy):
+    def __init__(self, strategy: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.strategy = strategy
-
-    def setClassifierClasses(self, classes):
-        self.classifier_classes = classes
 
     def what_to_label_next(
         self, NR_QUERIES_PER_ITERATION: int, learner: Learner, data_storage: DataStorage

@@ -13,7 +13,8 @@ import scipy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             roc_auc_score)
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
@@ -22,7 +23,7 @@ from .BaseCallback import BaseCallback
 
 
 class MetricCallback(BaseCallback):
-    def __init__(self, metric_function: Callable[[ActiveLearner], float]) -> None:
+    def __init__(self, metric_function: Callable[[ActiveLearner], List[float]]) -> None:
         self.metric_function = metric_function
 
     def pre_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:

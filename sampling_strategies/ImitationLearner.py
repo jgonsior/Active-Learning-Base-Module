@@ -12,12 +12,9 @@ from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
 
 from .BatchStateEncoding import BatchStateSampling
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
-    InputState,
-    OutputState,
-    PreSampledIndices,
-)
+from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
+                                            InputState, OutputState,
+                                            PreSampledIndices)
 from .SingleStateEncoding import SingleStateEncoding
 
 

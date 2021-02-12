@@ -6,8 +6,6 @@ from sklearn.datasets import make_classification
 
 
 def load_synthetic(
-    DATASETS_PATH: str,
-    DATASET_NAME: str,
     RANDOM_SEED: int,
     NEW_SYNTHETIC_PARAMS: bool,
     VARIABLE_DATASET: bool,

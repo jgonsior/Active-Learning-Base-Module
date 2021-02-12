@@ -77,7 +77,7 @@ def get_active_config(
                 },
             ),
             (["--NR_LEARNING_ITERATIONS"], {"type": int, "default": 150000}),
-            (["--NR_QUERIES_PER_ITERATION"], {"type": int, "default": 150}),
+            (["--BATCH_SIZE"], {"type": int, "default": 150}),
             (["--START_SET_SIZE"], {"type": int, "default": 1}),
             (
                 ["--MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS"],
@@ -181,8 +181,8 @@ def get_param_distribution(
     if hyper_search_type == "random":
         zero_to_one = uniform(loc=0, scale=1)
         half_to_one = uniform(loc=0.5, scale=0.5)
-        #  nr_queries_per_iteration = scipy.stats.randint(1, 151)
-        NR_QUERIES_PER_ITERATION = [10]
+        #  BATCH_SIZE = scipy.stats.randint(1, 151)
+        BATCH_SIZE = [10]
         #  START_SET_SIZE = scipy.stats.uniform(loc=0.001, scale=0.1)
         #  START_SET_SIZE = [1, 10, 25, 50, 100]
         START_SET_SIZE = [1]
@@ -191,9 +191,7 @@ def get_param_distribution(
         #  param_size = 2
         zero_to_one = np.linspace(0, 1, num=param_size * 2 + 1).astype(float)
         half_to_one = np.linspace(0.5, 1, num=param_size + 1).astype(float)
-        NR_QUERIES_PER_ITERATION = [
-            10
-        ]  # np.linspace(1, 150, num=param_size + 1).astype(int)
+        BATCH_SIZE = [10]  # np.linspace(1, 150, num=param_size + 1).astype(int)
         #  START_SET_SIZE = np.linspace(0.001, 0.1, num=10).astype(float)
         START_SET_SIZE = [1]
 
@@ -219,7 +217,7 @@ def get_param_distribution(
         ],
         "NR_LEARNING_ITERATIONS": [NR_LEARNING_ITERATIONS],
         #  "NR_LEARNING_ITERATIONS": [1],
-        "NR_QUERIES_PER_ITERATION": NR_QUERIES_PER_ITERATION,
+        "BATCH_SIZE": BATCH_SIZE,
         "START_SET_SIZE": START_SET_SIZE,
         "STOPPING_CRITERIA_UNCERTAINTY": [1],  # zero_to_one,
         "STOPPING_CRITERIA_STD": [1],  # zero_to_one,
