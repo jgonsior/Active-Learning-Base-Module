@@ -1,14 +1,15 @@
 import abc
 import os
-from typing import Any, List, Sequence
+from typing import Any
 
 import numpy as np
 from sklearn.naive_bayes import BernoulliNB
 
 from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask
 from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import \
-    BaseSamplingStrategy
+from active_learning.sampling_strategies.BaseSamplingStrategy import (
+    BaseSamplingStrategy,
+)
 from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152

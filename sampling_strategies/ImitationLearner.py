@@ -1,6 +1,4 @@
-import abc
 import copy
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -12,9 +10,12 @@ from active_learning.learner.standard import Learner
 from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
 
 from .BatchStateEncoding import BatchStateSampling
-from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
-                                            InputState, OutputState,
-                                            PreSampledIndices)
+from .ImitationLearningBaseSampling import (
+    ImitationLearningBaseSampling,
+    InputState,
+    OutputState,
+    PreSampledIndices,
+)
 from .SingleStateEncoding import SingleStateEncoding
 
 

@@ -1,7 +1,4 @@
-import abc
-import copy
-from math import trunc
-from typing import Any, List
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -13,8 +10,11 @@ from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
 from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
 
-from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
-                                            InputState, PreSampledIndices)
+from .ImitationLearningBaseSampling import (
+    ImitationLearningBaseSampling,
+    InputState,
+    PreSampledIndices,
+)
 
 
 class SingleStateEncoding(ImitationLearningBaseSampling):

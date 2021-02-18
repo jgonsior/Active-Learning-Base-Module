@@ -1,7 +1,6 @@
-import copy
 import math
 import random
-from typing import Any, List
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -9,10 +8,11 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import pairwise_distances
 
 from active_learning.dataStorage import IndiceMask, LabelList
-from active_learning.sampling_strategies.ImitationLearner import \
-    ImitationLearner
+from active_learning.sampling_strategies.ImitationLearner import ImitationLearner
 from active_learning.sampling_strategies.ImitationLearningBaseSampling import (
-    InputState, PreSampledIndices)
+    InputState,
+    PreSampledIndices,
+)
 
 from .ImitationLearner import ImitationLearningBaseSampling
 

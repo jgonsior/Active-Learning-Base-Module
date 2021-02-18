@@ -2,8 +2,9 @@ import numpy as np
 
 from active_learning.dataStorage import DataStorage, IndiceMask
 from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import \
-    BaseSamplingStrategy
+from active_learning.sampling_strategies.BaseSamplingStrategy import (
+    BaseSamplingStrategy,
+)
 
 
 class RandomSampler(BaseSamplingStrategy):
