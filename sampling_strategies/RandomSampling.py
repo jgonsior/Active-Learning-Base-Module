@@ -8,10 +8,10 @@ from active_learning.sampling_strategies.BaseSamplingStrategy import \
 
 class RandomSampler(BaseSamplingStrategy):
     def what_to_label_next(
-        self, NR_QUERIES_PER_ITERATION: int, _, data_storage: DataStorage
+        self, BATCH_SIZE: int, _, data_storage: DataStorage
     ) -> IndiceMask:
         return np.random.choice(
             data_storage.unlabeled_mask,
-            size=NR_QUERIES_PER_ITERATION,
+            size=BATCH_SIZE,
             replace=False,
         )

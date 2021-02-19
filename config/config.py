@@ -16,7 +16,6 @@ def standard_config(
     standard_args: bool = True,
     return_argparse: bool = False,
 ) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
-    print("uiuiui")
     parser = argparse.ArgumentParser()
     if standard_args:
         parser.add_argument("--DATASETS_PATH", default="../datasets/")
@@ -37,8 +36,7 @@ def standard_config(
             parser.add_argument(*additional_parameter[0], **additional_parameter[1])
 
     config: argparse.Namespace = parser.parse_args()
-    print("ui")
-    print(config)
+    
     if len(sys.argv[:-1]) == 0:
         parser.print_help()
         parser.exit()
@@ -68,7 +66,7 @@ def get_active_config(
             (
                 ["--DATASET_NAME"],
                 {
-                    "required": True,
+                    "default": 'synthetic'
                 },
             ),
             (

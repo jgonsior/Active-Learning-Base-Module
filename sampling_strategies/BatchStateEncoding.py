@@ -110,7 +110,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
                 index_batches.append(
                     np.random.choice(
                         self.data_storage.unlabeled_mask,
-                        size=self.NR_QUERIES_PER_ITERATION,
+                        size=self.BATCH_SIZE,
                         replace=False,
                     )
                 )
@@ -123,7 +123,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
-                    size=self.NR_QUERIES_PER_ITERATION,
+                    size=self.BATCH_SIZE,
                     replace=False,
                 )
                 for _ in range(0, self.PRE_SAMPLING_ARG)
@@ -155,7 +155,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
             possible_batches = [
                 np.random.choice(
                     self.data_storage.unlabeled_mask,
-                    size=self.NR_QUERIES_PER_ITERATION,
+                    size=self.BATCH_SIZE,
                     replace=False,
                 )
                 for _ in range(0, self.PRE_SAMPLING_ARG)
@@ -269,7 +269,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
                 for p in partitions(n - i, i):
                     yield (i,) + p
 
-        BATCH_SIZE = self.NR_QUERIES_PER_ITERATION
+        BATCH_SIZE = self.BATCH_SIZE
         N_CLASSES = len(self.data_storage.label_encoder.classes_)  # type: ignore
 
         if N_CLASSES >= BATCH_SIZE:
@@ -302,8 +302,8 @@ class BatchStateSampling(ImitationLearningBaseSampling):
         if self.STATE_UNCERTAINTIES:
             # normalize by batch size
             state_list += [
-                (self.NR_QUERIES_PER_ITERATION + self._calculate_uncertainty_metric(a))
-                / self.NR_QUERIES_PER_ITERATION
+                (self.BATCH_SIZE + self._calculate_uncertainty_metric(a))
+                / self.BATCH_SIZE
                 for a in pre_sampled_X_queries_indices
             ]
 
@@ -313,10 +313,10 @@ class BatchStateSampling(ImitationLearningBaseSampling):
                 normalization_denominator = (
                     2
                     * math.sqrt(self.data_storage.X.shape[1])
-                    * self.NR_QUERIES_PER_ITERATION
+                    * self.BATCH_SIZE
                 )
             elif self.DISTANCE_METRIC == "cosine":
-                normalization_denominator = self.NR_QUERIES_PER_ITERATION
+                normalization_denominator = self.BATCH_SIZE
             else:
                 print("The defined distance metric is not implemented, exiting…")
                 exit(-1)
@@ -329,10 +329,10 @@ class BatchStateSampling(ImitationLearningBaseSampling):
                 normalization_denominator = (
                     2
                     * math.sqrt(self.data_storage.X.shape[1])
-                    * self.NR_QUERIES_PER_ITERATION
+                    * self.BATCH_SIZE
                 )
             elif self.DISTANCE_METRIC == "cosine":
-                normalization_denominator = self.NR_QUERIES_PER_ITERATION
+                normalization_denominator = self.BATCH_SIZE
             else:
                 print("The defined distance metric is not implemented, exiting…")
                 exit(-1)

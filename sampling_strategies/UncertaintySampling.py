@@ -12,7 +12,7 @@ class UncertaintySampler(BaseSamplingStrategy):
         self.strategy = strategy
 
     def what_to_label_next(
-        self, NR_QUERIES_PER_ITERATION: int, learner: Learner, data_storage: DataStorage
+        self, BATCH_SIZE: int, learner: Learner, data_storage: DataStorage
     ) -> IndiceMask:
         Y_temp_proba = learner.predict_proba(
             data_storage.X[data_storage.unlabeled_mask]
@@ -31,4 +31,4 @@ class UncertaintySampler(BaseSamplingStrategy):
         query_indices = data_storage.unlabeled_mask[argsort]
 
         # return smallest probabilities
-        return query_indices[:NR_QUERIES_PER_ITERATION]
+        return query_indices[:BATCH_SIZE]

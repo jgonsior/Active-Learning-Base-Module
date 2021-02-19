@@ -11,6 +11,6 @@ class BaseSamplingStrategy:
 
     @abc.abstractmethod
     def what_to_label_next(
-        self, NR_QUERIES_PER_ITERATION: int, learner: Learner, data_storage: DataStorage
+        self, BATCH_SIZE: int, learner: Learner, data_storage: DataStorage
     ) -> IndiceMask:
         pass

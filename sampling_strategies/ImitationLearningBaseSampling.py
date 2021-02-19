@@ -46,7 +46,7 @@ class ImitationLearningBaseSampling(BaseSamplingStrategy):
     ) -> IndiceMask:
         self.data_storage: DataStorage = data_storage
         self.learner: Learner = learner
-        self.NR_QUERIES_PER_ITERATION: int = BATCH_SIZE
+        self.BATCH_SIZE: int = BATCH_SIZE
 
         pre_sampled_X_querie_indices: PreSampledIndices = (
             self.pre_sample_potential_X_queries()
