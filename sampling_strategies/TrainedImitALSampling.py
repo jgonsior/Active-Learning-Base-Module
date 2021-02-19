@@ -6,11 +6,8 @@ import numpy as np
 from active_learning.dataStorage import IndiceMask
 
 from .BatchStateEncoding import BatchStateSampling
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
-    InputState,
-    OutputState,
-)
+from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
+                                            InputState, OutputState)
 from .SingleStateEncoding import SingleStateEncoding
 
 

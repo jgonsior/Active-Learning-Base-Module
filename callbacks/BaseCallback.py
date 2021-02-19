@@ -1,7 +1,5 @@
-from typing import Any, List
 import abc
-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, List
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner

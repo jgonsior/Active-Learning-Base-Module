@@ -1,8 +1,10 @@
 from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
+
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner
+
 from .BaseOracle import BaseOracle
 
 

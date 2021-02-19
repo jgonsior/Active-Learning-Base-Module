@@ -1,3 +1,5 @@
+from active_learning.sampling_strategies.BatchStateEncoding import TrainImitALBatch
+from active_learning.sampling_strategies.TrainedImitALSampling import TrainedImitALBatchSampling
 import csv
 import datetime
 import hashlib
@@ -8,23 +10,24 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from json_tricks import dumps
-from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
+from sklearn.metrics import (accuracy_score, auc, f1_score, precision_score,
+                             recall_score)
 
 from active_learning import callbacks
 from active_learning.activeLearner import ActiveLearner
-from active_learning.callbacks import MetricCallback, test_acc_metric, test_f1_metric
+from active_learning.callbacks import (MetricCallback, test_acc_metric,
+                                       test_f1_metric)
 from active_learning.config.config import get_param_distribution
-from active_learning.datasets import load_alc, load_dwtc, load_synthetic, load_uci
+from active_learning.datasets import (load_alc, load_dwtc, load_synthetic,
+                                      load_uci)
 from active_learning.dataStorage import DataStorage
 from active_learning.learner import Learner, get_classifier
 from active_learning.oracles import BaseOracle
-from active_learning.sampling_strategies import (
-    BaseSamplingStrategy,
-    RandomSampler,
-    TrainImitALBatch,
-    TrainImitALSingle,
-    UncertaintySampler,
-)
+from active_learning.sampling_strategies import (BaseSamplingStrategy,
+                                                 RandomSampler,
+                                                 
+                                                 TrainImitALSingle,
+                                                 UncertaintySampler)
 from active_learning.stopping_criterias import ALCyclesStoppingCriteria
 
 from .dataStorage import DataStorage

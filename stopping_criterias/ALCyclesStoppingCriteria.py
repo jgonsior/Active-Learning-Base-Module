@@ -1,4 +1,3 @@
-from ..activeLearner import ActiveLearner
 from .BaseStoppingCriteria import BaseStoppingCriteria
 
 

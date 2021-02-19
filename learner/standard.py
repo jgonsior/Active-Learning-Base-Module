@@ -2,14 +2,14 @@ import warnings
 from typing import Any, Dict, Union
 
 import numpy as np
-
 #  import np.random.distributions as dists
 import numpy.random
 import scipy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             roc_auc_score)
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC

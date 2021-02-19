@@ -1,10 +1,11 @@
 import itertools
-from typing import Callable, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Callable, Tuple
 
 import numpy as np
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner
+
 from .BaseOracle import BaseOracle
 
 

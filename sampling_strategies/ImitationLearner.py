@@ -3,21 +3,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner
-from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
-from active_learning.learner.standard import Learner
-from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
+    from .BatchStateEncoding import BatchStateSampling
 
-from .BatchStateEncoding import BatchStateSampling
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
-    InputState,
-    OutputState,
-    PreSampledIndices,
-)
+from active_learning.dataStorage import  IndiceMask
+
+from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
+                                            InputState, OutputState,
+                                            PreSampledIndices)
 from .SingleStateEncoding import SingleStateEncoding
 
 
@@ -99,6 +95,3 @@ class ImitationLearner(ImitationLearningBaseSampling):
 class TrainImitALSingle(ImitationLearner, SingleStateEncoding):
     pass
 
-
-class TrainImitALBatch(ImitationLearner, BatchStateSampling):
-    pass

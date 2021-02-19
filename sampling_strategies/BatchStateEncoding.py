@@ -3,18 +3,12 @@ import random
 from typing import List
 
 import numpy as np
-import pandas as pd
-from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import pairwise_distances
 
 from active_learning.dataStorage import IndiceMask, LabelList
-from active_learning.sampling_strategies.ImitationLearner import ImitationLearner
 from active_learning.sampling_strategies.ImitationLearningBaseSampling import (
-    InputState,
-    PreSampledIndices,
-)
-
-from .ImitationLearner import ImitationLearningBaseSampling
+    InputState, PreSampledIndices)
+from .ImitationLearner import ImitationLearner, ImitationLearningBaseSampling
 
 
 class BatchStateSampling(ImitationLearningBaseSampling):
@@ -357,3 +351,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
         if self.STATE_INCLUDE_NR_FEATURES:
             state_list = [self.data_storage.X.shape[1]] + state_list
         return np.array(state_list)
+
+
+class TrainImitALBatch(ImitationLearner, BatchStateSampling):
+    pass

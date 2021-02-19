@@ -1,20 +1,10 @@
 from typing import List
 
 import numpy as np
-import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics.pairwise import pairwise_distances
 
-from active_learning.activeLearner import ActiveLearner
-from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
-from active_learning.learner.standard import Learner
-from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
-
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
-    InputState,
-    PreSampledIndices,
-)
+from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
+                                            InputState, PreSampledIndices)
 
 
 class SingleStateEncoding(ImitationLearningBaseSampling):
@@ -54,7 +44,7 @@ class SingleStateEncoding(ImitationLearningBaseSampling):
         if self.PRE_SAMPLING_METHOD == "random":
             X_query_index: PreSampledIndices = np.random.choice(
                 self.data_storage.unlabeled_mask,
-                size=AMOUNT_OF_PEAKED_OBJECTS,
+                size=self.AMOUNT_OF_PEAKED_OBJECTS,
                 replace=False,
             )
         elif self.PRE_SAMPLING_METHOD == "furthest":
@@ -63,7 +53,7 @@ class SingleStateEncoding(ImitationLearningBaseSampling):
             for _ in range(0, self.PRE_SAMPLING_ARG):
                 random_index: PreSampledIndices = np.random.choice(
                     self.data_storage.unlabeled_mask,
-                    size=AMOUNT_OF_PEAKED_OBJECTS,
+                    size=self.AMOUNT_OF_PEAKED_OBJECTS,
                     replace=False,
                 )
                 random_sample = self.data_storage.X[random_index]

@@ -1,4 +1,4 @@
-from typing import Callable, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, List
 
 import numpy as np
 import numpy.random
@@ -6,12 +6,14 @@ import scipy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             roc_auc_score)
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner
+
 from .BaseCallback import BaseCallback
 
 

@@ -1,6 +1,8 @@
 import abc
+from typing import TYPE_CHECKING
 
-from ..activeLearner import ActiveLearner
+if TYPE_CHECKING:
+    from ..activeLearner import ActiveLearner
 
 
 class BaseStoppingCriteria:
@@ -12,5 +14,5 @@ class BaseStoppingCriteria:
         pass
 
     @abc.abstractmethod
-    def update(self, active_learner: ActiveLearner) -> None:
+    def update(self, active_learner: 'ActiveLearner') -> None:
         pass

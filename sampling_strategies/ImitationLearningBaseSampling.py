@@ -3,21 +3,18 @@ import os
 from typing import Any
 
 import numpy as np
-from sklearn.naive_bayes import BernoulliNB
 
-from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask
+from active_learning.dataStorage import DataStorage, IndiceMask
 from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import (
-    BaseSamplingStrategy,
-)
-from train_lstm import AMOUNT_OF_PEAKED_OBJECTS
+from active_learning.sampling_strategies.BaseSamplingStrategy import \
+    BaseSamplingStrategy
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-InputState = np.ndarray[np.float64]
-OutputState = np.ndarray[np.float64]
+InputState = np.ndarray
+OutputState = np.ndarray
 PreSampledIndices = (
     np.ndarray
 )  # these are lists of indices, for batch batches, and for single just one-element lists
