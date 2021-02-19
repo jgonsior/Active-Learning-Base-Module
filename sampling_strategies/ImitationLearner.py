@@ -1,10 +1,12 @@
 import copy
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score
 
-from active_learning.activeLearner import ActiveLearner
+if TYPE_CHECKING:
+    from active_learning.activeLearner import ActiveLearner
 from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
 from train_lstm import AMOUNT_OF_PEAKED_OBJECTS

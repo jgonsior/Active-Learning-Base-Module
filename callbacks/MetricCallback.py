@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, TYPE_CHECKING
 
 import numpy as np
 import numpy.random
@@ -10,22 +10,23 @@ from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, roc_auc_
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
-from ..activeLearner import ActiveLearner
+if TYPE_CHECKING:
+    from ..activeLearner import ActiveLearner
 from .BaseCallback import BaseCallback
 
 
 class MetricCallback(BaseCallback):
-    def __init__(self, metric_function: Callable[[ActiveLearner], List[float]]) -> None:
+    def __init__(self, metric_function: Callable[['ActiveLearner'], List[float]]) -> None:
         self.metric_function = metric_function
 
-    def pre_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:
+    def pre_learning_cycle_hook(self, active_learner: 'ActiveLearner') -> None:
         pass
 
-    def post_learning_cycle_hook(self, active_learner: ActiveLearner) -> None:
+    def post_learning_cycle_hook(self, active_learner: 'ActiveLearner') -> None:
         self.values.append(self.metric_function(active_learner))
 
 
-def test_f1_metric(active_learner: ActiveLearner) -> List[float]:
+def test_f1_metric(active_learner: 'ActiveLearner') -> List[float]:
     Y_true = active_learner.data_storage.Y[active_learner.data_storage.test_mask]
     Y_pred = active_learner.learner.predict(
         active_learner.data_storage.X[active_learner.data_storage.test_mask]
@@ -34,7 +35,7 @@ def test_f1_metric(active_learner: ActiveLearner) -> List[float]:
     return f1_score(Y_true, Y_pred, average="weighted", zero_division=0)  # type: ignore
 
 
-def test_acc_metric(active_learner: ActiveLearner) -> List[float]:
+def test_acc_metric(active_learner: 'ActiveLearner') -> List[float]:
     Y_true = active_learner.data_storage.Y[active_learner.data_storage.test_mask]
     Y_pred = active_learner.learner.predict(
         active_learner.data_storage.X[active_learner.data_storage.test_mask]
