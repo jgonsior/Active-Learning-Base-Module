@@ -1,3 +1,4 @@
+from active_learning.logger.logger import log_it
 import random
 from typing import Any, Dict, Tuple
 
@@ -16,6 +17,7 @@ def load_synthetic(
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     no_valid_synthetic_arguments_found = True
     while no_valid_synthetic_arguments_found:
+        log_it("Start finding synthetic dataset")
         if not NEW_SYNTHETIC_PARAMS:
             if VARIABLE_DATASET:
                 N_SAMPLES = random.randint(100, 5000)
@@ -113,9 +115,13 @@ def load_synthetic(
         "scale": SCALE,  # type: ignore
         "random_state": RANDOM_SEED,
     }
-    synthetic_creation_args
 
+    log_it(
+        "Dataset creating arguments found using variables: "
+        + str(synthetic_creation_args)
+    )
     X, Y = make_classification(**synthetic_creation_args)  # type: ignore
+    log_it("Dataset creation done")
     df = pd.DataFrame(X)
     df["label"] = Y
     return df, synthetic_creation_args

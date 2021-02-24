@@ -23,7 +23,7 @@ class LabeleingFunctionsOracle(BaseOracle):
         self.cost = cost
 
     def has_new_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> bool:
         self.potentially_labeled_query_indices, self.Y_lf = self.labeling_function(
             active_learner.data_storage.X[active_learner.data_storage.unlabeled_mask]
@@ -34,6 +34,6 @@ class LabeleingFunctionsOracle(BaseOracle):
             return True
 
     def get_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> Tuple[np.ndarray, np.ndarray]:
         return self.potentially_labeled_query_indices, self.Y_lf

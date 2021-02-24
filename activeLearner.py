@@ -63,6 +63,7 @@ class ActiveLearner:
     def al_cycle(
         self,
     ) -> None:
+        log_it("Started AL Cycle")
         while not self.stopping_criteria.stop_is_reached():
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
             if len(self.data_storage.unlabeled_mask) < self.BATCH_SIZE:
@@ -70,8 +71,6 @@ class ActiveLearner:
             if self.BATCH_SIZE == 0:
                 # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
-
-            Y_query: LabelList = np.empty(0, dtype=np.int64)
 
             query_indices = self.sampling_strategy.what_to_label_next(
                 self.BATCH_SIZE, self.learner, self.data_storage
@@ -85,6 +84,7 @@ class ActiveLearner:
             # or does my NN also specifies which oracle to ask?!?!
             for oracle in self.oracles:
                 # decide somehow which oracle to ask
+
                 if oracle.has_new_labels(query_indices, self):
                     (
                         self.current_query_indices,
@@ -99,11 +99,12 @@ class ActiveLearner:
                 )
                 exit(-1)
 
+            # even though oracle, query_indices and Y_query are local variables for this cycle we store them as object variables to let f.e. callbacks/metric access them
             self.data_storage.label_samples(
-                query_indices,
-                Y_query,
+                self.current_query_indices,
+                self.current_Y_query,
                 self.current_oracle.get_oracle_identifier(),
-                oracle.cost,
+                self.current_oracle.cost,
             )
 
             for callback in self.callbacks.values():

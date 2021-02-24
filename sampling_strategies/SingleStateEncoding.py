@@ -3,8 +3,11 @@ from typing import List
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
-from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
-                                            InputState, PreSampledIndices)
+from .ImitationLearningBaseSampling import (
+    ImitationLearningBaseSampling,
+    InputState,
+    PreSampledIndices,
+)
 
 
 class SingleStateEncoding(ImitationLearningBaseSampling):

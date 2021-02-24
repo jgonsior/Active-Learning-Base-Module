@@ -19,7 +19,7 @@ class WeakCert(BaseOracle):
         self.CERTAINTY_RATIO = CERTAINTY_RATIO
 
     def has_new_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> bool:
         # calculate certainties for all of X_train_unlabeled
         self.certainties = active_learner.learner.predict_proba(
@@ -39,7 +39,7 @@ class WeakCert(BaseOracle):
             return False
 
     def get_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> Tuple[np.ndarray, np.ndarray]:
         # for safety reasons I refrain from explaining the following
         certain_indices: np.ndarray = np.array(

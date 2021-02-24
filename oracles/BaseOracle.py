@@ -20,13 +20,13 @@ class BaseOracle:
 
     @abc.abstractmethod
     def has_new_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> bool:
         pass
 
     @abc.abstractmethod
     def get_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> Tuple[np.ndarray, np.ndarray]:
         pass
 

@@ -13,7 +13,7 @@ class LabeledStartSetOracle(BaseOracle):
     cost = 0
 
     def has_new_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> bool:
         if active_learner.stopping_criteria.stop_is_reached():
             return False
@@ -21,7 +21,7 @@ class LabeledStartSetOracle(BaseOracle):
             return True
 
     def get_labels(
-        self, query_indices: np.ndarray, active_learner: 'ActiveLearner'
+        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
     ) -> Tuple[np.ndarray, np.ndarray]:
         return query_indices, active_learner.data_storage.get_experiment_labels(
             query_indices

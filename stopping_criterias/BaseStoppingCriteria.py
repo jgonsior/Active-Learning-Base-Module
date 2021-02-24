@@ -14,5 +14,5 @@ class BaseStoppingCriteria:
         pass
 
     @abc.abstractmethod
-    def update(self, active_learner: 'ActiveLearner') -> None:
+    def update(self, active_learner: "ActiveLearner") -> None:
         pass

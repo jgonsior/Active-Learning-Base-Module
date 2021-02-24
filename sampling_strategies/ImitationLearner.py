@@ -9,20 +9,22 @@ if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner
     from .BatchStateEncoding import BatchStateSampling
 
-from active_learning.dataStorage import  IndiceMask
+from active_learning.dataStorage import IndiceMask
 
-from .ImitationLearningBaseSampling import (ImitationLearningBaseSampling,
-                                            InputState, OutputState,
-                                            PreSampledIndices)
+from .ImitationLearningBaseSampling import (
+    ImitationLearningBaseSampling,
+    InputState,
+    OutputState,
+    PreSampledIndices,
+)
 from .SingleStateEncoding import SingleStateEncoding
 
 
 class ImitationLearner(ImitationLearningBaseSampling):
     AMOUNT_OF_PEAKED_OBJECTS: int
 
-    def __init__(self, AMOUNT_OF_PEAKED_OBJECTS: int, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.AMOUNT_OF_PEAKED_OBJECTS = AMOUNT_OF_PEAKED_OBJECTS
         self.states: pd.DataFrame = pd.DataFrame(
             data=None,
         )
@@ -94,4 +96,3 @@ class ImitationLearner(ImitationLearningBaseSampling):
 
 class TrainImitALSingle(ImitationLearner, SingleStateEncoding):
     pass
-

@@ -7,7 +7,9 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 from active_learning.dataStorage import IndiceMask, LabelList
 from active_learning.sampling_strategies.ImitationLearningBaseSampling import (
-    InputState, PreSampledIndices)
+    InputState,
+    PreSampledIndices,
+)
 from .ImitationLearner import ImitationLearner, ImitationLearningBaseSampling
 
 
@@ -311,9 +313,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
             # normalize based on the assumption, that the whole vector space got first normalized to -1 to +1, then we can calculate the maximum possible distance like this:
             if self.DISTANCE_METRIC == "euclidean":
                 normalization_denominator = (
-                    2
-                    * math.sqrt(self.data_storage.X.shape[1])
-                    * self.BATCH_SIZE
+                    2 * math.sqrt(self.data_storage.X.shape[1]) * self.BATCH_SIZE
                 )
             elif self.DISTANCE_METRIC == "cosine":
                 normalization_denominator = self.BATCH_SIZE
@@ -327,9 +327,7 @@ class BatchStateSampling(ImitationLearningBaseSampling):
         if self.STATE_DISTANCES_LAB:
             if self.DISTANCE_METRIC == "euclidean":
                 normalization_denominator = (
-                    2
-                    * math.sqrt(self.data_storage.X.shape[1])
-                    * self.BATCH_SIZE
+                    2 * math.sqrt(self.data_storage.X.shape[1]) * self.BATCH_SIZE
                 )
             elif self.DISTANCE_METRIC == "cosine":
                 normalization_denominator = self.BATCH_SIZE

@@ -15,5 +15,5 @@ class CostLimitStoppingCriteria(BaseStoppingCriteria):
         else:
             return False
 
-    def update(self, active_learner: 'ActiveLearner') -> None:
+    def update(self, active_learner: "ActiveLearner") -> None:
         self.costs_spend += active_learner.data_storage.costs_spend[-1]

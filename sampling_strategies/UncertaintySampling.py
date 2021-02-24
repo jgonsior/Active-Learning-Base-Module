@@ -3,8 +3,10 @@ from scipy.stats import entropy
 
 from active_learning.dataStorage import DataStorage, IndiceMask
 from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import \
-    BaseSamplingStrategy
+from active_learning.sampling_strategies.BaseSamplingStrategy import (
+    BaseSamplingStrategy,
+)
+
 
 class UncertaintySampler(BaseSamplingStrategy):
     def __init__(self, strategy: str, *args, **kwargs):

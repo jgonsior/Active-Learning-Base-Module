@@ -1,5 +1,8 @@
+from active_learning.callbacks.BaseCallback import BaseCallback
 from active_learning.sampling_strategies.BatchStateEncoding import TrainImitALBatch
-from active_learning.sampling_strategies.TrainedImitALSampling import TrainedImitALBatchSampling
+from active_learning.sampling_strategies.TrainedImitALSampling import (
+    TrainedImitALBatchSampling,
+)
 import csv
 import datetime
 import hashlib
@@ -10,24 +13,21 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from json_tricks import dumps
-from sklearn.metrics import (accuracy_score, auc, f1_score, precision_score,
-                             recall_score)
+from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
 
 from active_learning import callbacks
 from active_learning.activeLearner import ActiveLearner
-from active_learning.callbacks import (MetricCallback, test_acc_metric,
-                                       test_f1_metric)
-from active_learning.config.config import get_param_distribution
-from active_learning.datasets import (load_alc, load_dwtc, load_synthetic,
-                                      load_uci)
+from active_learning.callbacks import MetricCallback, test_acc_metric, test_f1_metric
+from active_learning.datasets import load_alc, load_dwtc, load_synthetic, load_uci
 from active_learning.dataStorage import DataStorage
 from active_learning.learner import Learner, get_classifier
 from active_learning.oracles import BaseOracle
-from active_learning.sampling_strategies import (BaseSamplingStrategy,
-                                                 RandomSampler,
-                                                 
-                                                 TrainImitALSingle,
-                                                 UncertaintySampler)
+from active_learning.sampling_strategies import (
+    BaseSamplingStrategy,
+    RandomSampler,
+    TrainImitALSingle,
+    UncertaintySampler,
+)
 from active_learning.stopping_criterias import ALCyclesStoppingCriteria
 
 from .dataStorage import DataStorage
@@ -37,7 +37,7 @@ def train_al(
     hyper_parameters: Dict[str, Any],
     oracles: List[BaseOracle],
     data_storage: DataStorage = None,
-) -> Tuple[Learner, float, Dict[str, MetricCallback], DataStorage, ActiveLearner]:
+) -> Tuple[Learner, float, Dict[str, BaseCallback], DataStorage, ActiveLearner]:
 
     if data_storage is None:
         if hyper_parameters["DATASET_NAME"] == "alc":
@@ -68,7 +68,7 @@ def train_al(
             data_storage = DataStorage(
                 df, TEST_FRACTION=hyper_parameters["TEST_FRACTION"]
             )
-            hyper_parameters["sythetic_creation_args"] = synthetic_creation_args
+            hyper_parameters["synthetic_creation_args"] = synthetic_creation_args
         elif hyper_parameters["DATASET_NAME"] == "uci":
             df = load_uci(
                 hyper_parameters["DATASETS_PATH"],
@@ -104,7 +104,7 @@ def train_al(
         print("No Active Learning Strategy specified, exiting")
         exit(-1)
 
-    callbacks = {
+    callbacks: Dict[str, BaseCallback] = {
         "acc_test": MetricCallback(test_acc_metric),
         "f1_test": MetricCallback(test_f1_metric),
     }
@@ -134,25 +134,9 @@ def train_al(
 def eval_al(
     data_storage: DataStorage,
     fit_time: float,
-    callbacks: Dict[str, MetricCallback],
+    callbacks: Dict[str, BaseCallback],
     hyper_parameters: Dict[str, Any],
 ):
-
-    # normalize by start_set_size
-    percentage_user_asked_queries = (
-        1
-        - hyper_parameters["amount_of_user_asked_queries"]
-        / hyper_parameters["LEN_TRAIN_DATA"]
-    )
-    test_acc = callbacks["acc_test"].values[-1]
-
-    # score is harmonic mean
-    score = (
-        2
-        * percentage_user_asked_queries
-        * test_acc
-        / (percentage_user_asked_queries + test_acc)
-    )
 
     amount_of_all_labels = len(data_storage.labeled_mask)
 
@@ -203,14 +187,6 @@ def eval_al(
         / (len(callbacks["f1_test"].values) - 1)
     )
 
-    # calculate based on params a unique id which should be the same across all similar cross validation splits
-    param_distribution = get_param_distribution(**hyper_parameters)
-    unique_params = ""
-    for k in param_distribution.keys():
-        unique_params += str(hyper_parameters[k])
-    param_list_id = hashlib.md5(unique_params.encode("utf-8")).hexdigest()
-    #  db = get_db(db_name_or_type=hyper_parameters["DB_NAME_OR_TYPE"])
-
     #  hyper_parameters["DATASET_NAME"] = DATASET_NAME
     #  print(hyper_parameters.keys())
     hyper_parameters["cores"] = hyper_parameters["N_JOBS"]
@@ -227,8 +203,6 @@ def eval_al(
     hyper_parameters["recall_test_oracle"] = recall_test_oracle
     hyper_parameters["acc_auc"] = acc_auc
     hyper_parameters["f1_auc"] = f1_auc
-    hyper_parameters["fit_score"] = score
-    hyper_parameters["param_list_id"] = param_list_id
     hyper_parameters["thread_id"] = threading.get_ident()
     hyper_parameters["end_time"] = datetime.datetime.now()
     hyper_parameters["amount_of_all_labels"] = amount_of_all_labels
@@ -236,7 +210,7 @@ def eval_al(
     if hyper_parameters["dataset_name"] == "synthetic":
         hyper_parameters = {
             **hyper_parameters,
-            **hyper_parameters["sythetic_creation_args"],
+            **hyper_parameters["synthetic_creation_args"],
         }
 
     # save hyper parameter results in csv file
@@ -257,7 +231,7 @@ def eval_al(
         csv_writer = csv.DictWriter(f, fieldnames=hyper_parameters.keys())
         csv_writer.writerow(hyper_parameters)
 
-    return score
+    return f1_auc
 
 
 """
