@@ -11,6 +11,16 @@ from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
+    sampling_strategy: BaseSamplingStrategy
+    data_storage: DataStorage
+    oracles: List[BaseOracle]
+    callbacks: Dict[str, BaseCallback]
+    stopping_criteria: BaseStoppingCriteria
+    BATCH_SIZE: int
+    current_query_indices: IndiceMask
+    current_Y_query: LabelList
+    current_oracle: Union[BaseOracle, None]
+
     def __init__(
         self,
         sampling_strategy: BaseSamplingStrategy,
@@ -22,22 +32,20 @@ class ActiveLearner:
         BATCH_SIZE: int,
     ) -> None:
 
-        self.sampling_strategy: BaseSamplingStrategy = sampling_strategy
-        self.data_storage: DataStorage = data_storage
-        self.learner: Learner = learner
-        self.oracles: List[BaseOracle] = oracles
-        self.callbacks: Dict[str, BaseCallback] = callbacks
-        self.stopping_criteria: BaseStoppingCriteria = stopping_criteria
-        self.BATCH_SIZE: int = BATCH_SIZE
+        self.sampling_strategy = sampling_strategy
+        self.data_storage = data_storage
+        self.learner = learner
+        self.oracles = oracles
+        self.callbacks = callbacks
+        self.stopping_criteria = stopping_criteria
+        self.BATCH_SIZE = BATCH_SIZE
 
         # fake iteration zero
-        self.current_query_indices: IndiceMask = self.data_storage.labeled_mask
+        self.current_query_indices = self.data_storage.labeled_mask
 
-        self.current_Y_query: LabelList = self.data_storage.Y[
-            self.data_storage.labeled_mask
-        ]
+        self.current_Y_query = self.data_storage.Y[self.data_storage.labeled_mask]
 
-        self.current_oracle: BaseOracle = LabeledStartSetOracle()
+        self.current_oracle = LabeledStartSetOracle()
 
         for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
