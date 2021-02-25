@@ -1,7 +1,5 @@
 from typing import Dict, List, Union
 
-import numpy as np
-
 from .callbacks.BaseCallback import BaseCallback
 from .dataStorage import DataStorage, IndiceMask, LabelList
 from .learner.standard import Learner

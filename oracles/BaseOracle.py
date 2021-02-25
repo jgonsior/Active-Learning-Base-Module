@@ -1,4 +1,5 @@
 import abc
+from active_learning.dataStorage import IndiceMask, LabelList
 from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
@@ -20,14 +21,14 @@ class BaseOracle:
 
     @abc.abstractmethod
     def has_new_labels(
-        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
+        self, query_indices: IndiceMask, active_learner: "ActiveLearner"
     ) -> bool:
         pass
 
     @abc.abstractmethod
     def get_labels(
-        self, query_indices: np.ndarray, active_learner: "ActiveLearner"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, query_indices: IndiceMask, active_learner: "ActiveLearner"
+    ) -> Tuple[IndiceMask, LabelList]:
         pass
 
     def get_oracle_identifier(self) -> str:
