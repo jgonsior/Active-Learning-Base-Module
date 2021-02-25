@@ -126,6 +126,11 @@ def get_active_config(
                 ["--PRE_SAMPLING_ARG"],
                 {"type": int, "default": 10},
             ),
+            (
+                ["--AMOUNT_OF_SYNTHETIC_LABELLING_FUNCTIONS"],
+                {"type": int, "default": 5},
+            ),
+            (["--DISABLE_FAKE_EXPERIMENT_ORACLE"], {"action": "store_true"}),
             *additional_parameters,
         ]
     )

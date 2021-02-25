@@ -62,6 +62,7 @@ class ActiveLearner:
         self,
     ) -> None:
         log_it("Started AL Cycle")
+        print(self.oracles)
         while not self.stopping_criteria.stop_is_reached():
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
             if len(self.data_storage.unlabeled_mask) < self.BATCH_SIZE:
@@ -74,7 +75,7 @@ class ActiveLearner:
                 self.BATCH_SIZE, self.learner, self.data_storage
             )
 
-            oracle: Union[BaseOracle, None] = None
+            self.current_oracle: Union[BaseOracle, None] = None
 
             # @todo what about weak supervision and multiple oracle?
             # should MY net decide, which oracle to trust, or is my oracle still only there to decide, which label to take,
@@ -91,7 +92,7 @@ class ActiveLearner:
                     self.current_oracle = oracle
                     break
 
-            if oracle is None:
+            if self.current_oracle is None:
                 log_it(
                     "No oracle available, exiting, implement logic for that corner case later"
                 )
