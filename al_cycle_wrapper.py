@@ -1,23 +1,22 @@
 from active_learning.callbacks.BaseCallback import BaseCallback
 from active_learning.sampling_strategies.BatchStateEncoding import TrainImitALBatch
-from active_learning.sampling_strategies.TrainedImitALSampling import (
-    TrainedImitALBatchSampling,
-)
+
 import csv
 import datetime
-import hashlib
 import threading
 from pathlib import Path
 from timeit import default_timer as timer
 from typing import Any, Dict, List, Tuple
 
-import numpy as np
-from json_tricks import dumps
 from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
 
-from active_learning import callbacks
 from active_learning.activeLearner import ActiveLearner
-from active_learning.callbacks import MetricCallback, test_acc_metric, test_f1_metric
+from active_learning.callbacks import (
+    MetricCallback,
+    PrintLoggingStatisticsCallback,
+    test_acc_metric,
+    test_f1_metric,
+)
 from active_learning.datasets import load_alc, load_dwtc, load_synthetic, load_uci
 from active_learning.dataStorage import DataStorage
 from active_learning.learner import Learner, get_classifier
@@ -97,9 +96,19 @@ def train_al(
         sampling_strategy = UncertaintySampler("entropy")
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         if hyper_parameters["BATCH_MODE"]:
-            sampling_strategy = TrainImitALBatch(hyper_parameters["NN_BINARY_PATH"])
+            sampling_strategy = TrainImitALBatch(
+                hyper_parameters["NN_BINARY_PATH"],
+                PRE_SAMPLING_METHOD=hyper_parameters["PRE_SAMPLING_METHOD"],
+                PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
+                AMOUNT_OF_PEAKED_OBJECTS=hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"],
+            )
         else:
-            sampling_strategy = TrainImitALSingle(hyper_parameters["NN_BINARY_PATH"])
+            sampling_strategy = TrainImitALSingle(
+                hyper_parameters["NN_BINARY_PATH"],
+                PRE_SAMPLING_METHOD=hyper_parameters["PRE_SAMPLING_METHOD"],
+                PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
+                AMOUNT_OF_PEAKED_OBJECTS=hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"],
+            )
     else:
         print("No Active Learning Strategy specified, exiting")
         exit(-1)
@@ -107,6 +116,7 @@ def train_al(
     callbacks: Dict[str, BaseCallback] = {
         "acc_test": MetricCallback(test_acc_metric),
         "f1_test": MetricCallback(test_f1_metric),
+        "logging": PrintLoggingStatisticsCallback(),
     }
 
     learner = get_classifier(
@@ -120,7 +130,7 @@ def train_al(
         "learner": learner,
         "callbacks": callbacks,
         "stopping_criteria": ALCyclesStoppingCriteria(50),
-        "BATCH_SIZE": hyper_parameters["PATCH_SIZE"],
+        "BATCH_SIZE": hyper_parameters["BATCH_SIZE"],
     }
     active_learner = ActiveLearner(**active_learner_params)
 
@@ -195,7 +205,6 @@ def eval_al(
     # lower case all parameters for nice values in database
     hyper_parameters = {k.lower(): v for k, v in hyper_parameters.items()}
     hyper_parameters["fit_time"] = fit_time
-    hyper_parameters["metrics_per_al_cycle"] = dumps(str(callbacks), allow_nan=True)
     hyper_parameters["acc_test"] = callbacks["acc_test"].values[-1]
     hyper_parameters["acc_test_oracle"] = acc_test_oracle
     hyper_parameters["f1_test_oracle"] = f1_test_oracle
