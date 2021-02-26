@@ -1,14 +1,21 @@
 import abc
+from active_learning.BaseOracle import BaseOracle
 import os
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 
-from active_learning.dataStorage import DataStorage, IndiceMask
+from active_learning.dataStorage import DataStorage, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
 from active_learning.sampling_strategies.BaseSamplingStrategy import (
     BaseSamplingStrategy,
 )
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from active_learning.activeLearner import ActiveLearner
+
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -43,8 +50,8 @@ class ImitationLearningBaseSampling(BaseSamplingStrategy):
         self.DISTANCE_METRIC = DISTANCE_METRIC
 
     def what_to_label_next(
-        self, BATCH_SIZE: int, learner: Learner, data_storage: DataStorage
-    ) -> IndiceMask:
+        self, active_learner: "ActiveLearner"
+    ) -> Tuple[IndiceMask, LabelList, BaseOracle]:
         self.data_storage: DataStorage = data_storage
         self.learner: Learner = learner
         self.BATCH_SIZE: int = BATCH_SIZE

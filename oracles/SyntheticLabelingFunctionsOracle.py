@@ -24,29 +24,19 @@ class SyntheticLabelingFunctionsOracle(LabeleingFunctionsOracle):
         self._compute_labeling_function(X, Y, error_factor=error_factor)
 
     def labeling_function(
-        self,
-        data_storage: DataStorage,
-    ) -> Tuple[IndiceMask, LabelList, LabelConfidence]:
-        X = data_storage.X[data_storage.unlabeled_mask]
+        self, query_indices: IndiceMask, data_storage: DataStorage
+    ) -> Tuple[LabelList, LabelConfidence]:
+        X = data_storage.X[query_indices]
 
         if self.model in ["lr", "knn"]:
             X = X[:, self.restricted_features]  # type: ignore
         Y_pred = self.clf.predict(X)
         Y_probas = self.clf.predict_proba(X)
 
-        # abstain for those queries where we are below our specified confidence score
-        X_query_indices: IndiceMask = np.nonzero(
-            np.max(Y_probas, axis=1) > self.abstain_threshold
-        )[0]
-        Y_pred = Y_pred[X_query_indices]
-        Y_probas = Y_probas[X_query_indices]
+        # return abstain for those samples, for who we are not certain enough
+        Y_pred[Y_pred < self.abstain_threshold] = -1
 
-        # X_query_indices are indices on unlabeled_mask
-        # we have to convert them back to real indices of whole of X
-        X_query_indices = data_storage.unlabeled_mask[X_query_indices]
-
-        # only return those query indices for who we do not abstain
-        return X_query_indices, Y_pred, Y_probas
+        return Y_pred, Y_probas
 
     def _compute_labeling_function(
         self, X: FeatureList, Y: LabelList, error_factor: float

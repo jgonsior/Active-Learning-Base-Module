@@ -17,7 +17,7 @@ class LabeleingFunctionsOracle(BaseOracle):
     def __init__(
         self,
         labeling_function: Callable[
-            [DataStorage], Tuple[IndiceMask, LabelList, LabelConfidence]
+            [IndiceMask, DataStorage], Tuple[LabelList, LabelConfidence]
         ],
         cost: float,
     ):
@@ -30,16 +30,17 @@ class LabeleingFunctionsOracle(BaseOracle):
         self, query_indices: IndiceMask, active_learner: "ActiveLearner"
     ) -> bool:
         (
-            self.X_query_indices_lf,
             self.Y_pred_lf,
             self.Y_probas_lf,
-        ) = self.labeling_function(active_learner.data_storage)
-        if len(self.X_query_indices_lf) > 0:
+        ) = self.labeling_function(query_indices, active_learner.data_storage)
+        if np.count_nonzero(self.Y_pred_lf) > 0:  # type: ignore
             return True
         else:
             return False
 
-    def get_labels(
-        self, query_indices: IndiceMask, active_learner: "ActiveLearner"
-    ) -> Tuple[IndiceMask, LabelList]:
-        return self.X_query_indices_lf, self.Y_pred_lf
+    def get_labels(self, query_indices: IndiceMask, _) -> Tuple[IndiceMask, LabelList]:
+
+        # return only the asked samples
+        Y_pred_non_abstain = self.Y_pred_lf[self.Y_pred_lf != -1]
+        indices = query_indices[self.Y_pred_lf != -1]
+        return np.array(indices), Y_pred_non_abstain

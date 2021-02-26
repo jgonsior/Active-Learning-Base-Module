@@ -31,24 +31,6 @@ class WeakImitAL(TrainImitALSingle):
     STATE_DISTANCES_UNLAB: bool
     STATE_INCLUDE_NR_FEATURES: bool
 
-    """
-        möglicher input:
-        pro sample:
-        - most confident weak labeller prediction
-        - average distance to unlabeld/labeleled/human_labelled points
-
-        output:
-        pro sample:
-        - task annotation by human label
-        - take annotation by weak labeller
-
-        einfacher test: es gibt automatische weak labeller (einfache synthetische annotation functions), mein netz wird darauf trainiert (mit imit learning), nur dann den user zu fragen, wenn die labelling functions falsch liegen?
-        --> ich muss synthetische labelling functions so gestalten, dass sie auch tatsächlich ab und zu falsch sind
-
-        Erroneous labels:
-        easy test: just treat weakly labeled samples as "unlabeled" by the main classifier again!!
-    """
-
     def __init__(
         self,
         STATE_ARGSECOND_PROBAS: bool = False,
@@ -134,62 +116,35 @@ class WeakImitAL(TrainImitALSingle):
         # return np.reshape(X_query_index,(1, len(X_query_index))) # type: ignore
         return X_query_index
 
+    """
+        möglicher input:
+        pre-sampling -> verschiedene methoden ausprobieren(
+            distance among points
+            uncert von weak labellern uneinig
+            hat schon label von weak labellern erhalten, aber zugleich ist vorhersage dafür vom Netz sehr gering (trotz enthalten im trainingsset!!)
+
+        pro sample:
+        - most confident weak labeller prediction
+        - "disagreement score" von weak labellern -> enthält vorheriges vielleicht sogar?
+        - average distance to unlabeld/labeleled/human_labelled points
+
+        output:
+        pro sample:
+        - task annotation by human label
+        - take annotation by weak labeller
+
+        Erroneous labels:
+        easy test: just treat weakly labeled samples as "unlabeled" by the main classifier again!!
+    """
+
     def encode_input_state(
         self, pre_sampled_X_queries_indices: PreSampledIndices
     ) -> InputState:
+        state_list: List[float] = []
+        # per sample:
+
         X_query = self.data_storage.X[pre_sampled_X_queries_indices]
-        possible_samples_probas = self.learner.predict_proba(X_query)
 
-        sorted_probas = -np.sort(-possible_samples_probas, axis=1)  # type: ignore
-        argmax_probas = sorted_probas[:, 0]
-
-        state_list: List[float] = list(argmax_probas.tolist())
-
-        if self.STATE_ARGSECOND_PROBAS:
-            argsecond_probas = sorted_probas[:, 1]
-            state_list += argsecond_probas.tolist()
-        if self.STATE_DIFF_PROBAS:
-            state_list += (argmax_probas - sorted_probas[:, 1]).tolist()
-        if self.STATE_ARGTHIRD_PROBAS:
-            if sorted_probas.shape[1] < 3:
-                state_list += [0 for _ in range(0, len(X_query))]
-            else:
-                state_list += sorted_probas[:, 2].tolist()
-        if self.STATE_PREDICTED_CLASS:
-            state_list += self.learner.predict(X_query).tolist()
-
-        if self.STATE_DISTANCES_LAB:
-            # calculate average distance to labeled and average distance to unlabeled samples
-            average_distance_labeled = (
-                np.sum(
-                    pairwise_distances(
-                        self.data_storage.X[self.data_storage.labeled_mask],
-                        X_query,
-                        metric=self.DISTANCE_METRIC,
-                    ),
-                    axis=0,
-                )
-                / len(self.data_storage.X[self.data_storage.labeled_mask])
-            )
-            state_list += average_distance_labeled.tolist()
-
-        if self.STATE_DISTANCES_UNLAB:
-            # calculate average distance to labeled and average distance to unlabeled samples
-            average_distance_unlabeled = (
-                np.sum(
-                    pairwise_distances(
-                        self.data_storage.X[self.data_storage.unlabeled_mask],
-                        X_query,
-                        metric=self.DISTANCE_METRIC,
-                    ),
-                    axis=0,
-                )
-                / len(self.data_storage.X[self.data_storage.unlabeled_mask])
-            )
-            state_list += average_distance_unlabeled.tolist()
-
-        if self.STATE_INCLUDE_NR_FEATURES:
-            state_list = [float(self.data_storage.X.shape[1])] + state_list
         return np.array(state_list)
 
     def _future_peak(

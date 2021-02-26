@@ -1,8 +1,14 @@
 import abc
+from ..oracles.BaseOracle import BaseOracle
 
-from active_learning.dataStorage import DataStorage, IndiceMask
+from typing import Tuple
 
-from ..learner.standard import Learner
+from active_learning.dataStorage import IndiceMask, LabelList
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from active_learning.activeLearner import ActiveLearner
 
 
 class BaseSamplingStrategy:
@@ -11,6 +17,6 @@ class BaseSamplingStrategy:
 
     @abc.abstractmethod
     def what_to_label_next(
-        self, BATCH_SIZE: int, learner: Learner, data_storage: DataStorage
-    ) -> IndiceMask:
+        self, active_learner: "ActiveLearner"
+    ) -> Tuple[IndiceMask, LabelList, BaseOracle]:
         pass
