@@ -1,17 +1,15 @@
-from active_learning.oracles.LabelingFunctionsOracle import LabeleingFunctionsOracle
+from active_learning.oracles.LabelingFunctionsOracle import (
+    LabelConfidence,
+    LabeleingFunctionsOracle,
+)
 from active_learning.logger.logger import log_it
 import random
-from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
-from typing import Any, List, Sequence, TYPE_CHECKING, Callable, Tuple
+from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask, LabelList
+from typing import Any, List, Tuple
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
-
-if TYPE_CHECKING:
-    from ..activeLearner import ActiveLearner
-
-from .BaseOracle import BaseOracle
 
 
 class SyntheticLabelingFunctionsOracle(LabeleingFunctionsOracle):
@@ -27,15 +25,28 @@ class SyntheticLabelingFunctionsOracle(LabeleingFunctionsOracle):
 
     def labeling_function(
         self,
-        X: FeatureList,
-    ) -> Tuple[LabelList, np.ndarray]:
+        data_storage: DataStorage,
+    ) -> Tuple[IndiceMask, LabelList, LabelConfidence]:
+        X = data_storage.X[data_storage.unlabeled_mask]
+
         if self.model in ["lr", "knn"]:
             X = X[:, self.restricted_features]  # type: ignore
         Y_pred = self.clf.predict(X)
         Y_probas = self.clf.predict_proba(X)
 
-        Y_pred[Y_pred < self.abstain_threshold] = -1
-        return Y_pred, Y_probas
+        # abstain for those queries where we are below our specified confidence score
+        X_query_indices: IndiceMask = np.nonzero(
+            np.max(Y_probas, axis=1) > self.abstain_threshold
+        )[0]
+        Y_pred = Y_pred[X_query_indices]
+        Y_probas = Y_probas[X_query_indices]
+
+        # X_query_indices are indices on unlabeled_mask
+        # we have to convert them back to real indices of whole of X
+        X_query_indices = data_storage.unlabeled_mask[X_query_indices]
+
+        # only return those query indices for who we do not abstain
+        return X_query_indices, Y_pred, Y_probas
 
     def _compute_labeling_function(
         self, X: FeatureList, Y: LabelList, error_factor: float

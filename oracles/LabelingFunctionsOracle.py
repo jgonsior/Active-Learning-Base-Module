@@ -1,4 +1,4 @@
-from active_learning.dataStorage import FeatureList, IndiceMask, LabelList
+from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask, LabelList
 from typing import List, TYPE_CHECKING, Callable, Tuple
 
 import numpy as np
@@ -8,13 +8,17 @@ if TYPE_CHECKING:
 
 from .BaseOracle import BaseOracle
 
+LabelConfidence = np.ndarray
+
 
 class LabeleingFunctionsOracle(BaseOracle):
     identifier = "F"
 
     def __init__(
         self,
-        labeling_function: Callable[[FeatureList], Tuple[LabelList, np.ndarray]],
+        labeling_function: Callable[
+            [DataStorage], Tuple[IndiceMask, LabelList, LabelConfidence]
+        ],
         cost: float,
     ):
         super().__init__()
@@ -25,15 +29,17 @@ class LabeleingFunctionsOracle(BaseOracle):
     def has_new_labels(
         self, query_indices: IndiceMask, active_learner: "ActiveLearner"
     ) -> bool:
-        self.potentially_labeled_query_indices, self.Y_lf = self.labeling_function(
-            active_learner.data_storage.X[active_learner.data_storage.unlabeled_mask]
-        )
-        if len(self.potentially_labeled_query_indices) > 0:
-            return False
-        else:
+        (
+            self.X_query_indices_lf,
+            self.Y_pred_lf,
+            self.Y_probas_lf,
+        ) = self.labeling_function(active_learner.data_storage)
+        if len(self.X_query_indices_lf) > 0:
             return True
+        else:
+            return False
 
     def get_labels(
         self, query_indices: IndiceMask, active_learner: "ActiveLearner"
     ) -> Tuple[IndiceMask, LabelList]:
-        return self.potentially_labeled_query_indices, self.Y_lf
+        return self.X_query_indices_lf, self.Y_pred_lf

@@ -98,6 +98,7 @@ class ActiveLearner:
                         self.current_Y_query,
                     ) = oracle.get_labels(query_indices, self)
                     self.current_oracle = oracle
+
                     break
 
             if self.current_oracle is None:
