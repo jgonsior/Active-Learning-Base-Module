@@ -6,24 +6,24 @@ from .learner.standard import Learner
 from .logger.logger import log_it
 from .oracles.BaseOracle import BaseOracle
 from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
-from .sampling_strategies.BaseSamplingStrategy import BaseSamplingStrategy
+from .merged_sampling_strategies import StandardMergedSamplingStrategy
 from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
-    sampling_strategy: BaseSamplingStrategy
+    merged_sampling_strategy: StandardMergedSamplingStrategy
     data_storage: DataStorage
     oracles: List[BaseOracle]
     callbacks: Dict[str, BaseCallback]
     stopping_criteria: BaseStoppingCriteria
     BATCH_SIZE: int
-    current_query_indices: IndiceMask
-    current_Y_query: LabelList
-    current_oracle: Union[BaseOracle, None]
+    current_query_indices: List[IndiceMask]
+    current_Y_queries: List[LabelList]
+    current_oracles: List[BaseOracle]
 
     def __init__(
         self,
-        sampling_strategy: BaseSamplingStrategy,
+        merged_sampling_strategy: StandardMergedSamplingStrategy,
         data_storage: DataStorage,
         oracles: List[BaseOracle],
         learner: Learner,
@@ -32,7 +32,7 @@ class ActiveLearner:
         BATCH_SIZE: int,
     ) -> None:
 
-        self.sampling_strategy = sampling_strategy
+        self.merged_sampling_strategy = merged_sampling_strategy
         self.data_storage = data_storage
         self.learner = learner
         self.oracles = oracles
@@ -41,11 +41,11 @@ class ActiveLearner:
         self.BATCH_SIZE = BATCH_SIZE
 
         # fake iteration zero
-        self.current_query_indices = self.data_storage.labeled_mask
+        self.current_query_indices = [self.data_storage.labeled_mask]
 
-        self.current_Y_query = self.data_storage.Y[self.data_storage.labeled_mask]
+        self.current_Y_queries = [self.data_storage.Y[self.data_storage.labeled_mask]]
 
-        self.current_oracle = LabeledStartSetOracle()
+        self.current_oracles = [LabeledStartSetOracle()]
 
         for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
@@ -81,16 +81,19 @@ class ActiveLearner:
 
             (
                 self.current_query_indices,
-                self.current_Y_query,
-                self.current_oracle,
-            ) = self.sampling_strategy.what_to_label_next(self)
+                self.current_oracles,
+            ) = self.merged_sampling_strategy.get_next_query_and_oracles(self)
+
+            # actually ask the oracles for the labels
+            self.current_Y_queries = []
+            for oracle, query_indices in zip(
+                self.current_oracles, self.current_query_indices
+            ):
+                self.current_Y_queries.append(oracle.get_labels(query_indices, self))
 
             # even though oracle, query_indices and Y_query are local variables for this cycle we store them as object variables to let f.e. callbacks/metric access them
             self.data_storage.label_samples(
-                self.current_query_indices,
-                self.current_Y_query,
-                self.current_oracle.get_oracle_identifier(),
-                self.current_oracle.cost,
+                self.current_query_indices, self.current_Y_queries, self.current_oracles
             )
 
             for callback in self.callbacks.values():

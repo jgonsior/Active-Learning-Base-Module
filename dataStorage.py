@@ -1,3 +1,5 @@
+from active_learning.oracles import LabeledStartSetOracle
+from active_learning.oracles import BaseOracle
 import math
 from typing import List
 
@@ -90,6 +92,8 @@ class DataStorage:
             labels_not_in_start_set = set(range(0, len(self.label_encoder.classes_)))  # type: ignore
             all_label_in_start_set = False
 
+            labeledStartSetOracleList: List[BaseOracle] = [LabeledStartSetOracle()]
+
             if not all_label_in_start_set:
                 #  if len(self.train_labeled_data) == 0:
                 #      print("Please specify at least one labeled example of each class")
@@ -105,10 +109,9 @@ class DataStorage:
                     random_index = self.unlabeled_mask[random_index]
 
                     self.label_samples(
-                        np.array([random_index]),
-                        np.array([label]),
-                        "G",
-                        0,
+                        [np.array([random_index])],
+                        [np.array([label])],
+                        labeledStartSetOracleList,
                     )
 
     def unlabel_samples(self, query_indices: IndiceMask) -> None:
@@ -125,19 +128,23 @@ class DataStorage:
 
     def label_samples(
         self,
-        query_indices: IndiceMask,
-        Y_queries: LabelList,
-        source: str,
-        cost: float,
+        query_indices_list: List[IndiceMask],
+        Y_queries_list: List[LabelList],
+        oracles_list: List[BaseOracle],
     ):
-        self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)  # type: ignore
+        for query_indices, Y_queries, oracle in zip(
+            query_indices_list, Y_queries_list, oracles_list
+        ):
+            self.labeled_mask = np.append(self.labeled_mask, query_indices, axis=0)  # type: ignore
 
-        for element in query_indices:
-            self.unlabeled_mask = self.unlabeled_mask[self.unlabeled_mask != element]
+            for element in query_indices:
+                self.unlabeled_mask = self.unlabeled_mask[
+                    self.unlabeled_mask != element
+                ]
 
-        self.label_source[query_indices] = source
-        self.Y[query_indices] = Y_queries
-        self.costs_spend.append(cost)
+            self.label_source[query_indices] = oracle.identifier
+            self.Y[query_indices] = Y_queries
+            self.costs_spend.append(oracle.cost * len(query_indices))
 
     def get_experiment_labels(self, query_indice: IndiceMask) -> LabelList:
         return self.Y[query_indice]
