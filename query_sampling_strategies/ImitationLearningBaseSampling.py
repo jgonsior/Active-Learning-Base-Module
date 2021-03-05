@@ -52,9 +52,9 @@ class ImitationLearningBaseSampling(BaseSamplingStrategy):
     def what_to_label_next(
         self, active_learner: "ActiveLearner"
     ) -> Tuple[IndiceMask, LabelList, BaseOracle]:
-        self.data_storage: DataStorage = data_storage
-        self.learner: Learner = learner
-        self.BATCH_SIZE: int = BATCH_SIZE
+        self.data_storage: DataStorage = active_learner.data_storage
+        self.learner: Learner = active_learner.learner
+        self.BATCH_SIZE: int = active_learner.BATCH_SIZE
 
         pre_sampled_X_querie_indices: PreSampledIndices = (
             self.pre_sample_potential_X_queries()
@@ -68,7 +68,7 @@ class ImitationLearningBaseSampling(BaseSamplingStrategy):
         )
         Y_output_state: OutputState = self.applyNN(X_input_state)
         return self.decode_output_state(
-            Y_output_state, pre_sampled_X_querie_indices, BATCH_SIZE
+            Y_output_state, pre_sampled_X_querie_indices, self.BATCH_SIZE
         )
 
     @abc.abstractmethod
