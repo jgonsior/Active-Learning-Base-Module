@@ -13,15 +13,6 @@ from .BaseOracle import BaseOracle
 
 class FakeExperimentOracle(BaseOracle):
     identifier = "E"
-    cost = 1
-
-    def has_new_labels(
-        self, query_indices: "IndiceMask", active_learner: "ActiveLearner"
-    ) -> bool:
-        if active_learner.stopping_criteria.stop_is_reached():
-            return False
-        else:
-            return True
 
     def get_labels(
         self, query_indices: "IndiceMask", active_learner: "ActiveLearner"

@@ -9,21 +9,10 @@ if TYPE_CHECKING:
 from typing import List, TYPE_CHECKING, Tuple
 
 
-class BaseOracle:
-    cost: float
-
-    @property
+class BaseOracle(metaclass=abc.ABCMeta):
+    @property # type: ignore
     @abc.abstractmethod
     def identifier(self) -> str:
-        pass
-
-    def __init__(self):
-        self.values = []
-
-    @abc.abstractmethod
-    def has_new_labels(
-        self, query_indices: "IndiceMask", active_learner: "ActiveLearner"
-    ) -> List[bool]:
         pass
 
     @abc.abstractmethod

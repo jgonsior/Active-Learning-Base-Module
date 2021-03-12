@@ -6,50 +6,42 @@ from .learner.standard import Learner
 from .logger.logger import log_it
 from .oracles.BaseOracle import BaseOracle
 from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
-from .combined_query_and_oracle_sampling_strategies import (
-    StandardCombinedQueryAndOracleSamplingStrategy,
-)
 from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
-    combined_query_and_oracle_sampling_strategy: StandardCombinedQueryAndOracleSamplingStrategy
+    query_sampling_strategy:         StandardQuerySamplingStrategy,
     data_storage: DataStorage
-    oracles: List[BaseOracle]
+    oracle: BaseOracle
     callbacks: Dict[str, BaseCallback]
     stopping_criteria: BaseStoppingCriteria
     BATCH_SIZE: int
-    current_query_indices: List[IndiceMask]
-    current_Y_queries: List[LabelList]
-    current_oracles: List[BaseOracle]
+    current_query_indices: IndiceMask
+    current_Y_queries: LabelList
 
     def __init__(
         self,
-        combined_query_and_oracle_sampling_strategy: StandardCombinedQueryAndOracleSamplingStrategy,
+        query_sampling_strategy: StandardQuerySamplingStrategy,
         data_storage: DataStorage,
-        oracles: List[BaseOracle],
+        oracle: BaseOracle,
         learner: Learner,
         callbacks: Dict[str, BaseCallback],
         stopping_criteria: BaseStoppingCriteria,
         BATCH_SIZE: int,
     ) -> None:
 
-        self.combined_query_and_oracle_sampling_strategy = (
-            combined_query_and_oracle_sampling_strategy
-        )
+        self.query_sampling_strategy = query_sampling_strategy
         self.data_storage = data_storage
         self.learner = learner
-        self.oracles = oracles
+        self.oracle = oracle
         self.callbacks = callbacks
         self.stopping_criteria = stopping_criteria
         self.BATCH_SIZE = BATCH_SIZE
 
         # fake iteration zero
-        self.current_query_indices = [self.data_storage.labeled_mask]
+        self.current_query_indices = self.data_storage.labeled_mask
 
-        self.current_Y_queries = [self.data_storage.Y[self.data_storage.labeled_mask]]
-
-        self.current_oracles = [LabeledStartSetOracle()]
+        self.current_Y_queries = self.data_storage.Y[self.data_storage.labeled_mask]
 
         for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
