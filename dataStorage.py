@@ -1,4 +1,4 @@
-from merge_weak_supervision_label_strategies import (
+from .merge_weak_supervision_label_strategies import (
     BaseMergeWeakSupervisionLabelStrategy,
 )
 import math
@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
-from weak_supervision import BaseWeakSupervision
+from .weak_supervision import BaseWeakSupervision
 
 # type aliases
 IndiceMask = np.ndarray
