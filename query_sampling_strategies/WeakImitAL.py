@@ -1,5 +1,6 @@
+from active_learning.dataStorage import IndiceMask
 from sklearn.metrics.pairwise import pairwise_distances
-from active_learning.sampling_strategies.ImitationLearner import TrainImitALSingle
+from .ImitationLearner import TrainImitALSingle
 import copy
 from typing import List, TYPE_CHECKING
 
@@ -11,15 +12,10 @@ if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner
     from .BatchStateEncoding import BatchStateSampling
 
-from active_learning.dataStorage import IndiceMask
-
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
+from .ImitationLearningBaseQuerySampling import (
     InputState,
-    OutputState,
     PreSampledIndices,
 )
-from .SingleStateEncoding import SingleStateEncoding
 
 
 class WeakImitAL(TrainImitALSingle):

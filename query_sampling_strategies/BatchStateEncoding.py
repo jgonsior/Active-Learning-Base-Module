@@ -6,14 +6,14 @@ import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
 from active_learning.dataStorage import IndiceMask, LabelList
-from active_learning.sampling_strategies.ImitationLearningBaseSampling import (
+from .ImitationLearningBaseQuerySampling import (
     InputState,
     PreSampledIndices,
 )
-from .ImitationLearner import ImitationLearner, ImitationLearningBaseSampling
+from .ImitationLearner import ImitationLearner, ImitationLearningBaseQuerySampling
 
 
-class BatchStateSampling(ImitationLearningBaseSampling):
+class BatchStateSampling(ImitationLearningBaseQuerySampling):
     STATE_PREDICTED_UNITY: bool
     STATE_DISTANCES: bool
     STATE_DISTANCES_LAB: bool

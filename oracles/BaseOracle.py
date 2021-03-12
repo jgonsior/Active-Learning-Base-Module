@@ -1,5 +1,4 @@
-import abc
-
+from abc import ABC, abstractmethod
 
 from typing import TYPE_CHECKING
 
@@ -9,13 +8,10 @@ if TYPE_CHECKING:
 from typing import List, TYPE_CHECKING, Tuple
 
 
-class BaseOracle(metaclass=abc.ABCMeta):
-    @property # type: ignore
-    @abc.abstractmethod
-    def identifier(self) -> str:
-        pass
+class BaseOracle(ABC):
+    identifier: str
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_labels(
         self, query_indices: "IndiceMask", active_learner: "ActiveLearner"
     ) -> "LabelList":

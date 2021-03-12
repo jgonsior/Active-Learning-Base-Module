@@ -1,3 +1,4 @@
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import BaseQuerySamplingStrategy
 from typing import Dict, List, Union
 
 from .callbacks.BaseCallback import BaseCallback
@@ -10,7 +11,7 @@ from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
-    query_sampling_strategy:         StandardQuerySamplingStrategy,
+    query_sampling_strategy: BaseQuerySamplingStrategy,
     data_storage: DataStorage
     oracle: BaseOracle
     callbacks: Dict[str, BaseCallback]
@@ -21,7 +22,7 @@ class ActiveLearner:
 
     def __init__(
         self,
-        query_sampling_strategy: StandardQuerySamplingStrategy,
+        query_sampling_strategy: BaseQuerySamplingStrategy,
         data_storage: DataStorage,
         oracle: BaseOracle,
         learner: Learner,
@@ -82,7 +83,7 @@ class ActiveLearner:
             self.data_storage.generate_weak_labels(rerun=True)
 
             self.current_query_indices = (
-                self.query_sampling_strategy.get_next_query_indices(self)
+                self.query_sampling_strategy.what_to_label_next(self)
             )
             self.current_Y_queries = self.oracle.get_labels(
                 self.current_query_indices, self

@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner
 
 
-class BaseCallback:
+class BaseCallback(abc.ABC):
     values: List[Any] = []
 
     @abc.abstractmethod

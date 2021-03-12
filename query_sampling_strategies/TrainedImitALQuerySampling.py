@@ -6,15 +6,15 @@ import numpy as np
 from active_learning.dataStorage import IndiceMask
 
 from .BatchStateEncoding import BatchStateSampling
-from .ImitationLearningBaseSampling import (
-    ImitationLearningBaseSampling,
+from .ImitationLearningBaseQuerySampling import (
+    ImitationLearningBaseQuerySampling,
     InputState,
     OutputState,
 )
 from .SingleStateEncoding import SingleStateEncoding
 
 
-class TrainedImitALSampling(ImitationLearningBaseSampling):
+class TrainedImitALSampling(ImitationLearningBaseQuerySampling):
     def __init__(self, NN_BINARY_PATH: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

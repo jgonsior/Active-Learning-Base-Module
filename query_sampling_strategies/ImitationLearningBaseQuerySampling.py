@@ -1,4 +1,7 @@
 import abc
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
+)
 from active_learning.BaseOracle import BaseOracle
 import os
 from typing import Any, Tuple
@@ -7,10 +10,6 @@ import numpy as np
 
 from active_learning.dataStorage import DataStorage, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
-from active_learning.sampling_strategies.BaseSamplingStrategy import (
-    BaseSamplingStrategy,
-)
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -28,7 +27,7 @@ PreSampledIndices = (
 )  # these are lists of indices, for batch batches, and for single just one-element lists
 
 
-class ImitationLearningBaseSampling(BaseSamplingStrategy):
+class ImitationLearningBaseQuerySampling(BaseQuerySamplingStrategy):
     PRE_SAMPLING_METHOD: str
     PRE_SAMPLING_ARG: Any
     DISTANCE_METRIC: str
