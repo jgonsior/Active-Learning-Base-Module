@@ -6,12 +6,14 @@ from .learner.standard import Learner
 from .logger.logger import log_it
 from .oracles.BaseOracle import BaseOracle
 from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
-from .merged_sampling_strategies import StandardMergedSamplingStrategy
+from .combined_query_and_oracle_sampling_strategies import (
+    StandardCombinedQueryAndOracleSamplingStrategy,
+)
 from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
-    merged_sampling_strategy: StandardMergedSamplingStrategy
+    combined_query_and_oracle_sampling_strategy: StandardCombinedQueryAndOracleSamplingStrategy
     data_storage: DataStorage
     oracles: List[BaseOracle]
     callbacks: Dict[str, BaseCallback]
@@ -23,7 +25,7 @@ class ActiveLearner:
 
     def __init__(
         self,
-        merged_sampling_strategy: StandardMergedSamplingStrategy,
+        combined_query_and_oracle_sampling_strategy: StandardCombinedQueryAndOracleSamplingStrategy,
         data_storage: DataStorage,
         oracles: List[BaseOracle],
         learner: Learner,
@@ -32,7 +34,9 @@ class ActiveLearner:
         BATCH_SIZE: int,
     ) -> None:
 
-        self.merged_sampling_strategy = merged_sampling_strategy
+        self.combined_query_and_oracle_sampling_strategy = (
+            combined_query_and_oracle_sampling_strategy
+        )
         self.data_storage = data_storage
         self.learner = learner
         self.oracles = oracles
@@ -52,6 +56,9 @@ class ActiveLearner:
 
         # retrain CLASSIFIER
         self.fit_learner()
+
+        # run all labeling functions to create weak labels
+        self.data_storage.generate_weak_labels()
 
         for callback in self.callbacks.values():
             callback.post_learning_cycle_hook(self)
@@ -79,21 +86,18 @@ class ActiveLearner:
                 # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
 
-            (
-                self.current_query_indices,
-                self.current_oracles,
-            ) = self.merged_sampling_strategy.get_next_query_and_oracles(self)
+            # potentially the labeling functions have different results now
+            self.data_storage.generate_weak_labels(rerun=True)
 
-            # actually ask the oracles for the labels
-            self.current_Y_queries = []
-            for oracle, query_indices in zip(
-                self.current_oracles, self.current_query_indices
-            ):
-                self.current_Y_queries.append(oracle.get_labels(query_indices, self))
+            self.current_query_indices = (
+                self.query_sampling_strategy.get_next_query_indices(self)
+            )
+            self.current_Y_queries = self.oracle.get_labels(
+                self.current_query_indices, self
+            )
 
-            # even though oracle, query_indices and Y_query are local variables for this cycle we store them as object variables to let f.e. callbacks/metric access them
-            self.data_storage.label_samples(
-                self.current_query_indices, self.current_Y_queries, self.current_oracles
+            self.data_storage.oracle_label_samples(
+                self.current_query_indices, self.current_Y_queries
             )
 
             for callback in self.callbacks.values():

@@ -1,10 +1,15 @@
-from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask, LabelList
 from typing import List, TYPE_CHECKING, Callable, Tuple
 
 import numpy as np
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner
+    from active_learning.dataStorage import (
+        DataStorage,
+        IndiceMask,
+        LabelList,
+    )
+
 
 from .BaseOracle import BaseOracle
 
@@ -17,7 +22,7 @@ class LabeleingFunctionsOracle(BaseOracle):
     def __init__(
         self,
         labeling_function: Callable[
-            [IndiceMask, DataStorage], Tuple[LabelList, LabelConfidence]
+            ["IndiceMask", "DataStorage"], Tuple["LabelList", LabelConfidence]
         ],
         cost: float,
     ):
@@ -27,7 +32,7 @@ class LabeleingFunctionsOracle(BaseOracle):
         self.cost = cost
 
     def has_new_labels(
-        self, query_indices: IndiceMask, active_learner: "ActiveLearner"
+        self, query_indices: "IndiceMask", active_learner: "ActiveLearner"
     ) -> bool:
         (
             self.Y_pred_lf,
@@ -38,7 +43,9 @@ class LabeleingFunctionsOracle(BaseOracle):
         else:
             return False
 
-    def get_labels(self, query_indices: IndiceMask, _) -> Tuple[IndiceMask, LabelList]:
+    def get_labels(
+        self, query_indices: "IndiceMask", _
+    ) -> Tuple["IndiceMask", "LabelList"]:
 
         # return only the asked samples
         Y_pred_non_abstain = self.Y_pred_lf[self.Y_pred_lf != -1]

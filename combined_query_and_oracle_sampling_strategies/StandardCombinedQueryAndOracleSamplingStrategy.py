@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner
 
 
-class StandardMergedSamplingStrategy:
+class StandardCombinedQueryAndOracleSamplingStrategy:
     query_sampling_strategy: BaseQuerySamplingStrategy
     oracle_sampling_strategy: BaseOracleSamplingStrategy
 
