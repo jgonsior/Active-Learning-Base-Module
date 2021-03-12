@@ -80,7 +80,8 @@ class ActiveLearner:
                 break
 
             # potentially the labeling functions have different results now
-            self.data_storage.generate_weak_labels(rerun=True)
+            # if rerun_ws=True
+            self.data_storage.generate_weak_labels()
 
             self.current_query_indices = (
                 self.query_sampling_strategy.what_to_label_next(self)
@@ -89,8 +90,8 @@ class ActiveLearner:
                 self.current_query_indices, self
             )
 
-            self.data_storage.oracle_label_samples(
-                self.current_query_indices, self.current_Y_queries
+            self.data_storage.label_samples(
+                self.current_query_indices, self.current_Y_queries, "H"
             )
 
             for callback in self.callbacks.values():
