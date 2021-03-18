@@ -1,3 +1,4 @@
+from distutils.command.config import config
 from .merge_weak_supervision_label_strategies import (
     BaseMergeWeakSupervisionLabelStrategy,
 )
@@ -9,6 +10,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
 
 from .weak_supervision import BaseWeakSupervision
+
 
 # type aliases
 IndiceMask = np.ndarray
@@ -144,7 +146,6 @@ class DataStorage:
                     )
 
     def unlabel_samples(self, query_indices: IndiceMask) -> None:
-
         self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
 
         for sample in query_indices:
@@ -181,7 +182,7 @@ class DataStorage:
         ws_labels_list: List[LabelList] = []
         for weak_supervision in self.weak_supervisions:
             ws_labels_list.append(
-                weak_supervision.get_labels(self.X[self.unlabeled_mask])
+                weak_supervision.get_labels(self.unlabeled_mask, self)
             )
 
         # magic
