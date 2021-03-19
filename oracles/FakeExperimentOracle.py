@@ -16,7 +16,5 @@ class FakeExperimentOracle(BaseOracle):
 
     def get_labels(
         self, query_indices: "IndiceMask", active_learner: "ActiveLearner"
-    ) -> Tuple["IndiceMask", "LabelList"]:
-        return query_indices, active_learner.data_storage.get_experiment_labels(
-            query_indices
-        )
+    ) -> "LabelList":
+        return active_learner.data_storage.get_experiment_labels(query_indices)
