@@ -1,6 +1,6 @@
-from active_learning.oracles.LabelingFunctionsOracle import (
+from .LabelingFunctions import (
     LabelConfidence,
-    LabeleingFunctionsOracle,
+    LabelingFunctions,
 )
 from active_learning.logger.logger import log_it
 import random
@@ -12,7 +12,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 
 
-class SyntheticLabelingFunctionsOracle(LabeleingFunctionsOracle):
+class SyntheticLabelingFunctionsOracle(LabelingFunctions):
     identifier: str
     abstain_threshold: float
     clf: Any

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Callable, List
 
-from sklearn.metrics import accuracy_score,  f1_score
+from sklearn.metrics import accuracy_score, f1_score
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner

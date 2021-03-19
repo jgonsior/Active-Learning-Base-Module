@@ -16,7 +16,7 @@ from .BaseWeakSupervision import BaseWeakSupervision
 LabelConfidence = np.ndarray
 
 
-class LabeleingFunctions(BaseWeakSupervision):
+class LabelingFunctions(BaseWeakSupervision):
     def __init__(
         self,
         labeling_function: Callable[

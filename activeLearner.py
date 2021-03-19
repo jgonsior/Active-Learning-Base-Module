@@ -1,4 +1,6 @@
-from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import BaseQuerySamplingStrategy
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
+)
 from typing import Dict, List, Union
 
 from .callbacks.BaseCallback import BaseCallback
@@ -11,7 +13,7 @@ from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
-    query_sampling_strategy: BaseQuerySamplingStrategy,
+    query_sampling_strategy: BaseQuerySamplingStrategy
     data_storage: DataStorage
     oracle: BaseOracle
     callbacks: Dict[str, BaseCallback]
