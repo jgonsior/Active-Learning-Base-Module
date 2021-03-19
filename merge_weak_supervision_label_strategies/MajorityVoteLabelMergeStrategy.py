@@ -10,10 +10,15 @@ if TYPE_CHECKING:
 
 
 class MajorityVoteLabelMergeStrategy(BaseMergeWeakSupervisionLabelStrategy):
-    def merge(self, ws_labels_list: List["LabelList"]) -> "LabelList":
-        merged_labels = []
-        for i in range(0, len(ws_labels_list[0])):
-            c = Counter(ws_labels_list[i])
-            merged_labels[i] = c.most_common(1)[0][0]
+    def merge(self, ws_labels_array: np.ndarray) -> "LabelList":
+        merged_labels = np.ones(ws_labels_array.shape[0]) * -1
 
-        return np.array(merged_labels)
+        for i in range(0, len(ws_labels_array[0])):
+            c = Counter(ws_labels_array[i])
+            most_common = c.most_common(1)[0][0]
+
+            if most_common == "-1":
+                most_common = c.most_common(1)[1][0]
+
+            merged_labels[i] = most_common
+        return merged_labels

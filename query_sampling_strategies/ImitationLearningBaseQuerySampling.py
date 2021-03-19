@@ -48,9 +48,7 @@ class ImitationLearningBaseQuerySampling(BaseQuerySamplingStrategy):
 
         self.DISTANCE_METRIC = DISTANCE_METRIC
 
-    def what_to_label_next(
-        self, active_learner: "ActiveLearner"
-    ) -> Tuple[IndiceMask, LabelList, BaseOracle]:
+    def what_to_label_next(self, active_learner: "ActiveLearner") -> IndiceMask:
         self.data_storage: DataStorage = active_learner.data_storage
         self.learner: Learner = active_learner.learner
         self.BATCH_SIZE: int = active_learner.BATCH_SIZE

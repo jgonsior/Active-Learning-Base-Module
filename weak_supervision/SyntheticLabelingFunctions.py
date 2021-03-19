@@ -4,28 +4,37 @@ from .LabelingFunctions import (
 )
 from active_learning.logger.logger import log_it
 import random
-from active_learning.dataStorage import DataStorage, FeatureList, IndiceMask, LabelList
 from typing import Any, List, Tuple
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 
+from typing import List, TYPE_CHECKING
 
-class SyntheticLabelingFunctionsOracle(LabelingFunctions):
+if TYPE_CHECKING:
+    from active_learning.dataStorage import (
+        DataStorage,
+        FeatureList,
+        IndiceMask,
+        LabelList,
+    )
+
+
+class SyntheticLabelingFunctions(LabelingFunctions):
     identifier: str
     abstain_threshold: float
     clf: Any
     restricted_features: List[int]
     model: str
 
-    def __init__(self, X: FeatureList, Y: LabelList, error_factor: float = 0.9):
+    def __init__(self, X: "FeatureList", Y: "LabelList", error_factor: float = 0.9):
         self.cost = 0
         self._compute_labeling_function(X, Y, error_factor=error_factor)
 
     def labeling_function(
-        self, query_indices: IndiceMask, data_storage: DataStorage
-    ) -> Tuple[LabelList, LabelConfidence]:
+        self, query_indices: "IndiceMask", data_storage: "DataStorage"
+    ) -> Tuple["LabelList", LabelConfidence]:
         X = data_storage.X[query_indices]
 
         if self.model in ["lr", "knn"]:
@@ -39,7 +48,7 @@ class SyntheticLabelingFunctionsOracle(LabelingFunctions):
         return Y_pred, Y_probas
 
     def _compute_labeling_function(
-        self, X: FeatureList, Y: LabelList, error_factor: float
+        self, X: "FeatureList", Y: "LabelList", error_factor: float
     ) -> None:
         """number_of_features: int = random.choices(
             population=range(0, X.shape[1]),

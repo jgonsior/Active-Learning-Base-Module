@@ -257,7 +257,7 @@ class BatchStateSampling(ImitationLearningBaseQuerySampling):
                     ),
                     self.AMOUNT_OF_PEAKED_OBJECTS - len(index_batches),
                 )
-            ]
+            ]  # type: ignore
         else:
             print("NON EXISTENT INITIAL_SAMPLING_METHOD: " + self.PRE_SAMPLING_METHOD)
             exit(-1)

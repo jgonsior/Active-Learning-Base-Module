@@ -1,5 +1,5 @@
 import abc
-
+import numpy as np
 
 from typing import List, TYPE_CHECKING
 
@@ -10,5 +10,5 @@ if TYPE_CHECKING:
 
 class BaseMergeWeakSupervisionLabelStrategy(abc.ABC):
     @abc.abstractmethod
-    def merge(self, ws_labels_list: List["LabelList"]) -> "LabelList":
+    def merge(self, ws_labels_array: np.ndarray) -> "LabelList":
         pass

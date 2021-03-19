@@ -1,5 +1,15 @@
+from active_learning.query_sampling_strategies.TrainedImitALQuerySampling import (
+    TrainedImitALBatchSampling,
+    TrainedImitALSingleSampling,
+)
+from active_learning.query_sampling_strategies.UncertaintyQuerySampling import (
+    UncertaintyQuerySampling,
+)
+from active_learning.query_sampling_strategies import RandomQuerySampling
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
+)
 from active_learning.callbacks.BaseCallback import BaseCallback
-from active_learning.sampling_strategies.BatchStateEncoding import TrainImitALBatch
 
 import csv
 import datetime
@@ -21,12 +31,7 @@ from active_learning.datasets import load_alc, load_dwtc, load_synthetic, load_u
 from active_learning.dataStorage import DataStorage
 from active_learning.learner import Learner, get_classifier
 from active_learning.oracles import BaseOracle
-from active_learning.sampling_strategies import (
-    BaseSamplingStrategy,
-    RandomSampler,
-    TrainImitALSingle,
-    UncertaintySampler,
-)
+
 from active_learning.stopping_criterias import ALCyclesStoppingCriteria
 
 from .dataStorage import DataStorage
@@ -85,25 +90,25 @@ def train_al(
         data_storage.labeled_mask
     )
 
-    sampling_strategy: BaseSamplingStrategy
+    sampling_strategy: BaseQuerySamplingStrategy
     if hyper_parameters["SAMPLING"] == "random":
-        sampling_strategy = RandomSampler()
+        sampling_strategy = RandomQuerySampling()
     elif hyper_parameters["SAMPLING"] == "uncertainty_lc":
-        sampling_strategy = UncertaintySampler("least_confident")
+        sampling_strategy = UncertaintyQuerySampling("least_confident")
     elif hyper_parameters["SAMPLING"] == "uncertainty_max_margin":
-        sampling_strategy = UncertaintySampler("max_margin")
+        sampling_strategy = UncertaintyQuerySampling("max_margin")
     elif hyper_parameters["SAMPLING"] == "uncertainty_entropy":
-        sampling_strategy = UncertaintySampler("entropy")
+        sampling_strategy = UncertaintyQuerySampling("entropy")
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         if hyper_parameters["BATCH_MODE"]:
-            sampling_strategy = TrainImitALBatch(
+            sampling_strategy = TrainedImitALBatchSampling(
                 hyper_parameters["NN_BINARY_PATH"],
                 PRE_SAMPLING_METHOD=hyper_parameters["PRE_SAMPLING_METHOD"],
                 PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
                 AMOUNT_OF_PEAKED_OBJECTS=hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"],
             )
         else:
-            sampling_strategy = TrainImitALSingle(
+            sampling_strategy = TrainedImitALSingleSampling(
                 hyper_parameters["NN_BINARY_PATH"],
                 PRE_SAMPLING_METHOD=hyper_parameters["PRE_SAMPLING_METHOD"],
                 PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],

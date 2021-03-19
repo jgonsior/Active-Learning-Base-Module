@@ -19,11 +19,10 @@ class PrintLoggingStatisticsCallback(BaseCallback):
     def post_learning_cycle_hook(self, active_learner: "ActiveLearner") -> None:
         self.ITERATION_COUNTER += 1
         log_it(
-            "{:>2} {:>6} {:>6} {:1} {:.2%} {:.2%}".format(
+            "{:>2} {:>6} {:>6} {:.2%} {:.2%}".format(
                 self.ITERATION_COUNTER,
                 len(active_learner.data_storage.labeled_mask),
                 len(active_learner.data_storage.unlabeled_mask),
-                active_learner.current_oracle.get_oracle_identifier(),
                 active_learner.callbacks["acc_test"].values[-1],
                 active_learner.callbacks["f1_test"].values[-1],
             )

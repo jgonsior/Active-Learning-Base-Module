@@ -3,7 +3,7 @@ from .merge_weak_supervision_label_strategies import (
     BaseMergeWeakSupervisionLabelStrategy,
 )
 import math
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -31,20 +31,16 @@ class DataStorage:
     exp_Y: LabelList
     weak_combined_Y: LabelList
     costs_spend: int = 0
-    merge_weak_supervision_label_strategy: BaseMergeWeakSupervisionLabelStrategy
+    merge_weak_supervision_label_strategy: Optional[
+        BaseMergeWeakSupervisionLabelStrategy
+    ]
 
     def __init__(
         self,
         df: pd.DataFrame,
-        weak_supervisions: List[BaseWeakSupervision],
-        merge_weak_supervision_label_strategy: BaseMergeWeakSupervisionLabelStrategy,
         TEST_FRACTION: float = 0.3,
     ) -> None:
         self.TEST_FRACTION: float = TEST_FRACTION
-        self.weak_supervisions = weak_supervisions
-        self.merge_weak_supervision_label_strategy = (
-            merge_weak_supervision_label_strategy
-        )
 
         self.weak_combined_Y = self.Y = self.human_expert_Y = np.ones(len(df)) * -1
 
@@ -145,6 +141,16 @@ class DataStorage:
                         "S",
                     )
 
+    def set_weak_supervisions(
+        self,
+        weak_supervisions: List[BaseWeakSupervision],
+        merge_weak_supervision_label_strategy: BaseMergeWeakSupervisionLabelStrategy,
+    ) -> None:
+        self.merge_weak_supervision_label_strategy = (
+            merge_weak_supervision_label_strategy
+        )
+        self.weak_supervisions = weak_supervisions
+
     def unlabel_samples(self, query_indices: IndiceMask) -> None:
         self.unlabeled_mask = np.append(self.unlabeled_mask, query_indices, axis=0)
 
@@ -185,9 +191,14 @@ class DataStorage:
                 weak_supervision.get_labels(self.unlabeled_mask, self)
             )
 
+        # convert from [array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.])]
+
+        # to [[-1,-1,4,2], [-1,4,-1], …]
+        ws_labels_array: np.ndarray = np.transpose(np.array(ws_labels_list))
+
         # magic
         self.weak_combined_Y[
             self.unlabeled_mask
-        ] = self.merge_weak_supervision_label_strategy.merge(ws_labels_list)
+        ] = self.merge_weak_supervision_label_strategy.merge(ws_labels_array)
 
         self.Y[self.unlabeled_mask] = self.weak_combined_Y[self.unlabeled_mask]
