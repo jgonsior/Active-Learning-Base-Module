@@ -22,7 +22,7 @@ class MetricCallback(BaseCallback):
 
 
 def test_f1_metric(active_learner: "ActiveLearner") -> List[float]:
-    Y_true = active_learner.data_storage.Y[active_learner.data_storage.test_mask]
+    Y_true = active_learner.data_storage.exp_Y[active_learner.data_storage.test_mask]
     Y_pred = active_learner.learner.predict(
         active_learner.data_storage.X[active_learner.data_storage.test_mask]
     )
@@ -31,7 +31,9 @@ def test_f1_metric(active_learner: "ActiveLearner") -> List[float]:
 
 
 def test_acc_metric(active_learner: "ActiveLearner") -> List[float]:
-    Y_true = active_learner.data_storage.Y[active_learner.data_storage.test_mask]
+    Y_true = active_learner.data_storage.Y_merged_final[
+        active_learner.data_storage.test_mask
+    ]
     Y_pred = active_learner.learner.predict(
         active_learner.data_storage.X[active_learner.data_storage.test_mask]
     )

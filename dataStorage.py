@@ -26,10 +26,10 @@ class DataStorage:
     weak_supervisions: List[BaseWeakSupervision]
 
     X: FeatureList
-    Y: LabelList
-    human_expert_Y: LabelList
-    exp_Y: LabelList
-    weak_combined_Y: LabelList
+    Y_merged_final: LabelList  # the final label, merged from human_expert_Y and weak_combined_Y -> this is the stuff which trains the AL-model
+    human_expert_Y: LabelList  # those who come from the human oracle
+    exp_Y: LabelList  # those who are known from the beginning in an experiment setting
+    weak_combined_Y: LabelList  # the merged labels from all the weak supervision sources
     costs_spend: int = 0
     merge_weak_supervision_label_strategy: Optional[
         BaseMergeWeakSupervisionLabelStrategy
@@ -42,7 +42,9 @@ class DataStorage:
     ) -> None:
         self.TEST_FRACTION: float = TEST_FRACTION
 
-        self.weak_combined_Y = self.Y = self.human_expert_Y = np.ones(len(df)) * -1
+        self.weak_combined_Y = self.Y_merged_final = self.human_expert_Y = (
+            np.ones(len(df)) * -1
+        )
 
         self.X = df.loc[:, df.columns != "label"].to_numpy()  # type: ignore
         self.exp_Y = df["label"].to_numpy().reshape(len(self.X))
@@ -59,23 +61,25 @@ class DataStorage:
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if -1 in df["label"]:
-            self.Y = self.exp_Y
+            self.Y_merged_final = self.exp_Y
             # no experiment, we have already some real labels
-            self.unlabeled_mask = np.argwhere(pd.isnull(self.Y)).flatten()  # type: ignore
-            self.labeled_mask = np.argwhere(~pd.isnull(self.Y)).flatten()  # type: ignore
+            self.unlabeled_mask = np.argwhere(pd.isnull(self.Y_merged_final)).flatten()  # type: ignore
+            self.labeled_mask = np.argwhere(~pd.isnull(self.Y_merged_final)).flatten()  # type: ignore
             self.label_source[self.labeled_mask] = ["G" for _ in self.labeled_mask]
             #  self.Y = Y
 
             # create test split out of labeled data
             self.test_mask = np.empty(0, dtype=np.int64)
 
-            Y_encoded = self.label_encoder.fit_transform(self.Y[~pd.isnull(self.Y)])
-            self.Y = self.Y.astype(np.int64)
-            self.Y[self.labeled_mask] = Y_encoded
+            Y_encoded = self.label_encoder.fit_transform(
+                self.Y_merged_final[~pd.isnull(self.Y_merged_final)]
+            )
+            self.Y_merged_final = self.Y_merged_final.astype(np.int64)
+            self.Y_merged_final[self.labeled_mask] = Y_encoded
 
-            self.Y[pd.isnull(self.Y)] = -1
-            self.human_expert_Y = self.Y
-            self.exp_Y = self.Y
+            self.Y_merged_final[pd.isnull(self.Y_merged_final)] = -1
+            self.human_expert_Y = self.Y_merged_final
+            self.exp_Y = self.Y_merged_final
 
         else:
             # ignore nan as labels
@@ -158,11 +162,11 @@ class DataStorage:
             self.labeled_mask = self.labeled_mask[self.labeled_mask != sample]
 
         self.human_expert_Y[query_indices] = -1
-        self.Y[query_indices] = -1
+        self.Y_merged_final[query_indices] = -1
 
     def update_samples(self, query_indices: IndiceMask, Y_query: LabelList) -> None:
         self.human_expert_Y[query_indices] = Y_query
-        self.Y[query_indices] = Y_query
+        self.Y_merged_final[query_indices] = Y_query
 
     def label_samples(
         self, query_indices: IndiceMask, Y_queries: LabelList, label_source: str
@@ -174,7 +178,7 @@ class DataStorage:
 
         self.label_source[query_indices] = label_source
         self.human_expert_Y[query_indices] = Y_queries
-        self.Y[query_indices] = Y_queries
+        self.Y_merged_final[query_indices] = Y_queries
 
         # todo later: eventuell basierend auf Daten mit dazu rechnen, dass Label verschiedene Kosten haben (Annotationsdauer in Experimenten etc)
         self.costs_spend += len(query_indices)
@@ -201,4 +205,6 @@ class DataStorage:
             self.unlabeled_mask
         ] = self.merge_weak_supervision_label_strategy.merge(ws_labels_array)
 
-        self.Y[self.unlabeled_mask] = self.weak_combined_Y[self.unlabeled_mask]
+        self.Y_merged_final[self.unlabeled_mask] = self.weak_combined_Y[
+            self.unlabeled_mask
+        ]

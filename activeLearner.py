@@ -44,7 +44,9 @@ class ActiveLearner:
         # fake iteration zero
         self.current_query_indices = self.data_storage.labeled_mask
 
-        self.current_Y_queries = self.data_storage.Y[self.data_storage.labeled_mask]
+        self.current_Y_queries = self.data_storage.Y_merged_final[
+            self.data_storage.labeled_mask
+        ]
 
         for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
@@ -61,7 +63,7 @@ class ActiveLearner:
     def fit_learner(self) -> None:
         self.learner.fit(
             self.data_storage.X[self.data_storage.labeled_mask],
-            self.data_storage.Y[self.data_storage.labeled_mask],
+            self.data_storage.Y_merged_final[self.data_storage.labeled_mask],
             #  sample_weight=compute_sample_weight(
             #      "balanced",
             #      self.data_storage.Y[self.data_storage.labeled_mask],

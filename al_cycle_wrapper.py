@@ -160,27 +160,29 @@ def eval_al(
 
     active_rf.fit(
         data_storage.X[data_storage.labeled_mask],
-        data_storage.Y[data_storage.labeled_mask]
+        data_storage.Y_merged_final[data_storage.labeled_mask]
         #  data_storage.train_labeled_X.loc[ys_oracle.index], ys_oracle["label"].to_list()
     )
 
     y_pred = active_rf.predict(data_storage.X[data_storage.test_mask])
-    acc_test_oracle = accuracy_score(data_storage.Y[data_storage.test_mask], y_pred)
+    acc_test_oracle = accuracy_score(
+        data_storage.Y_merged_final[data_storage.test_mask], y_pred
+    )
 
     f1_test_oracle = f1_score(
-        data_storage.Y[data_storage.test_mask],
+        data_storage.Y_merged_final[data_storage.test_mask],
         y_pred,
         average="weighted",
         zero_division=0,
     )
     precision_test_oracle = precision_score(
-        data_storage.Y[data_storage.test_mask],
+        data_storage.Y_merged_final[data_storage.test_mask],
         y_pred,
         average="weighted",
         zero_division=0,
     )
     recall_test_oracle = recall_score(
-        data_storage.Y[data_storage.test_mask],
+        data_storage.Y_merged_final[data_storage.test_mask],
         y_pred,
         average="weighted",
         zero_division=0,
