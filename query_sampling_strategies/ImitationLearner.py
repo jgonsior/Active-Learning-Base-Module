@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 from active_learning.dataStorage import IndiceMask
 
-from .ImitationLearningBaseQuerySampling import (
-    ImitationLearningBaseQuerySampling,
+from .ImitationLearningBaseQuerySampler import (
+    ImitationLearningBaseQuerySampler,
     InputState,
     OutputState,
     PreSampledIndices,
@@ -20,7 +20,7 @@ from .ImitationLearningBaseQuerySampling import (
 from .SingleStateEncoding import SingleStateEncoding
 
 
-class ImitationLearner(ImitationLearningBaseQuerySampling):
+class ImitationLearner(ImitationLearningBaseQuerySampler):
     AMOUNT_OF_PEAKED_OBJECTS: int
 
     def __init__(self, *args, **kwargs):

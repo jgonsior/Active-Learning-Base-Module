@@ -1,3 +1,4 @@
+from active_learning.logger.logger import log_it
 from distutils.command.config import config
 from .merge_weak_supervision_label_strategies import (
     BaseMergeWeakSupervisionLabelStrategy,
@@ -23,7 +24,7 @@ class DataStorage:
     labeled_mask: IndiceMask
     test_mask: IndiceMask
     weakly_combined_mask: IndiceMask
-    weak_supervisions: List[BaseWeakSupervision]
+    weak_supervisions: List[BaseWeakSupervision] = []
 
     X: FeatureList
     Y_merged_final: LabelList  # the final label, merged from human_expert_Y and weak_combined_Y -> this is the stuff which trains the AL-model
@@ -187,6 +188,10 @@ class DataStorage:
         return self.exp_Y[query_indice]
 
     def generate_weak_labels(self) -> None:
+        if len(self.weak_supervisions) == 0:
+            log_it("No weak supervision strategies provided")
+            return
+
         # store in weak_combined_Y
         # merge together with human_expert_Y into Y
         ws_labels_list: List[LabelList] = []

@@ -27,7 +27,7 @@ PreSampledIndices = (
 )  # these are lists of indices, for batch batches, and for single just one-element lists
 
 
-class ImitationLearningBaseQuerySampling(BaseQuerySamplingStrategy):
+class ImitationLearningBaseQuerySampler(BaseQuerySamplingStrategy):
     PRE_SAMPLING_METHOD: str
     PRE_SAMPLING_ARG: Any
     DISTANCE_METRIC: str

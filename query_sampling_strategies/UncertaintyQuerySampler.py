@@ -8,7 +8,7 @@ from active_learning.dataStorage import DataStorage, IndiceMask
 from active_learning.learner.standard import Learner
 
 
-class UncertaintyQuerySampling(BaseQuerySamplingStrategy):
+class UncertaintyQuerySampler(BaseQuerySamplingStrategy):
     def __init__(self, strategy: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.strategy = strategy

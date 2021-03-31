@@ -1,11 +1,14 @@
-from active_learning.query_sampling_strategies.TrainedImitALQuerySampling import (
-    TrainedImitALBatchSampling,
-    TrainedImitALSingleSampling,
+from active_learning.query_sampling_strategies.BatchStateEncoding import (
+    TrainImitALBatch,
 )
-from active_learning.query_sampling_strategies.UncertaintyQuerySampling import (
-    UncertaintyQuerySampling,
+from active_learning.query_sampling_strategies.TrainedImitALQuerySampler import (
+    TrainedImitALBatchSampler,
+    TrainedImitALSingleSampler,
 )
-from active_learning.query_sampling_strategies import RandomQuerySampling
+from active_learning.query_sampling_strategies.UncertaintyQuerySampler import (
+    UncertaintyQuerySampler,
+)
+from active_learning.query_sampling_strategies import RandomQuerySampler
 from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
     BaseQuerySamplingStrategy,
 )
@@ -39,7 +42,7 @@ from .dataStorage import DataStorage
 
 def train_al(
     hyper_parameters: Dict[str, Any],
-    oracles: List[BaseOracle],
+    oracle: BaseOracle,
     data_storage: DataStorage = None,
 ) -> Tuple[Learner, float, Dict[str, BaseCallback], DataStorage, ActiveLearner]:
 
@@ -90,25 +93,25 @@ def train_al(
         data_storage.labeled_mask
     )
 
-    sampling_strategy: BaseQuerySamplingStrategy
+    query_sampling_strategy: BaseQuerySamplingStrategy
     if hyper_parameters["SAMPLING"] == "random":
-        sampling_strategy = RandomQuerySampling()
+        query_sampling_strategy = RandomQuerySampler()
     elif hyper_parameters["SAMPLING"] == "uncertainty_lc":
-        sampling_strategy = UncertaintyQuerySampling("least_confident")
+        query_sampling_strategy = UncertaintyQuerySampler("least_confident")
     elif hyper_parameters["SAMPLING"] == "uncertainty_max_margin":
-        sampling_strategy = UncertaintyQuerySampling("max_margin")
+        query_sampling_strategy = UncertaintyQuerySampler("max_margin")
     elif hyper_parameters["SAMPLING"] == "uncertainty_entropy":
-        sampling_strategy = UncertaintyQuerySampling("entropy")
+        query_sampling_strategy = UncertaintyQuerySampler("entropy")
     elif hyper_parameters["SAMPLING"] == "trained_nn":
         if hyper_parameters["BATCH_MODE"]:
-            sampling_strategy = TrainedImitALBatchSampling(
+            query_sampling_strategy = TrainedImitALBatchSampler(
                 hyper_parameters["NN_BINARY_PATH"],
                 PRE_SAMPLING_METHOD=hyper_parameters["PRE_SAMPLING_METHOD"],
                 PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
                 AMOUNT_OF_PEAKED_OBJECTS=hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"],
             )
         else:
-            sampling_strategy = TrainedImitALSingleSampling(
+            query_sampling_strategy = TrainedImitALSingleSampler(
                 hyper_parameters["NN_BINARY_PATH"],
                 PRE_SAMPLING_METHOD=hyper_parameters["PRE_SAMPLING_METHOD"],
                 PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
@@ -129,9 +132,9 @@ def train_al(
     )
 
     active_learner_params = {
-        "sampling_strategy": sampling_strategy,
+        "query_sampling_strategy": query_sampling_strategy,
         "data_storage": data_storage,
-        "oracles": oracles,
+        "oracle": oracle,
         "learner": learner,
         "callbacks": callbacks,
         "stopping_criteria": ALCyclesStoppingCriteria(50),
@@ -261,11 +264,11 @@ Takes a dataset_path, X, Y, label_encoder and does the following steps:
 
 def train_and_eval_dataset(
     hyper_parameters: Dict[str, Any],
-    oracles: List[BaseOracle],
+    oracle: BaseOracle,
 ) -> float:
     (_, fit_time, callbacks, data_storage, _,) = train_al(
         hyper_parameters=hyper_parameters,
-        oracles=oracles,
+        oracle=oracle,
         data_storage=None,
     )
 

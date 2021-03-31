@@ -3,18 +3,17 @@ import os
 import dill
 import numpy as np
 
-from active_learning.dataStorage import IndiceMask
-
 from .BatchStateEncoding import BatchStateSampling
-from .ImitationLearningBaseQuerySampling import (
-    ImitationLearningBaseQuerySampling,
+from .ImitationLearningBaseQuerySampler import (
+    ImitationLearningBaseQuerySampler,
     InputState,
     OutputState,
+    PreSampledIndices,
 )
 from .SingleStateEncoding import SingleStateEncoding
 
 
-class TrainedImitALSampling(ImitationLearningBaseQuerySampling):
+class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
     def __init__(self, NN_BINARY_PATH: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -31,10 +30,15 @@ class TrainedImitALSampling(ImitationLearningBaseQuerySampling):
         Y_pred: OutputState = self.sampling_classifier.predict(X_state)
         return Y_pred
 
+    def calculateImitationLearningData(
+        self, pre_sampled_X_querie_indices: PreSampledIndices
+    ) -> None:
+        pass
 
-class TrainedImitALSingleSampling(TrainedImitALSampling, SingleStateEncoding):
+
+class TrainedImitALSingleSampler(TrainedImitALSampler, SingleStateEncoding):
     pass
 
 
-class TrainedImitALBatchSampling(TrainedImitALSampling, BatchStateSampling):
+class TrainedImitALBatchSampler(TrainedImitALSampler, BatchStateSampling):
     pass

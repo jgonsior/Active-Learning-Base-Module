@@ -1,5 +1,5 @@
-from .ImitationLearningBaseQuerySampling import (
-    ImitationLearningBaseQuerySampling,
+from .ImitationLearningBaseQuerySampler import (
+    ImitationLearningBaseQuerySampler,
     InputState,
     PreSampledIndices,
 )
@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
 
-class SingleStateEncoding(ImitationLearningBaseQuerySampling):
+class SingleStateEncoding(ImitationLearningBaseQuerySampler):
     STATE_ARGSECOND_PROBAS: bool
     STATE_ARGTHIRD_PROBAS: bool
     STATE_DIFF_PROBAS: bool
