@@ -53,7 +53,7 @@ def standard_config(
 
 
 def get_active_config(
-    additional_parameters: CliConfigParameters = [],
+    additional_parameters: CliConfigParameters = [], return_parser: bool = False
 ) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
     return standard_config(
         [
@@ -132,5 +132,6 @@ def get_active_config(
             ),
             (["--DISABLE_FAKE_EXPERIMENT_ORACLE"], {"action": "store_true"}),
             *additional_parameters,
-        ]
+        ],
+        return_argparse=return_parser,
     )
