@@ -4,8 +4,13 @@ from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import 
 import numpy as np
 from scipy.stats import entropy
 
-from active_learning.dataStorage import DataStorage, IndiceMask
+from active_learning.dataStorage import IndiceMask
 from active_learning.learner.standard import Learner
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from active_learning.activeLearner import ActiveLearner
 
 
 class UncertaintyQuerySampler(BaseQuerySamplingStrategy):
@@ -13,11 +18,9 @@ class UncertaintyQuerySampler(BaseQuerySamplingStrategy):
         super().__init__(*args, **kwargs)
         self.strategy = strategy
 
-    def what_to_label_next(
-        self, BATCH_SIZE: int, learner: Learner, data_storage: DataStorage
-    ) -> IndiceMask:
-        Y_temp_proba = learner.predict_proba(
-            data_storage.X[data_storage.unlabeled_mask]
+    def what_to_label_next(self, active_learner: "ActiveLearner") -> IndiceMask:
+        Y_temp_proba = active_learner.learner.predict_proba(
+            active_learner.data_storage.X[active_learner.data_storage.unlabeled_mask]
         )
 
         if self.strategy == "least_confident":
@@ -30,7 +33,7 @@ class UncertaintyQuerySampler(BaseQuerySamplingStrategy):
 
         # sort indices_of_cluster by argsort
         argsort = np.argsort(-result)  # type: ignore
-        query_indices = data_storage.unlabeled_mask[argsort]
+        query_indices = active_learner.data_storage.unlabeled_mask[argsort]
 
         # return smallest probabilities
-        return query_indices[:BATCH_SIZE]
+        return query_indices[: active_learner.BATCH_SIZE]
