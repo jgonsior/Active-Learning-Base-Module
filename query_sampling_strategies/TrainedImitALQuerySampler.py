@@ -1,8 +1,8 @@
 import os
 
-import pickle
+import pandas as pd
 import numpy as np
-import tensorflow.keras
+from tensorflow import keras
 from .BatchStateEncoding import BatchStateSampling
 from .ImitationLearningBaseQuerySampler import (
     ImitationLearningBaseQuerySampler,
@@ -20,10 +20,17 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        # reload the correct dimensions
+        X = pd.read_csv(
+            os.path.dirname(NN_BINARY_PATH) + "/01_state_encodings_X.csv", nrows=10
+        )
+        Y = pd.read_csv(
+            os.path.dirname(NN_BINARY_PATH) + "/01_expert_actions_Y.csv", nrows=10
+        )
 
         keras_model = keras.models.load_model(NN_BINARY_PATH)
-        model = KerasRegressor(keras_model)
-        model.initialize(np.array([]), np.array([]))  # type: ignore
+        model = KerasRegressor(keras_model)  # type: ignore
+        model.initialize(X, Y)
 
         # with open(NN_BINARY_PATH, "rb") as handle:
         #    model = pickle.load(handle)
