@@ -2,7 +2,7 @@ import os
 
 import pickle
 import numpy as np
-import keras
+import tensorflow.keras
 from .BatchStateEncoding import BatchStateSampling
 from .ImitationLearningBaseQuerySampler import (
     ImitationLearningBaseQuerySampler,
