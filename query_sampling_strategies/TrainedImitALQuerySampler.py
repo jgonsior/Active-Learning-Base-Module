@@ -1,8 +1,8 @@
 import os
 
-import dill
+import pickle
 import numpy as np
-
+import keras
 from .BatchStateEncoding import BatchStateSampling
 from .ImitationLearningBaseQuerySampler import (
     ImitationLearningBaseQuerySampler,
@@ -11,6 +11,7 @@ from .ImitationLearningBaseQuerySampler import (
     PreSampledIndices,
 )
 from .SingleStateEncoding import SingleStateEncoding
+from scikeras.wrappers import KerasRegressor
 
 
 class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
@@ -20,8 +21,12 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
-        with open(NN_BINARY_PATH, "rb") as handle:
-            model = dill.load(handle)
+        keras_model = keras.models.load_model(NN_BINARY_PATH)
+        model = KerasRegressor(keras_model)
+        model.initialize(np.array([]), np.array([]))  # type: ignore
+
+        # with open(NN_BINARY_PATH, "rb") as handle:
+        #    model = pickle.load(handle)
 
         self.sampling_classifier = model
 
