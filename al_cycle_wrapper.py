@@ -237,7 +237,7 @@ def eval_al(
         output_hyper_parameter_file = Path(hyper_parameters["output_directory"])
     else:
         output_hyper_parameter_file = Path(
-            hyper_parameters["output_directory"] + "/dataset_creation.csv"
+            hyper_parameters["output_directory"] + "/01_dataset_creation_stats.csv"
         )
 
     if not output_hyper_parameter_file.is_file():

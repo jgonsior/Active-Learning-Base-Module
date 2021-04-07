@@ -38,10 +38,10 @@ class ImitationLearner(ImitationLearningBaseQuerySampler):
 
     def save_nn_training_data(self, DATA_PATH):
         self.states.to_csv(
-            DATA_PATH + "/states.csv", index=False, header=False, mode="a"
+            DATA_PATH + "/01_state_encodings_X.csv", index=False, header=False, mode="a"
         )
         self.optimal_policies.to_csv(
-            DATA_PATH + "/opt_pol.csv", index=False, header=False, mode="a"
+            DATA_PATH + "/01_expert_actions_Y.csv", index=False, header=False, mode="a"
         )
 
     def calculateImitationLearningData(
