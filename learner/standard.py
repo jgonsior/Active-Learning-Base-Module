@@ -1,6 +1,4 @@
 import warnings
-from typing import Any, Dict, Union
-
 
 #  import np.random.distributions as dists
 from sklearn.ensemble import RandomForestClassifier
@@ -10,6 +8,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from typing import Any, Dict, Union
 
 Learner = Union[
     MLPClassifier,

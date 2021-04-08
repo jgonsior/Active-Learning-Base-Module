@@ -1,16 +1,16 @@
+import numpy as np
+import random
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from typing import Any, List, Tuple
+from typing import List, TYPE_CHECKING
+
+from active_learning.logger.logger import log_it
 from .LabelingFunctions import (
     LabelConfidence,
     LabelingFunctions,
 )
-from active_learning.logger.logger import log_it
-import random
-from typing import Any, List, Tuple
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
-import numpy as np
-
-from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from active_learning.dataStorage import (

@@ -1,8 +1,9 @@
 import abc
-from collections import Counter
-from .BaseMergeWeakSupervisionLabelStrategy import BaseMergeWeakSupervisionLabelStrategy
 import numpy as np
+from collections import Counter
 from typing import List, TYPE_CHECKING
+
+from .BaseMergeWeakSupervisionLabelStrategy import BaseMergeWeakSupervisionLabelStrategy
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

@@ -1,6 +1,5 @@
-from typing import List, TYPE_CHECKING, Callable, Tuple
-
 import numpy as np
+from typing import List, TYPE_CHECKING, Callable, Tuple
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner

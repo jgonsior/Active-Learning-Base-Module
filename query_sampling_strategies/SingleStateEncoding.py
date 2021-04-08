@@ -1,12 +1,12 @@
+import numpy as np
+from sklearn.metrics.pairwise import pairwise_distances
+from typing import List
+
 from .ImitationLearningBaseQuerySampler import (
     ImitationLearningBaseQuerySampler,
     InputState,
     PreSampledIndices,
 )
-from typing import List
-
-import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances
 
 
 class SingleStateEncoding(ImitationLearningBaseQuerySampler):

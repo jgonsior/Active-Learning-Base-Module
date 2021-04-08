@@ -1,17 +1,15 @@
-from active_learning.logger.logger import log_it
+import math
+import numpy as np
+import pandas as pd
 from distutils.command.config import config
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
+from typing import List, Optional
+
+from active_learning.logger.logger import log_it
 from .merge_weak_supervision_label_strategies import (
     BaseMergeWeakSupervisionLabelStrategy,
 )
-import math
-from typing import List, Optional
-
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler, RobustScaler
-
 from .weak_supervision import BaseWeakSupervision
-
 
 # type aliases
 IndiceMask = np.ndarray
@@ -110,14 +108,14 @@ class DataStorage:
             )
             self.labeled_mask = np.empty(0, dtype=np.int64)
 
-            """ 
+            """
             1. get start_set from X_labeled
             2. if X_unlabeled is None : experiment!
                 2.1 if X_test: rest von X_labeled wird X_train_unlabeled
                 2.2 if X_test is none: split rest von X_labeled in X_train_unlabeled und X_test
                else (kein experiment):
                X_unlabeled wird X_unlabeled, rest von X_labeled wird X_train_unlabeled_
-            
+
             """
             # separate X_labeled into start_set and labeled _rest
             # check if the minimum amount of labeled data is present in the start set size

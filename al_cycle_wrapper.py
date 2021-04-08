@@ -1,3 +1,27 @@
+import csv
+import datetime
+import threading
+from pathlib import Path
+from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
+from timeit import default_timer as timer
+from typing import Any, Dict, List, Tuple
+
+from active_learning.activeLearner import ActiveLearner
+from active_learning.callbacks import (
+    MetricCallback,
+    PrintLoggingStatisticsCallback,
+    test_acc_metric,
+    test_f1_metric,
+)
+from active_learning.callbacks.BaseCallback import BaseCallback
+from active_learning.dataStorage import DataStorage
+from active_learning.datasets import load_alc, load_dwtc, load_synthetic, load_uci
+from active_learning.learner import Learner, get_classifier
+from active_learning.oracles import BaseOracle
+from active_learning.query_sampling_strategies import RandomQuerySampler
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
+)
 from active_learning.query_sampling_strategies.BatchStateEncoding import (
     TrainImitALBatch,
 )
@@ -8,35 +32,7 @@ from active_learning.query_sampling_strategies.TrainedImitALQuerySampler import 
 from active_learning.query_sampling_strategies.UncertaintyQuerySampler import (
     UncertaintyQuerySampler,
 )
-from active_learning.query_sampling_strategies import RandomQuerySampler
-from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
-    BaseQuerySamplingStrategy,
-)
-from active_learning.callbacks.BaseCallback import BaseCallback
-
-import csv
-import datetime
-import threading
-from pathlib import Path
-from timeit import default_timer as timer
-from typing import Any, Dict, List, Tuple
-
-from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score
-
-from active_learning.activeLearner import ActiveLearner
-from active_learning.callbacks import (
-    MetricCallback,
-    PrintLoggingStatisticsCallback,
-    test_acc_metric,
-    test_f1_metric,
-)
-from active_learning.datasets import load_alc, load_dwtc, load_synthetic, load_uci
-from active_learning.dataStorage import DataStorage
-from active_learning.learner import Learner, get_classifier
-from active_learning.oracles import BaseOracle
-
 from active_learning.stopping_criterias import ALCyclesStoppingCriteria
-
 from .dataStorage import DataStorage
 
 

@@ -1,8 +1,7 @@
 import abc
-from .BaseMergeWeakSupervisionLabelStrategy import BaseMergeWeakSupervisionLabelStrategy
-
-
 from typing import List, TYPE_CHECKING
+
+from .BaseMergeWeakSupervisionLabelStrategy import BaseMergeWeakSupervisionLabelStrategy
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

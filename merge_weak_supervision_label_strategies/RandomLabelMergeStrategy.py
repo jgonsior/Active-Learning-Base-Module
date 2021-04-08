@@ -1,9 +1,9 @@
 import abc
-from .BaseMergeWeakSupervisionLabelStrategy import BaseMergeWeakSupervisionLabelStrategy
 import numpy as np
-
-from typing import List, TYPE_CHECKING
 import random
+from typing import List, TYPE_CHECKING
+
+from .BaseMergeWeakSupervisionLabelStrategy import BaseMergeWeakSupervisionLabelStrategy
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

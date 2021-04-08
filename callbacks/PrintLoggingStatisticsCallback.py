@@ -1,7 +1,7 @@
-from active_learning.logger.logger import log_it
+from sklearn.metrics import accuracy_score, f1_score
 from typing import TYPE_CHECKING, Callable, List
 
-from sklearn.metrics import accuracy_score, f1_score
+from active_learning.logger.logger import log_it
 
 if TYPE_CHECKING:
     from ..activeLearner import ActiveLearner

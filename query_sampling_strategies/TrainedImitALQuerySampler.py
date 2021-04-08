@@ -1,8 +1,9 @@
-import os
-
-import pandas as pd
 import numpy as np
+import os
+import pandas as pd
+from scikeras.wrappers import KerasRegressor
 from tensorflow import keras
+
 from .BatchStateEncoding import BatchStateSampling
 from .ImitationLearningBaseQuerySampler import (
     ImitationLearningBaseQuerySampler,
@@ -11,7 +12,6 @@ from .ImitationLearningBaseQuerySampler import (
     PreSampledIndices,
 )
 from .SingleStateEncoding import SingleStateEncoding
-from scikeras.wrappers import KerasRegressor
 
 
 class TrainedImitALSampler(ImitationLearningBaseQuerySampler):

@@ -1,13 +1,12 @@
-from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
-    BaseQuerySamplingStrategy,
-)
 import numpy as np
 from scipy.stats import entropy
+from typing import TYPE_CHECKING
 
 from active_learning.dataStorage import IndiceMask
 from active_learning.learner.standard import Learner
-
-from typing import TYPE_CHECKING
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
+)
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

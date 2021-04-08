@@ -1,9 +1,8 @@
 import copy
-from typing import TYPE_CHECKING
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

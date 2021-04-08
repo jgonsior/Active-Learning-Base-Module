@@ -1,10 +1,10 @@
-from active_learning.logger.logger import log_it
-import random
-from typing import Any, Dict, Tuple
-
 import numpy as np
 import pandas as pd
+import random
 from sklearn.datasets import make_classification
+from typing import Any, Dict, Tuple
+
+from active_learning.logger.logger import log_it
 
 
 def load_synthetic(

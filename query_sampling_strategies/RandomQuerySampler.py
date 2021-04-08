@@ -1,16 +1,15 @@
-from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
-    BaseQuerySamplingStrategy,
-)
-import random
-from xml.dom.domreg import well_known_implementations
-from active_learning.oracles.BaseOracle import BaseOracle
-from typing import List, Tuple
 import numpy as np
+import random
+from typing import List, Tuple
+from typing import TYPE_CHECKING
+from xml.dom.domreg import well_known_implementations
 
 from active_learning.dataStorage import DataStorage, IndiceMask, LabelList
 from active_learning.learner.standard import Learner
-
-from typing import TYPE_CHECKING
+from active_learning.oracles.BaseOracle import BaseOracle
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
+)
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

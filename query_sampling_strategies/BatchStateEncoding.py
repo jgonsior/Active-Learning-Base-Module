@@ -1,16 +1,15 @@
 import math
+import numpy as np
 import random
+from sklearn.metrics.pairwise import pairwise_distances
 from typing import List
 
-import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances
-
 from active_learning.dataStorage import IndiceMask, LabelList
+from .ImitationLearner import ImitationLearner, ImitationLearningBaseQuerySampler
 from .ImitationLearningBaseQuerySampler import (
     InputState,
     PreSampledIndices,
 )
-from .ImitationLearner import ImitationLearner, ImitationLearningBaseQuerySampler
 
 
 class BatchStateSampling(ImitationLearningBaseQuerySampler):

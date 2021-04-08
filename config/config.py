@@ -1,10 +1,9 @@
 import argparse
+import numpy as np
 import random
 import sys
-from typing import Any, Dict, List, Tuple, Union
-
-import numpy as np
 from scipy.stats import uniform  # type: ignore
+from typing import Any, Dict, List, Tuple, Union
 
 from ..logger.logger import init_logger
 

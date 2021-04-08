@@ -1,8 +1,8 @@
+from typing import Dict, List, Union
+
 from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
     BaseQuerySamplingStrategy,
 )
-from typing import Dict, List, Union
-
 from .callbacks.BaseCallback import BaseCallback
 from .dataStorage import DataStorage, IndiceMask, LabelList
 from .learner.standard import Learner

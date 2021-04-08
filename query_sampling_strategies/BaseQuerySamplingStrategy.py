@@ -1,8 +1,7 @@
 import abc
+from typing import TYPE_CHECKING
 
 from active_learning.dataStorage import IndiceMask
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner

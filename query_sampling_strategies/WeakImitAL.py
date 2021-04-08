@@ -1,12 +1,12 @@
-from active_learning.dataStorage import IndiceMask
-from sklearn.metrics.pairwise import pairwise_distances
-from .ImitationLearner import TrainImitALSingle
 import copy
-from typing import List, TYPE_CHECKING
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
+from sklearn.metrics.pairwise import pairwise_distances
+from typing import List, TYPE_CHECKING
+
+from active_learning.dataStorage import IndiceMask
+from .ImitationLearner import TrainImitALSingle
 
 if TYPE_CHECKING:
     from active_learning.activeLearner import ActiveLearner
