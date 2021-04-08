@@ -1,225 +1,109 @@
-import abc
+from typing import Dict, List, Union
 
-from .experiment_setup_lib import (
-    conf_matrix_and_acc_and_f1,
-    get_single_al_run_stats_row,
-    get_single_al_run_stats_table_header,
-    log_it,
+from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
+    BaseQuerySamplingStrategy,
 )
+from .callbacks.BaseCallback import BaseCallback
+from .dataStorage import DataStorage, IndiceMask, LabelList
+from .learner.standard import Learner
+from .logger.logger import log_it
+from .oracles.BaseOracle import BaseOracle
+from .oracles.LabeledStartSetOracle import LabeledStartSetOracle
+from .stopping_criterias.BaseStoppingCriteria import BaseStoppingCriteria
 
 
 class ActiveLearner:
+    query_sampling_strategy: BaseQuerySamplingStrategy
+    data_storage: DataStorage
+    oracle: BaseOracle
+    callbacks: Dict[str, BaseCallback]
+    stopping_criteria: BaseStoppingCriteria
+    BATCH_SIZE: int
+    current_query_indices: IndiceMask
+    current_Y_queries: LabelList
+
     def __init__(
         self,
-        data_storage,
-        cluster_strategy,
-        oracle,
-        clf,
-        weak_supervision_label_sources=[],
-        **kwargs,
-    ):
+        query_sampling_strategy: BaseQuerySamplingStrategy,
+        data_storage: DataStorage,
+        oracle: BaseOracle,
+        learner: Learner,
+        callbacks: Dict[str, BaseCallback],
+        stopping_criteria: BaseStoppingCriteria,
+        BATCH_SIZE: int,
+    ) -> None:
 
-        self.__dict__.update(**kwargs)
-
+        self.query_sampling_strategy = query_sampling_strategy
         self.data_storage = data_storage
-        self.clf = clf
-
-        self.metrics_per_al_cycle = {
-            "test_acc": [],
-            "test_f1": [],
-            "test_conf_matrix": [],
-            "train_acc": [],
-            "train_f1": [],
-            "train_conf_matrix": [],
-            "query_length": [],
-            "source": [],
-        }
-        self.cluster_strategy = cluster_strategy
-        self.amount_of_user_asked_queries = 0
+        self.learner = learner
         self.oracle = oracle
-        self.weak_supervision_label_sources = weak_supervision_label_sources
+        self.callbacks = callbacks
+        self.stopping_criteria = stopping_criteria
+        self.BATCH_SIZE = BATCH_SIZE
 
         # fake iteration zero
-        X_query = self.data_storage.X[self.data_storage.labeled_mask]
-        Y_query = self.data_storage.Y[self.data_storage.labeled_mask]
+        self.current_query_indices = self.data_storage.labeled_mask
 
-        self.metrics_per_al_cycle["source"].append("G")
-        self.metrics_per_al_cycle["query_length"].append(len(Y_query))
+        self.current_Y_queries = self.data_storage.Y_merged_final[
+            self.data_storage.labeled_mask
+        ]
 
-        self.calculate_pre_metrics(X_query, Y_query)
+        for callback in self.callbacks.values():
+            callback.pre_learning_cycle_hook(self)
 
         # retrain CLASSIFIER
-        self.fit_clf()
+        self.fit_learner()
 
-        self.calculate_post_metrics(X_query, Y_query)
+        # run all labeling functions to create weak labels
+        self.data_storage.generate_weak_labels()
 
-        log_it(get_single_al_run_stats_table_header())
-        log_it(
-            get_single_al_run_stats_row(
-                0,
-                len(self.data_storage.labeled_mask),
-                len(self.data_storage.unlabeled_mask),
-                self.metrics_per_al_cycle,
-            )
-        )
+        for callback in self.callbacks.values():
+            callback.post_learning_cycle_hook(self)
 
-    @abc.abstractmethod
-    def calculate_next_query_indices(self, X_train_unlabeled_cluster_indices, *args):
-        pass
-
-    def fit_clf(self):
-        self.clf.fit(
+    def fit_learner(self) -> None:
+        self.learner.fit(
             self.data_storage.X[self.data_storage.labeled_mask],
-            self.data_storage.Y[self.data_storage.labeled_mask],
+            self.data_storage.Y_merged_final[self.data_storage.labeled_mask],
             #  sample_weight=compute_sample_weight(
             #      "balanced",
             #      self.data_storage.Y[self.data_storage.labeled_mask],
             #  ),
         )
 
-    def calculate_pre_metrics(self, X_query, Y_query):
-        pass
-
-    def calculate_post_metrics(self, X_query, Y_query):
-        if len(self.data_storage.test_mask) > 0:
-            # experiment
-            conf_matrix, acc, f1 = conf_matrix_and_acc_and_f1(
-                self.clf,
-                self.data_storage.X[self.data_storage.test_mask],
-                self.data_storage.Y[self.data_storage.test_mask],
-                self.data_storage.label_encoder,
-            )
-        else:
-            conf_matrix, acc, f1 = None, 0, 0
-        self.metrics_per_al_cycle["test_conf_matrix"].append(conf_matrix)
-        self.metrics_per_al_cycle["test_acc"].append(acc)
-        self.metrics_per_al_cycle["test_f1"].append(f1)
-
-        if len(self.data_storage.test_mask) > 0:
-            # experiment
-            conf_matrix, acc, f1 = conf_matrix_and_acc_and_f1(
-                self.clf,
-                self.data_storage.X[self.data_storage.labeled_mask],
-                self.data_storage.Y[self.data_storage.labeled_mask],
-                self.data_storage.label_encoder,
-            )
-        else:
-            conf_matrix, acc, f1 = None, 0, 0
-
-        self.metrics_per_al_cycle["train_conf_matrix"].append(conf_matrix)
-        self.metrics_per_al_cycle["train_acc"].append(acc)
-        self.metrics_per_al_cycle["train_f1"].append(f1)
-
-        if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.train_unlabeled_Y_predicted = self.clf.predict(
-                self.data_storage.X[self.data_storage.unlabeled_mask]
-            )
-            self.data_storage.train_labeled_Y_predicted = self.clf.predict(
-                self.data_storage.X[self.data_storage.labeled_mask]
-            )
-
-    def get_newly_labeled_data(self):
-        X_train_unlabeled_cluster_indices = self.cluster_strategy.get_cluster_indices(
-            clf=self.clf, nr_queries_per_iteration=self.NR_QUERIES_PER_ITERATION
-        )
-
-        if self.data_storage.PLOT_EVOLUTION:
-            self.data_storage.possible_samples_indices = []
-            self.data_storage.test_accuracy = self.metrics_per_al_cycle["test_acc"][-1]
-            self.data_storage.clf = self.clf
-
-        # ask strategy for new datapoint
-        query_indices = self.calculate_next_query_indices(
-            X_train_unlabeled_cluster_indices
-        )
-
-        # ask oracle for new query
-        Y_query = self.oracle.get_labeled_samples(
-            query_indices, self.data_storage, self.metrics_per_al_cycle
-        )
-        return Y_query, query_indices, "A"
-
-    def learn(
+    def al_cycle(
         self,
-    ):
-        log_it(self.data_storage.label_encoder.classes_)
-        log_it("Used Hyperparams:")
-        log_it(vars(self))
-        log_it(locals())
+    ) -> None:
+        log_it("Started AL Cycle")
 
-        early_stop_reached = False
-        for i in range(0, self.NR_LEARNING_ITERATIONS):
+        while not self.stopping_criteria.stop_is_reached():
             # try to actively get at least this amount of data, but if there is only less data available that's just fine as well
-            if len(self.data_storage.unlabeled_mask) < self.NR_QUERIES_PER_ITERATION:
-                self.NR_QUERIES_PER_ITERATION = len(self.data_storage.unlabeled_mask)
-            if self.NR_QUERIES_PER_ITERATION == 0:
+            if len(self.data_storage.unlabeled_mask) < self.BATCH_SIZE:
+                self.BATCH_SIZE = len(self.data_storage.unlabeled_mask)
+            if self.BATCH_SIZE == 0:
+                # if there is no data left to be labeled we can stop regardless of the stopping criteria
                 break
 
-            # first iteration - add everything from ground truth
-            Y_query = None
+            # potentially the labeling functions have different results now
+            # if rerun_ws=True
+            self.data_storage.generate_weak_labels()
 
-            if (
-                self.metrics_per_al_cycle["test_acc"][-1]
-                > self.MINIMUM_TEST_ACCURACY_BEFORE_RECOMMENDATIONS
-            ):
-                # iterate over existing WS sources
-                for labelSource in self.weak_supervision_label_sources:
-                    (
-                        Y_query,
-                        query_indices,
-                        source,
-                    ) = labelSource.get_labeled_samples()
+            self.current_query_indices = (
+                self.query_sampling_strategy.what_to_label_next(self)
+            )
+            self.current_Y_queries = self.oracle.get_labels(
+                self.current_query_indices, self
+            )
 
-                    if Y_query is not None:
-                        break
+            self.data_storage.label_samples(
+                self.current_query_indices, self.current_Y_queries, "H"
+            )
 
-            if early_stop_reached and Y_query is None:
-                break
-
-            if Y_query is None:
-                # ask oracle for some new labels
-                Y_query, query_indices, source = self.get_newly_labeled_data()
-                self.amount_of_user_asked_queries += len(Y_query)
-
-            self.metrics_per_al_cycle["source"].append(source)
-            self.metrics_per_al_cycle["query_length"].append(len(Y_query))
-
-            self.data_storage.label_samples(query_indices, Y_query, source)
-
-            X_query = self.data_storage.X[query_indices]
-
-            self.calculate_pre_metrics(X_query, Y_query)
+            for callback in self.callbacks.values():
+                callback.pre_learning_cycle_hook(self)
 
             # retrain CLASSIFIER
-            self.fit_clf()
+            self.fit_learner()
 
-            self.calculate_post_metrics(X_query, Y_query)
-
-            log_it(
-                get_single_al_run_stats_row(
-                    i,
-                    len(self.data_storage.labeled_mask),
-                    len(self.data_storage.unlabeled_mask),
-                    self.metrics_per_al_cycle,
-                )
-            )
-
-            if self.amount_of_user_asked_queries > self.USER_QUERY_BUDGET_LIMIT:
-                early_stop_reached = True
-                log_it("Budget exhausted")
-                if not self.ALLOW_RECOMMENDATIONS_AFTER_STOP:
-                    break
-
-            if self.STOP_AFTER_MAXIMUM_ACCURACY_REACHED:
-                if (
-                    self.metrics_per_al_cycle["test_acc"][-1]
-                    >= self.THEORETICALLY_BEST_ACHIEVABLE_ACCURACY
-                ):
-                    early_stop_reached = True
-                    log_it(
-                        "THEORETICALLY_BEST_ACHIEVABLE_ACCURACY: "
-                        + str(self.THEORETICALLY_BEST_ACHIEVABLE_ACCURACY)
-                    )
-                    break
-
-        return (self.clf, self.metrics_per_al_cycle)
+            for callback in self.callbacks.values():
+                callback.post_learning_cycle_hook(self)
+            self.stopping_criteria.update(self)

@@ -1,4 +1,3 @@
-from .baseWeakSupervision import *
-from .snubaLite import *
-from .weakCert import *
-from .weakClust import *
+from .BaseWeakSupervision import *
+from .LabelingFunctions import *
+from .SyntheticLabelingFunctions import *
