@@ -100,6 +100,7 @@ class ImitationLearningBaseQuerySampler(BaseQuerySamplingStrategy):
         zero_to_one_values_and_index = list(
             zip(Y_output_state, pre_sampled_X_querie_indices)
         )
+
         ordered_list_of_possible_sample_indices = sorted(
             zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True
         )

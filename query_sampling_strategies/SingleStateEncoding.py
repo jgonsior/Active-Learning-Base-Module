@@ -54,11 +54,18 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
         elif self.PRE_SAMPLING_METHOD == "furthest":
             max_sum = 0
             X_query_index = np.empty(0, dtype=np.int64)
+
             for _ in range(0, self.PRE_SAMPLING_ARG):
+                if self.AMOUNT_OF_PEAKED_OBJECTS > len(
+                    self.data_storage.unlabeled_mask
+                ):
+                    replace = True
+                else:
+                    replace = False
                 random_index: PreSampledIndices = np.random.choice(
                     self.data_storage.unlabeled_mask,
                     size=self.AMOUNT_OF_PEAKED_OBJECTS,
-                    replace=False,
+                    replace=replace,
                 )
                 random_sample = self.data_storage.X[random_index]
 
