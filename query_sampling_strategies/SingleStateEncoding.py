@@ -8,6 +8,8 @@ from .ImitationLearningBaseQuerySampler import (
     PreSampledIndices,
 )
 
+import math
+
 
 class SingleStateEncoding(ImitationLearningBaseQuerySampler):
     STATE_ARGSECOND_PROBAS: bool
@@ -114,6 +116,12 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
 
         if self.STATE_DISTANCES_LAB:
             # calculate average distance to labeled and average distance to unlabeled samples
+            normalization_denominator = (
+                2
+                * math.sqrt(self.data_storage.X.shape[1])
+                * len(self.data_storage.labeled_mask)
+            )
+
             average_distance_labeled = (
                 np.sum(
                     pairwise_distances(
@@ -123,12 +131,19 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
                     ),
                     axis=0,
                 )
-                / len(self.data_storage.X[self.data_storage.labeled_mask])
+                / normalization_denominator  # len(self.data_storage.X[self.data_storage.labeled_mask])
             )
+
             state_list += average_distance_labeled.tolist()
 
         if self.STATE_DISTANCES_UNLAB:
             # calculate average distance to labeled and average distance to unlabeled samples
+            normalization_denominator = (
+                2
+                * math.sqrt(self.data_storage.X.shape[1])
+                * len(self.data_storage.unlabeled_mask)
+            )
+
             average_distance_unlabeled = (
                 np.sum(
                     pairwise_distances(
@@ -138,10 +153,12 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
                     ),
                     axis=0,
                 )
-                / len(self.data_storage.X[self.data_storage.unlabeled_mask])
+                / normalization_denominator  # len(self.data_storage.X[self.data_storage.unlabeled_mask])
             )
+
             state_list += average_distance_unlabeled.tolist()
 
         if self.STATE_INCLUDE_NR_FEATURES:
             state_list = [float(self.data_storage.X.shape[1])] + state_list
+
         return np.array(state_list)

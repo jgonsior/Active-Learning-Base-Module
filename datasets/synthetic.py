@@ -99,7 +99,7 @@ def load_synthetic(
 
             HYPERCUBE = HYPERCUBE  # if false a random polytope is selected instead
             SCALE = 0.01  # features should be between 0 and 1 now
-
+    N_SAMPLES = 80
     synthetic_creation_args = {
         "n_samples": N_SAMPLES,  # type: ignore
         "n_features": N_FEATURES,  # type: ignore

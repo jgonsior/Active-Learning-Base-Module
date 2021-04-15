@@ -12,6 +12,7 @@ from .ImitationLearningBaseQuerySampler import (
     PreSampledIndices,
 )
 from .SingleStateEncoding import SingleStateEncoding
+import joblib
 
 
 class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
@@ -32,6 +33,8 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
         model = KerasRegressor(keras_model)  # type: ignore
         model.initialize(X, Y)
 
+        self.scaler = joblib.load(NN_BINARY_PATH + "_scaler.gz")
+
         # with open(NN_BINARY_PATH, "rb") as handle:
         #    model = pickle.load(handle)
 
@@ -39,6 +42,7 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
 
     def applyNN(self, X_input_state: InputState) -> OutputState:
         X_state = np.reshape(X_input_state, (1, len(X_input_state)))
+        X_state = self.scaler.transform(X_state)
         Y_pred: OutputState = self.sampling_classifier.predict(X_state)
         return Y_pred
 

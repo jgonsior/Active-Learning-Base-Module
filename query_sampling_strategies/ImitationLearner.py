@@ -36,6 +36,7 @@ class ImitationLearner(ImitationLearningBaseQuerySampler):
         )
 
     def save_nn_training_data(self, DATA_PATH):
+        print(self.states)
         self.states.to_csv(
             DATA_PATH + "/01_state_encodings_X.csv", index=False, header=False, mode="a"
         )
