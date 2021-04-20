@@ -21,6 +21,7 @@ class ActiveLearner:
     BATCH_SIZE: int
     current_query_indices: IndiceMask
     current_Y_queries: LabelList
+    USE_WS_LABELS_CONTINOUSLY: bool
 
     def __init__(
         self,
@@ -31,6 +32,7 @@ class ActiveLearner:
         callbacks: Dict[str, BaseCallback],
         stopping_criteria: BaseStoppingCriteria,
         BATCH_SIZE: int,
+        USE_WS_LABELS_CONTINOUSLY: bool,
     ) -> None:
 
         self.query_sampling_strategy = query_sampling_strategy
@@ -40,6 +42,7 @@ class ActiveLearner:
         self.callbacks = callbacks
         self.stopping_criteria = stopping_criteria
         self.BATCH_SIZE = BATCH_SIZE
+        self.USE_WS_LABELS_CONTINOUSLY = USE_WS_LABELS_CONTINOUSLY
 
         # fake iteration zero
         self.current_query_indices = self.data_storage.labeled_mask
@@ -51,19 +54,25 @@ class ActiveLearner:
         for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
 
-        # retrain CLASSIFIER
-        self.fit_learner()
-
         # run all labeling functions to create weak labels
         self.data_storage.generate_weak_labels()
+
+        # retrain CLASSIFIER
+        self.fit_learner()
 
         for callback in self.callbacks.values():
             callback.post_learning_cycle_hook(self)
 
     def fit_learner(self) -> None:
+
+        if self.USE_WS_LABELS_CONTINOUSLY:
+            mask = self.data_storage.weakly_combined_mask
+        else:
+            mask = self.data_storage.labeled_mask
+
         self.learner.fit(
-            self.data_storage.X[self.data_storage.labeled_mask],
-            self.data_storage.Y_merged_final[self.data_storage.labeled_mask],
+            self.data_storage.X[mask],
+            self.data_storage.Y_merged_final[mask],
             #  sample_weight=compute_sample_weight(
             #      "balanced",
             #      self.data_storage.Y[self.data_storage.labeled_mask],

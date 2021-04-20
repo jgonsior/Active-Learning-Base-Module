@@ -130,6 +130,8 @@ def get_active_config(
                 {"type": int, "default": 5},
             ),
             (["--DISABLE_FAKE_EXPERIMENT_ORACLE"], {"action": "store_true"}),
+            (["--WS_MODE"], {"action": "store_true"}),
+            (["--USE_WS_LABELS_CONTINOUSLY"], {"action": "store_true"}),
             *additional_parameters,
         ],
         return_argparse=return_parser,

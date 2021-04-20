@@ -14,7 +14,7 @@ class MajorityVoteLabelMergeStrategy(BaseMergeWeakSupervisionLabelStrategy):
     def merge(self, ws_labels_array: np.ndarray) -> "LabelList":
         merged_labels = np.ones(ws_labels_array.shape[0]) * -1
 
-        for i in range(0, len(ws_labels_array[0])):
+        for i in range(0, ws_labels_array.shape[0]):
             c = Counter(ws_labels_array[i])
             most_common = c.most_common(1)[0][0]
 

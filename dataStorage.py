@@ -179,7 +179,7 @@ class DataStorage:
         self.human_expert_Y[query_indices] = Y_queries
         self.Y_merged_final[query_indices] = Y_queries
 
-        # todo later: eventuell basierend auf Daten mit dazu rechnen, dass Label verschiedene Kosten haben (Annotationsdauer in Experimenten etc)
+        # @TODO later: eventuell basierend auf Daten mit dazu rechnen, dass Label verschiedene Kosten haben (Annotationsdauer in Experimenten etc)
         self.costs_spend += len(query_indices)
 
     def get_experiment_labels(self, query_indice: IndiceMask) -> LabelList:
@@ -206,8 +206,28 @@ class DataStorage:
         # magic
         self.weak_combined_Y[
             self.unlabeled_mask
-        ] = self.merge_weak_supervision_label_strategy.merge(ws_labels_array)
+        ] = self.merge_weak_supervision_label_strategy.merge(  # type: ignore
+            ws_labels_array
+        )
 
+        # extract from self.weak_combined_Y only those who have not -1 and add them to the mask
+        self.weakly_combined_mask = np.array(
+            [
+                indice
+                for indice in self.unlabeled_mask
+                if self.weak_combined_Y[indice] != -1
+            ]
+        )
+
+        # merge labeled mask back into it
+        self.weakly_combined_mask = np.array(
+            list(set().union(self.labeled_mask, self.weakly_combined_mask))
+        )
+
+        # first write WS labels
         self.Y_merged_final[self.unlabeled_mask] = self.weak_combined_Y[
             self.unlabeled_mask
         ]
+
+        # but later overwrite it with the exp_Y labels
+        self.Y_merged_final[self.labeled_mask] = self.exp_Y[self.labeled_mask]
