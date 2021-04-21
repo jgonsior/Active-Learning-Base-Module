@@ -186,18 +186,19 @@ class DataStorage:
     def get_experiment_labels(self, query_indice: IndiceMask) -> LabelList:
         return self.exp_Y[query_indice]
 
-    def generate_weak_labels(self, learner: Learner) -> None:
+    def generate_weak_labels(self, learner: Learner, mask="unlabeled_mask") -> None:
         if len(self.weak_supervisions) == 0:
             log_it("No weak supervision strategies provided")
             return
+
+        if mask == "unlabeled_mask":
+            mask = self.unlabeled_mask
 
         # store in weak_combined_Y
         # merge together with human_expert_Y into Y
         ws_labels_list: List[LabelList] = []
         for weak_supervision in self.weak_supervisions:
-            ws_labels_list.append(
-                weak_supervision.get_labels(self.unlabeled_mask, self, learner)
-            )
+            ws_labels_list.append(weak_supervision.get_labels(mask, self, learner))
 
         # convert from [array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.])]
 
@@ -206,24 +207,22 @@ class DataStorage:
 
         # magic
         self.weak_combined_Y[
-            self.unlabeled_mask
+            mask
         ] = self.merge_weak_supervision_label_strategy.merge(  # type: ignore
             ws_labels_array
         )
 
+        # print(self.weak_combined_Y)
+
         # extract from self.weak_combined_Y only those who have not -1 and add them to the mask
         self.weakly_combined_mask = np.array(
-            [
-                indice
-                for indice in self.unlabeled_mask
-                if self.weak_combined_Y[indice] != -1
-            ]
+            [indice for indice in mask if self.weak_combined_Y[indice] != -1]
         )
 
         self.only_weak_mask = np.array(
             [
                 indice
-                for indice in self.unlabeled_mask
+                for indice in mask
                 if self.weak_combined_Y[indice] != -1
                 if indice not in self.labeled_mask
             ]
@@ -235,9 +234,9 @@ class DataStorage:
         )
 
         # first write WS labels
-        self.Y_merged_final[self.unlabeled_mask] = self.weak_combined_Y[
-            self.unlabeled_mask
-        ]
+        self.Y_merged_final[mask] = self.weak_combined_Y[mask]
 
         # but later overwrite it with the exp_Y labels
         self.Y_merged_final[self.labeled_mask] = self.exp_Y[self.labeled_mask]
+
+        assert -1 not in self.Y_merged_final[self.only_weak_mask]
