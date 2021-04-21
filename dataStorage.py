@@ -10,6 +10,7 @@ from .merge_weak_supervision_label_strategies import (
     BaseMergeWeakSupervisionLabelStrategy,
 )
 from .weak_supervision import BaseWeakSupervision
+from .learner.standard import Learner
 
 # type aliases
 IndiceMask = np.ndarray
@@ -185,7 +186,7 @@ class DataStorage:
     def get_experiment_labels(self, query_indice: IndiceMask) -> LabelList:
         return self.exp_Y[query_indice]
 
-    def generate_weak_labels(self) -> None:
+    def generate_weak_labels(self, learner: Learner) -> None:
         if len(self.weak_supervisions) == 0:
             log_it("No weak supervision strategies provided")
             return
@@ -195,7 +196,7 @@ class DataStorage:
         ws_labels_list: List[LabelList] = []
         for weak_supervision in self.weak_supervisions:
             ws_labels_list.append(
-                weak_supervision.get_labels(self.unlabeled_mask, self)
+                weak_supervision.get_labels(self.unlabeled_mask, self, learner)
             )
 
         # convert from [array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.])]
@@ -216,6 +217,15 @@ class DataStorage:
                 indice
                 for indice in self.unlabeled_mask
                 if self.weak_combined_Y[indice] != -1
+            ]
+        )
+
+        self.only_weak_mask = np.array(
+            [
+                indice
+                for indice in self.unlabeled_mask
+                if self.weak_combined_Y[indice] != -1
+                if indice not in self.labeled_mask
             ]
         )
 

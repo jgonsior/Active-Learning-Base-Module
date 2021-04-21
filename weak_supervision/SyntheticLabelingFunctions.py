@@ -48,7 +48,11 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         return Y_pred, Y_probas
 
     def _compute_labeling_function(
-        self, X: "FeatureList", Y: "LabelList", error_factor: float
+        self,
+        X: "FeatureList",
+        Y: "LabelList",
+        error_factor: float,
+        MAX_AMOUNT_OF_FOCUSSED_FEATURES: int = 10,
     ) -> None:
         """number_of_features: int = random.choices(
             population=range(0, X.shape[1]),
@@ -59,7 +63,9 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         self.model = random.sample(["dt", "lr", "knn"], k=1)[0]
 
         # focus on a maximum of 3 features
-        number_of_features: int = random.randint(1, min(3, X.shape[1]))
+        number_of_features: int = random.randint(
+            1, min(MAX_AMOUNT_OF_FOCUSSED_FEATURES, X.shape[1])
+        )
 
         self.restricted_features = random.sample(
             [i for i in range(0, X.shape[1])], k=number_of_features

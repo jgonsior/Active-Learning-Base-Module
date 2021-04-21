@@ -29,10 +29,12 @@ def load_synthetic(
             else:
                 N_FEATURES = random.randint(2, 100)
 
-            N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
+            N_INFORMATIVE, N_REDUNDANT, N_RANDOM_GARBAGE = [
                 int(N_FEATURES * i)
                 for i in np.random.dirichlet(np.ones(3), size=1).tolist()[0]  # type: ignore
             ]
+
+            N_REPEATED = 0
 
             N_CLASSES = random.randint(2, 10)
             N_CLUSTERS_PER_CLASS = random.randint(

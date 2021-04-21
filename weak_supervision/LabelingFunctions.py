@@ -9,6 +9,7 @@ if TYPE_CHECKING:
         LabelList,
     )
 
+from ..learner.standard import Learner
 
 from .BaseWeakSupervision import BaseWeakSupervision
 
@@ -29,7 +30,7 @@ class LabelingFunctions(BaseWeakSupervision):
         self.cost = cost
 
     def get_labels(
-        self, query_indices: "IndiceMask", data_storage: "DataStorage"
+        self, query_indices: "IndiceMask", data_storage: "DataStorage", learner: Learner
     ) -> "LabelList":
         (
             Y_pred_lf,

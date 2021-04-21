@@ -54,29 +54,34 @@ class ActiveLearner:
         for callback in self.callbacks.values():
             callback.pre_learning_cycle_hook(self)
 
-        # run all labeling functions to create weak labels
-        self.data_storage.generate_weak_labels()
-
         # retrain CLASSIFIER
-        self.fit_learner()
+        self.fit_learner(FIRST_TIME=True)
 
         for callback in self.callbacks.values():
             callback.post_learning_cycle_hook(self)
 
-    def fit_learner(self) -> None:
+    def fit_learner(self, FIRST_TIME=False) -> None:
 
-        if self.USE_WS_LABELS_CONTINOUSLY:
+        if self.USE_WS_LABELS_CONTINOUSLY and not FIRST_TIME:
             mask = self.data_storage.weakly_combined_mask
+            weights = []
+            for indice in mask:
+                if indice in self.data_storage.labeled_mask:
+                    weights.append(1)
+                else:
+                    weights.append(1)
         else:
             mask = self.data_storage.labeled_mask
-
-        self.learner.fit(
-            self.data_storage.X[mask],
-            self.data_storage.Y_merged_final[mask],
+            weights = None
             #  sample_weight=compute_sample_weight(
             #      "balanced",
             #      self.data_storage.Y[self.data_storage.labeled_mask],
             #  ),
+
+        self.learner.fit(
+            self.data_storage.X[mask],
+            self.data_storage.Y_merged_final[mask],
+            sample_weight=weights,
         )
 
     def al_cycle(
