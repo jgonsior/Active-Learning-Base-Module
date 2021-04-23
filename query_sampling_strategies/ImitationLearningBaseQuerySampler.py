@@ -97,7 +97,7 @@ class ImitationLearningBaseQuerySampler(BaseQuerySamplingStrategy):
         pre_sampled_X_querie_indices: PreSampledIndices,
         BATCH_SIZE: int,
     ) -> IndiceMask:
-        zero_to_one_values_and_index = list(
+        zero_to_one_values_and_index = set(
             zip(Y_output_state, pre_sampled_X_querie_indices)
         )
 
@@ -105,6 +105,12 @@ class ImitationLearningBaseQuerySampler(BaseQuerySamplingStrategy):
             zero_to_one_values_and_index, key=lambda tup: tup[0], reverse=True
         )
 
-        return np.array(
-            [v for _, v in ordered_list_of_possible_sample_indices[:BATCH_SIZE]]
-        )
+        # remove potential duplicates if there are less than 20 samples
+        result_list = set()
+        for proba, index in ordered_list_of_possible_sample_indices:
+            if index not in result_list:
+                result_list.add(index)
+            if len(result_list) == BATCH_SIZE:
+                return np.array(list(result_list))
+
+        return np.array(list(result_list))
