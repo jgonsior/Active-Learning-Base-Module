@@ -1,3 +1,4 @@
+from ast import BoolOp
 from typing import Dict, List, Union
 
 from active_learning.query_sampling_strategies.BaseQuerySamplingStrategy import (
@@ -21,6 +22,7 @@ class ActiveLearner:
     BATCH_SIZE: int
     current_query_indices: IndiceMask
     current_Y_queries: LabelList
+    WS_MODE: bool
     USE_WS_LABELS_CONTINOUSLY: bool
 
     def __init__(
@@ -33,6 +35,7 @@ class ActiveLearner:
         stopping_criteria: BaseStoppingCriteria,
         BATCH_SIZE: int,
         USE_WS_LABELS_CONTINOUSLY: bool,
+        WS_MODE: bool,
     ) -> None:
 
         self.query_sampling_strategy = query_sampling_strategy
@@ -43,6 +46,7 @@ class ActiveLearner:
         self.stopping_criteria = stopping_criteria
         self.BATCH_SIZE = BATCH_SIZE
         self.USE_WS_LABELS_CONTINOUSLY = USE_WS_LABELS_CONTINOUSLY
+        self.WS_MODE = WS_MODE
 
         # fake iteration zero
         self.current_query_indices = self.data_storage.labeled_mask
@@ -99,7 +103,8 @@ class ActiveLearner:
 
             # potentially the labeling functions have different results now
             # if rerun_ws=True
-            self.data_storage.generate_weak_labels()
+            if self.WS_MODE:
+                self.data_storage.generate_weak_labels(self.learner)
 
             self.current_query_indices = (
                 self.query_sampling_strategy.what_to_label_next(self)
