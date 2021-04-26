@@ -104,7 +104,7 @@ class WeakImitAL(TrainImitALSingle):
 
         else:
             print(
-                "No valid INITIAL_BATCH_SAMPLING_METHOD given. Valid for single are random or furthest. You specified: "
+                "No valid PRE_SAMPLING_METHOD given. Valid for single are random or furthest. You specified: "
                 + self.PRE_SAMPLING_METHOD
             )
             exit(-1)
