@@ -118,14 +118,6 @@ def get_active_config(
                 {"type": float, "default": 0.2},
             ),
             (
-                ["--PRE_SAMPLING_METHOD"],
-                {"type": str, "default": "furthest"},
-            ),
-            (
-                ["--PRE_SAMPLING_ARG"],
-                {"type": int, "default": 10},
-            ),
-            (
                 ["--AMOUNT_OF_SYNTHETIC_LABELLING_FUNCTIONS"],
                 {"type": int, "default": 5},
             ),

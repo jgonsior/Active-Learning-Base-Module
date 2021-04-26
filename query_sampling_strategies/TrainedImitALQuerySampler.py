@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import pandas as pd
-from scikeras.wrappers import KerasRegressor
+from scikeras.wrappers import KerasRegressor, KerasClassifier
 from tensorflow import keras
 
 from .BatchStateEncoding import BatchStateSampling
@@ -30,7 +30,15 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
         )
 
         keras_model = keras.models.load_model(NN_BINARY_PATH)
-        model = KerasRegressor(keras_model)  # type: ignore
+        if WRAPPER == "regression":
+            model_wrapper = KerasRegressor
+        elif WRAPPER == "classifier":
+            model_wrapper = KerasClassifier
+        else:
+            print("Only regression and classifier are allowd wrappers, exiting…")
+            exit(-1)
+
+        model = model_wrapper(keras_model)  # type: ignore
         model.initialize(X, Y)
 
         self.scaler = joblib.load(NN_BINARY_PATH + "_scaler.gz")
