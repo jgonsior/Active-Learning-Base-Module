@@ -42,8 +42,6 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
         )
 
         keras_model = keras.models.load_model(NN_BINARY_PATH)
-        print(NN_BINARY_PATH)
-        print(keras_model)
 
         with open(NN_BINARY_PATH + "/params.json", "r") as f:
             params = json.load(f)
