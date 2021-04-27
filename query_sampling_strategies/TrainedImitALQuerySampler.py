@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import json
 import pandas as pd
 from scikeras.wrappers import KerasRegressor, KerasClassifier
 from tensorflow import keras
@@ -13,6 +14,17 @@ from .ImitationLearningBaseQuerySampler import (
 )
 from .SingleStateEncoding import SingleStateEncoding
 import joblib
+
+
+def _binarize_targets(df, TOP_N=5):
+    df = df.assign(threshold=np.sort(df.values)[:, -TOP_N : -(TOP_N - 1)])
+    for column_name in df.columns:
+        if column_name == "threshold":
+            continue
+        df[column_name].loc[df[column_name] < df.threshold] = 0
+        df[column_name].loc[df[column_name] >= df.threshold] = 1
+    del df["threshold"]
+    return df
 
 
 class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
@@ -30,18 +42,25 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
         )
 
         keras_model = keras.models.load_model(NN_BINARY_PATH)
-        if WRAPPER == "regression":
-            model_wrapper = KerasRegressor
-        elif WRAPPER == "classifier":
-            model_wrapper = KerasClassifier
+        print(NN_BINARY_PATH)
+        print(keras_model)
+
+        with open(NN_BINARY_PATH + "/params.json", "r") as f:
+            params = json.load(f)
+
+        if params["TARGET_ENCODING"] == "regression":
+            wrapper = KerasRegressor
+        elif params["TARGET_ENCODING"] == "binary":
+            wrapper = KerasClassifier
+            Y = _binarize_targets(Y)
         else:
             print("Only regression and classifier are allowd wrappers, exiting…")
             exit(-1)
 
-        model = model_wrapper(keras_model)  # type: ignore
+        model = wrapper(keras_model)  # type: ignore
         model.initialize(X, Y)
 
-        self.scaler = joblib.load(NN_BINARY_PATH + "_scaler.gz")
+        self.scaler = joblib.load(NN_BINARY_PATH + "/scaler.gz")
 
         # with open(NN_BINARY_PATH, "rb") as handle:
         #    model = pickle.load(handle)
