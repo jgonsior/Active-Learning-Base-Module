@@ -75,7 +75,7 @@ def get_active_config(
             ),
             (["--BATCH_SIZE"], {"type": int, "default": 5}),
             (["--PLOT"], {"action": "store_true"}),
-            (["--OUTPUT_DIRECTORY"], {"default": "tmp/"}),
+            (["--OUTPUT_PATH"], {"default": "tmp/"}),
             (["--HYPER_SEARCH_TYPE"], {"default": "random"}),
             (["--TOTAL_BUDGET"], {"type": float, "default": 200}),
             (["--AMOUNT_OF_PEAKED_OBJECTS"], {"type": int, "default": 12}),

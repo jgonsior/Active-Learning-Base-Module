@@ -4,9 +4,9 @@ from sklearn.preprocessing import LabelEncoder
 
 
 def load_uci(
-    DATASETS_DIR: str, DATASET_NAME: str, RANDOM_SEED: int
+    DATASETS_PATH: str, DATASET_NAME: str, RANDOM_SEED: int
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-    df = pd.read_csv(DATASETS_DIR + "/uci_cleaned/" + DATASET_NAME + ".csv")
+    df = pd.read_csv(DATASETS_PATH + "/uci_cleaned/" + DATASET_NAME + ".csv")
 
     # shuffle df
     df = df.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)

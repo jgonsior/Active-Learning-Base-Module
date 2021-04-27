@@ -229,11 +229,11 @@ def eval_al(
         }
 
     # save hyper parameter results in csv file
-    if hyper_parameters["output_directory"].endswith(".csv"):
-        output_hyper_parameter_file = Path(hyper_parameters["output_directory"])
+    if hyper_parameters["output_path"].endswith(".csv"):
+        output_hyper_parameter_file = Path(hyper_parameters["output_path"])
     else:
         output_hyper_parameter_file = Path(
-            hyper_parameters["output_directory"] + "/01_dataset_creation_stats.csv"
+            hyper_parameters["output_path"] + "/01_dataset_creation_stats.csv"
         )
 
     if not output_hyper_parameter_file.is_file():
