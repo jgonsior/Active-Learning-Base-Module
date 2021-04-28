@@ -37,9 +37,7 @@ def load_synthetic(
             N_REPEATED = 0
 
             N_CLASSES = random.randint(2, 10)
-            N_CLUSTERS_PER_CLASS = random.randint(
-                1, min(max(1, int(2 ** N_INFORMATIVE / N_CLASSES)), 10)
-            )
+            N_CLUSTERS_PER_CLASS = random.randint(1, 10)
 
             if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
                 continue
