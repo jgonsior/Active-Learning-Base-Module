@@ -29,16 +29,18 @@ def load_synthetic(
             else:
                 N_FEATURES = random.randint(2, 100)
 
-            N_INFORMATIVE, N_REDUNDANT, N_RANDOM_GARBAGE = [
+            N_INFORMATIVE, N_REDUNDANT, N_REPEATED = [
                 int(N_FEATURES * i)
                 for i in np.random.dirichlet(np.ones(3), size=1).tolist()[0]  # type: ignore
             ]
 
-            N_REPEATED = 0
+            # N_REPEATED = 0
 
             N_CLASSES = random.randint(2, 10)
-            N_CLUSTERS_PER_CLASS = random.randint(1, 10)
-
+            # N_CLUSTERS_PER_CLASS = random.randint(1, 10)
+            N_CLUSTERS_PER_CLASS = random.randint(
+                1, min(max(1, int(2 ** N_INFORMATIVE / N_CLASSES)), 10)
+            )
             if N_CLASSES * N_CLUSTERS_PER_CLASS > 2 ** N_INFORMATIVE:
                 continue
             no_valid_synthetic_arguments_found = False
