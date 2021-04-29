@@ -8,9 +8,6 @@ def load_uci(
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     df = pd.read_csv(DATASETS_PATH + "/uci_cleaned/" + DATASET_NAME + ".csv")
 
-    # shuffle df
-    df = df.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
-
     synthetic_creation_args = {}
     synthetic_creation_args["n_classes"] = len(df["LABEL"].unique())
 
