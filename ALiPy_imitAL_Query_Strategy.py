@@ -24,15 +24,6 @@ class ALiPY_ImitAL_Query_Strategy:
         self.X = X
         self.Y = Y
 
-        if "OLD_PATH" in kwargs.keys():
-            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-            os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
-            with open(kwargs["NN_BINARY_PATH"], "rb") as handle:
-                model = dill.load(handle)
-
-            self.sampling_classifier = model
-
         # load NN params from json file
         with open(
             os.path.dirname(kwargs["NN_BINARY_PATH"])
@@ -40,7 +31,7 @@ class ALiPY_ImitAL_Query_Strategy:
             "r",
         ) as f:
             content = str(f.read())
-            dataset_stats = json.loads(content)
+                dataset_stats = json.loads(content)
 
         # print(dataset_stats)
 
