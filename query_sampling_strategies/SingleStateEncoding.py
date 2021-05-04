@@ -59,7 +59,7 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
             max_sum = 0
             X_query_index = np.empty(0, dtype=np.int64)
 
-            for _ in range(0, self.PRE_SAMPLING_ARG):
+            for x in range(0, self.PRE_SAMPLING_ARG):
                 if self.AMOUNT_OF_PEAKED_OBJECTS > len(
                     self.data_storage.unlabeled_mask
                 ):

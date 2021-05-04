@@ -1,6 +1,6 @@
 import json
 import os
-
+import dill
 import numpy as np
 
 from .query_sampling_strategies.ImitationLearningBaseQuerySampler import (
@@ -24,6 +24,15 @@ class ALiPY_ImitAL_Query_Strategy:
         self.X = X
         self.Y = Y
 
+        if "OLD_PATH" in kwargs.keys():
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+            with open(kwargs["NN_BINARY_PATH"], "rb") as handle:
+                model = dill.load(handle)
+
+            self.sampling_classifier = model
+
         # load NN params from json file
         with open(
             os.path.dirname(kwargs["NN_BINARY_PATH"])
@@ -36,23 +45,27 @@ class ALiPY_ImitAL_Query_Strategy:
         # print(dataset_stats)
 
         # overwrite
+        params = {
+            "PRE_SAMPLING_METHOD": dataset_stats["PRE_SAMPLING_METHOD"],
+            "PRE_SAMPLING_ARG": dataset_stats["PRE_SAMPLING_ARG"],
+            "AMOUNT_OF_PEAKED_OBJECTS": dataset_stats["AMOUNT_OF_PEAKED_OBJECTS"],
+            "DISTANCE_METRIC": dataset_stats["DISTANCE_METRIC"],
+            "STATE_ARGSECOND_PROBAS": dataset_stats["STATE_ARGSECOND_PROBAS"],
+            "STATE_ARGTHIRD_PROBAS": dataset_stats["STATE_ARGTHIRD_PROBAS"],
+            "STATE_DIFF_PROBAS": dataset_stats["STATE_DIFF_PROBAS"],
+            "STATE_PREDICTED_CLASS": dataset_stats["STATE_PREDICTED_CLASS"],
+            "STATE_DISTANCES_LAB": dataset_stats["STATE_DISTANCES_LAB"],
+            "STATE_DISTANCES_UNLAB": dataset_stats["STATE_DISTANCES_UNLAB"],
+            "STATE_INCLUDE_NR_FEATURES": dataset_stats["STATE_INCLUDE_NR_FEATURES"],
+            "NN_BINARY_PATH": kwargs["NN_BINARY_PATH"],
+        }
+        data_storage = kwargs["data_storage"]
+        del kwargs["data_storage"]
+        params.update(kwargs)
 
-        self.trained_imitAL_sampler = TrainedImitALSingleSampler(
-            PRE_SAMPLING_METHOD=dataset_stats["PRE_SAMPLING_METHOD"],
-            PRE_SAMPLING_ARG=dataset_stats["PRE_SAMPLING_ARG"],
-            AMOUNT_OF_PEAKED_OBJECTS=dataset_stats["AMOUNT_OF_PEAKED_OBJECTS"],
-            DISTANCE_METRIC=dataset_stats["DISTANCE_METRIC"],
-            STATE_ARGSECOND_PROBAS=dataset_stats["STATE_ARGSECOND_PROBAS"],
-            STATE_ARGTHIRD_PROBAS=dataset_stats["STATE_ARGTHIRD_PROBAS"],
-            STATE_DIFF_PROBAS=dataset_stats["STATE_DIFF_PROBAS"],
-            STATE_PREDICTED_CLASS=dataset_stats["STATE_PREDICTED_CLASS"],
-            STATE_DISTANCES_LAB=dataset_stats["STATE_DISTANCES_LAB"],
-            STATE_DISTANCES_UNLAB=dataset_stats["STATE_DISTANCES_UNLAB"],
-            STATE_INCLUDE_NR_FEATURES=dataset_stats["STATE_INCLUDE_NR_FEATURES"],
-            NN_BINARY_PATH=kwargs["NN_BINARY_PATH"],
-        )
+        self.trained_imitAL_sampler = TrainedImitALSingleSampler(**params)
 
-        self.trained_imitAL_sampler.data_storage = kwargs["data_storage"]
+        self.trained_imitAL_sampler.data_storage = data_storage
 
     def select(self, labeled_index, unlabeled_index, model, batch_size=1, **kwargs):
         self.trained_imitAL_sampler.learner = model
