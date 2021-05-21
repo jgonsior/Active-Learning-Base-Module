@@ -31,7 +31,7 @@ class ALiPY_ImitAL_Query_Strategy:
             "r",
         ) as f:
             content = str(f.read())
-                dataset_stats = json.loads(content)
+            dataset_stats = json.loads(content)
 
         # print(dataset_stats)
 

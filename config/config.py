@@ -57,7 +57,7 @@ def get_active_config(
     return standard_config(
         [
             (
-                ["--SAMPLING"],
+                ["--QUERY_STRATEGY"],
                 {
                     "help": "Possible values: uncertainty, random, committe, boundary",
                 },

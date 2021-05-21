@@ -90,15 +90,15 @@ def train_al(
     )
 
     query_sampling_strategy: BaseQuerySamplingStrategy
-    if hyper_parameters["SAMPLING"] == "random":
+    if hyper_parameters["QUERY_STRATEGY"] == "random":
         query_sampling_strategy = RandomQuerySampler()
-    elif hyper_parameters["SAMPLING"] == "uncertainty_lc":
+    elif hyper_parameters["QUERY_STRATEGY"] == "uncertainty_lc":
         query_sampling_strategy = UncertaintyQuerySampler("least_confident")
-    elif hyper_parameters["SAMPLING"] == "uncertainty_max_margin":
+    elif hyper_parameters["QUERY_STRATEGY"] == "uncertainty_max_margin":
         query_sampling_strategy = UncertaintyQuerySampler("max_margin")
-    elif hyper_parameters["SAMPLING"] == "uncertainty_entropy":
+    elif hyper_parameters["QUERY_STRATEGY"] == "uncertainty_entropy":
         query_sampling_strategy = UncertaintyQuerySampler("entropy")
-    elif hyper_parameters["SAMPLING"] == "trained_nn":
+    elif hyper_parameters["QUERY_STRATEGY"] == "trained_nn":
         if hyper_parameters["BATCH_MODE"]:
             query_sampling_strategy = TrainedImitALBatchSampler(
                 hyper_parameters["NN_BINARY_PATH"],
@@ -113,6 +113,8 @@ def train_al(
                 PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
                 AMOUNT_OF_PEAKED_OBJECTS=hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"],
             )
+    elif hyper_parameters["QUERY_STRATEGY"] == "optimal":
+        query_sampling_strategy = OptimalSampler()
     else:
         print("No Active Learning Strategy specified, exiting")
         exit(-1)
