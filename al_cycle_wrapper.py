@@ -194,6 +194,7 @@ def eval_al(
         )
         / (len(callbacks["acc_test"].values) - 1)
     )
+
     hyper_parameters["acc_auc"] = acc_auc
     f1_auc = (
         auc(

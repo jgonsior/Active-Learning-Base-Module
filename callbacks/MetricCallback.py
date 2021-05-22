@@ -12,6 +12,7 @@ class MetricCallback(BaseCallback):
         self, metric_function: Callable[["ActiveLearner"], List[float]]
     ) -> None:
         self.metric_function = metric_function
+        self.values = []
 
     def pre_learning_cycle_hook(self, active_learner: "ActiveLearner") -> None:
         pass
@@ -25,14 +26,11 @@ def test_f1_metric(active_learner: "ActiveLearner") -> List[float]:
     Y_pred = active_learner.learner.predict(
         active_learner.data_storage.X[active_learner.data_storage.test_mask]
     )
-
     return f1_score(Y_true, Y_pred, average="weighted", zero_division=0)  # type: ignore
 
 
 def test_acc_metric(active_learner: "ActiveLearner") -> List[float]:
-    Y_true = active_learner.data_storage.Y_merged_final[
-        active_learner.data_storage.test_mask
-    ]
+    Y_true = active_learner.data_storage.exp_Y[active_learner.data_storage.test_mask]
     Y_pred = active_learner.learner.predict(
         active_learner.data_storage.X[active_learner.data_storage.test_mask]
     )
@@ -63,7 +61,7 @@ def get_single_al_run_stats_row(
         amount_of_labeled,
         amount_of_unlabeled,
         metrics_per_al_cycle["query_length"][index],
-        metrics_per_al_cycle["test_acc"][index],
-        metrics_per_al_cycle["train_acc"][index],
+        metrics_per_al_cycle["test_f1"][index],
+        metrics_per_al_cycle["train_f1"][index],
         metrics_per_al_cycle["source"][index],
     )

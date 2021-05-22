@@ -6,8 +6,6 @@ if TYPE_CHECKING:
 
 
 class BaseCallback(abc.ABC):
-    values: List[Any] = []
-
     @abc.abstractmethod
     def pre_learning_cycle_hook(self, active_learner: "ActiveLearner") -> None:
         pass
