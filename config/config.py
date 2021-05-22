@@ -60,6 +60,7 @@ def get_active_config(
                 ["--QUERY_STRATEGY"],
                 {
                     "help": "Possible values: uncertainty, random, committe, boundary",
+                    "default": "trained_nn",
                 },
             ),
             (

@@ -113,8 +113,6 @@ def train_al(
                 PRE_SAMPLING_ARG=hyper_parameters["PRE_SAMPLING_ARG"],
                 AMOUNT_OF_PEAKED_OBJECTS=hyper_parameters["AMOUNT_OF_PEAKED_OBJECTS"],
             )
-    elif hyper_parameters["QUERY_STRATEGY"] == "optimal":
-        query_sampling_strategy = OptimalSampler()
     else:
         print("No Active Learning Strategy specified, exiting")
         exit(-1)
