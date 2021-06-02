@@ -9,11 +9,6 @@ from active_learning.logger.logger import log_it
 
 def load_synthetic(
     RANDOM_SEED: int,
-    NEW_SYNTHETIC_PARAMS: bool,
-    VARIABLE_DATASET: bool,
-    AMOUNT_OF_FEATURES: int,
-    HYPERCUBE: bool,
-    GENERATE_NOISE: bool,
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     no_valid_synthetic_arguments_found = True
     while no_valid_synthetic_arguments_found:

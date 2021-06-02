@@ -62,11 +62,6 @@ def train_al(
         elif hyper_parameters["DATASET_NAME"] == "synthetic":
             df, synthetic_creation_args = load_synthetic(
                 hyper_parameters["RANDOM_SEED"],
-                hyper_parameters["NEW_SYNTHETIC_PARAMS"],
-                hyper_parameters["VARIABLE_DATASET"],
-                hyper_parameters["AMOUNT_OF_FEATURES"],
-                hyper_parameters["HYPERCUBE"],
-                hyper_parameters["GENERATE_NOISE"],
             )
             data_storage = DataStorage(
                 df, TEST_FRACTION=hyper_parameters["TEST_FRACTION"]
