@@ -1,9 +1,6 @@
 from active_learning.dataStorage import IndiceMask
 import copy
 from ALiPy.alipy.metrics.performance import accuracy_score
-import json
-import os
-import dill
 import numpy as np
 
 from .query_sampling_strategies.ImitationLearningBaseQuerySampler import (

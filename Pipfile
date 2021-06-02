@@ -34,7 +34,6 @@ tensorflow = "*"
 statsmodels = "*"
 tensorflow-ranking = "*"
 scikeras = "*"
-dill = "*"
 
 
 [requires]

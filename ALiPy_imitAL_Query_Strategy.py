@@ -1,6 +1,5 @@
 import json
 import os
-import dill
 import numpy as np
 
 from .query_sampling_strategies.ImitationLearningBaseQuerySampler import (
