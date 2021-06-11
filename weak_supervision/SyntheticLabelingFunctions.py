@@ -3,9 +3,9 @@ import random
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 from typing import List, TYPE_CHECKING
-
+from math import ceil
 from active_learning.logger.logger import log_it
 from .LabelingFunctions import (
     LabelConfidence,
@@ -28,9 +28,22 @@ class SyntheticLabelingFunctions(LabelingFunctions):
     restricted_features: List[int]
     model: str
 
-    def __init__(self, X: "FeatureList", Y: "LabelList", error_factor: float = 0.9):
+    def __init__(
+        self,
+        X: "FeatureList",
+        Y: "LabelList",
+        AMOUNT_OF_LF_FEATURES: Union[str, float] = "rand",
+        LF_CLASSIFIER: str = "rand",
+        ABSTAIN_THRESHOLD: Union[str, float] = "rand",
+    ):
         self.cost = 0
-        self._compute_labeling_function(X, Y, error_factor=error_factor)
+        self._compute_labeling_function(
+            X,
+            Y,
+            AMOUNT_OF_LF_FEATURES=AMOUNT_OF_LF_FEATURES,
+            LF_CLASSIFIER=LF_CLASSIFIER,
+            ABSTAIN_THRESHOLD=ABSTAIN_THRESHOLD,
+        )
 
     def labeling_function(
         self, query_indices: "IndiceMask", data_storage: "DataStorage"
@@ -51,8 +64,9 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         self,
         X: "FeatureList",
         Y: "LabelList",
-        error_factor: float,
-        MAX_AMOUNT_OF_FOCUSSED_FEATURES: int = 10,
+        AMOUNT_OF_LF_FEATURES: Union[str, float],
+        LF_CLASSIFIER: str,
+        ABSTAIN_THRESHOLD: Union[float, str],
     ) -> None:
         """number_of_features: int = random.choices(
             population=range(0, X.shape[1]),
@@ -60,12 +74,16 @@ class SyntheticLabelingFunctions(LabelingFunctions):
             k=1,
         )[0]"""
 
-        self.model = random.sample(["dt", "lr", "knn"], k=1)[0]
+        if LF_CLASSIFIER == "rand":
+            self.model = random.sample(["dt", "lr", "knn"], k=1)[0]
+        else:
+            self.model = LF_CLASSIFIER
 
         # focus on a maximum of 3 features
-        number_of_features: int = random.randint(
-            1, min(MAX_AMOUNT_OF_FOCUSSED_FEATURES, X.shape[1])
-        )
+        if AMOUNT_OF_LF_FEATURES == "rand":
+            number_of_features: int = random.randint(1, X.shape[1])
+        else:
+            number_of_features = ceil(AMOUNT_OF_LF_FEATURES * X.shape[1])  # type: ignore
 
         self.restricted_features = random.sample(
             [i for i in range(0, X.shape[1])], k=number_of_features
@@ -92,8 +110,12 @@ class SyntheticLabelingFunctions(LabelingFunctions):
             clf.fit(X[:, self.restricted_features], Y)  # type: ignore
 
         self.clf = clf  # type: ignore
+
         # calculate a random threshold under which the lf abstains
-        self.abstain_threshold = random.random()
+        if ABSTAIN_THRESHOLD == "rand":
+            self.abstain_threshold = random.random()
+        else:
+            self.abstain_threshold = ABSTAIN_THRESHOLD  # type: ignore
 
         self.identifier = (
             "L_"
