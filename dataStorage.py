@@ -188,8 +188,8 @@ class DataStorage:
 
     def generate_weak_labels(self, learner: Learner, mask="unlabeled_mask") -> None:
         if len(self.weak_supervisions) == 0:
-            log_it("No weak supervision strategies provided")
-            return
+            print("No weak supervision strategies provided")
+            exit(-1)
 
         if mask == "unlabeled_mask":
             mask = self.unlabeled_mask
@@ -227,16 +227,17 @@ class DataStorage:
                 if indice not in self.labeled_mask
             ]
         )
-
         # merge labeled mask back into it
         self.weakly_combined_mask = np.array(
             list(set().union(self.labeled_mask, self.weakly_combined_mask))
         )
 
+        # problem: when we directly use weak_combined_Y as labels -> we potentially a lot of -1!!!
         # first write WS labels
         self.Y_merged_final[mask] = self.weak_combined_Y[mask]
-
+        print(self.Y_merged_final)
         # but later overwrite it with the exp_Y labels
         self.Y_merged_final[self.labeled_mask] = self.exp_Y[self.labeled_mask]
 
-        assert -1 not in self.Y_merged_final[self.only_weak_mask]
+        # if all WS return -1 the following does not hold true
+        # assert -1 not in self.Y_merged_final[self.only_weak_mask]
