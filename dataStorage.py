@@ -235,7 +235,7 @@ class DataStorage:
         # problem: when we directly use weak_combined_Y as labels -> we potentially a lot of -1!!!
         # first write WS labels
         self.Y_merged_final[mask] = self.weak_combined_Y[mask]
-        print(self.Y_merged_final)
+
         # but later overwrite it with the exp_Y labels
         self.Y_merged_final[self.labeled_mask] = self.exp_Y[self.labeled_mask]
 

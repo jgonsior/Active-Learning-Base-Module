@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 class RandomLabelMergeStrategy(BaseMergeWeakSupervisionLabelStrategy):
     def merge(self, ws_labels_list: List["LabelList"]) -> "LabelList":
         merged_labels = []
-        for i in range(0, len(ws_labels_list[0])):
-            merged_labels[i] = random.choice(ws_labels_list)[i]
+
+        for i in range(0, len(ws_labels_list)):
+            merged_labels.append(random.choice(ws_labels_list[i]))
         return np.array(merged_labels)
