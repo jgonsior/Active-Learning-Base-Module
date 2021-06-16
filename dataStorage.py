@@ -29,7 +29,7 @@ class DataStorage:
     X: FeatureList
     Y_merged_final: LabelList  # the final label, merged from human_expert_Y and weak_combined_Y -> this is the stuff which trains the AL-model
     human_expert_Y: LabelList  # those who come from the human oracle
-    exp_Y: LabelList  # those who are known from the beginning in an experiment setting
+    true_Y: LabelList  # those who are known from the beginning in an experiment setting
     weak_combined_Y: LabelList  # the merged labels from all the weak supervision sources
     costs_spend: int = 0
     merge_weak_supervision_label_strategy: Optional[
@@ -48,7 +48,7 @@ class DataStorage:
         )
 
         self.X = df.loc[:, df.columns != "label"].to_numpy()  # type: ignore
-        self.exp_Y = df["label"].to_numpy().reshape(len(self.X))
+        self.true_Y = df["label"].to_numpy().reshape(len(self.X))
 
         self.label_encoder: LabelEncoder = LabelEncoder()
         # feature normalization
@@ -58,11 +58,11 @@ class DataStorage:
         # scale back to [0,1]
         scaler = MinMaxScaler()
         self.X = scaler.fit_transform(self.X)
-        self.label_source = np.full(len(self.exp_Y), "N")
+        self.label_source = np.full(len(self.true_Y), "N")
 
         # check if we are in an experiment setting or are dealing with real, unlabeled data
         if -1 in df["label"]:
-            self.Y_merged_final = self.exp_Y
+            self.Y_merged_final = self.true_Y
             # no experiment, we have already some real labels
             self.unlabeled_mask = np.argwhere(pd.isnull(self.Y_merged_final)).flatten()  # type: ignore
             self.labeled_mask = np.argwhere(~pd.isnull(self.Y_merged_final)).flatten()  # type: ignore
@@ -80,33 +80,33 @@ class DataStorage:
 
             self.Y_merged_final[pd.isnull(self.Y_merged_final)] = -1
             self.human_expert_Y = self.Y_merged_final
-            self.exp_Y = self.Y_merged_final
+            self.true_Y = self.Y_merged_final
 
         else:
             # ignore nan as labels
-            self.exp_Y = self.label_encoder.fit_transform(
-                self.exp_Y[~np.isnan(self.exp_Y)]
+            self.true_Y = self.label_encoder.fit_transform(
+                self.true_Y[~np.isnan(self.true_Y)]
             )
 
             # split into test, train_labeled, train_unlabeled
             # experiment setting apparently
 
             self.unlabeled_mask = np.arange(
-                math.floor(len(self.exp_Y) * self.TEST_FRACTION), len(self.exp_Y)
+                math.floor(len(self.true_Y) * self.TEST_FRACTION), len(self.true_Y)
             )
 
             # prevent that the first split contains not all labels in the training split, so we just shuffle the data as long as we have every label in their
-            while len(np.unique(self.exp_Y[self.unlabeled_mask])) != len(
+            while len(np.unique(self.true_Y[self.unlabeled_mask])) != len(
                 self.label_encoder.classes_  # type: ignore
             ):
-                new_shuffled_indices = np.random.permutation(len(self.exp_Y))
+                new_shuffled_indices = np.random.permutation(len(self.true_Y))
                 self.exp_X = self.X[new_shuffled_indices]
-                self.exp_Y = self.exp_Y[new_shuffled_indices]
+                self.true_Y = self.true_Y[new_shuffled_indices]
                 self.unlabeled_mask = np.arange(
-                    math.floor(len(self.exp_Y) * self.TEST_FRACTION), len(self.exp_Y)
+                    math.floor(len(self.true_Y) * self.TEST_FRACTION), len(self.true_Y)
                 )
             self.test_mask = np.arange(
-                0, math.floor(len(self.exp_Y) * self.TEST_FRACTION)
+                0, math.floor(len(self.true_Y) * self.TEST_FRACTION)
             )
             self.labeled_mask = np.empty(0, dtype=np.int64)
 
@@ -132,7 +132,7 @@ class DataStorage:
                 # move more data here from the classes not present
                 for label in labels_not_in_start_set:
                     # select a random sample of this labelwhich is NOT yet labeled
-                    random_index = np.where(self.exp_Y[self.unlabeled_mask] == label)[
+                    random_index = np.where(self.true_Y[self.unlabeled_mask] == label)[
                         0
                     ][0]
 
@@ -185,7 +185,7 @@ class DataStorage:
         self.costs_spend += len(query_indices)
 
     def get_experiment_labels(self, query_indice: IndiceMask) -> LabelList:
-        return self.exp_Y[query_indice]
+        return self.true_Y[query_indice]
 
     def generate_weak_labels(self, learner: Learner, mask="unlabeled_mask") -> None:
         if len(self.weak_supervisions) == 0:
@@ -239,8 +239,8 @@ class DataStorage:
         # first write WS labels
         self.Y_merged_final[mask] = self.weak_combined_Y[mask]
 
-        # but later overwrite it with the exp_Y labels
-        self.Y_merged_final[self.labeled_mask] = self.exp_Y[self.labeled_mask]
+        # but later overwrite it with the true_Y labels
+        self.Y_merged_final[self.labeled_mask] = self.true_Y[self.labeled_mask]
 
         # if all WS return -1 the following does not hold true
         # assert -1 not in self.Y_merged_final[self.only_weak_mask]
