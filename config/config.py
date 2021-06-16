@@ -17,7 +17,7 @@ def standard_config(
 ) -> Union[argparse.Namespace, Tuple[argparse.Namespace, argparse.ArgumentParser]]:
     parser = argparse.ArgumentParser()
     if standard_args:
-        parser.add_argument("--DATASETS_PATH", default="../datasets/")
+        parser.add_argument("--DATASETS_PATH", default="~/datasets")
         parser.add_argument(
             "--CLASSIFIER",
             default="RF",
