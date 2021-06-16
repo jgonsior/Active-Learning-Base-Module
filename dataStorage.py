@@ -32,9 +32,8 @@ class DataStorage:
     true_Y: LabelList  # those who are known from the beginning in an experiment setting
     weak_combined_Y: LabelList  # the merged labels from all the weak supervision sources
     costs_spend: int = 0
-    merge_weak_supervision_label_strategy: Optional[
-        BaseMergeWeakSupervisionLabelStrategy
-    ]
+    merge_weak_supervision_label_strategy: BaseMergeWeakSupervisionLabelStrategy
+
 
     def __init__(
         self,

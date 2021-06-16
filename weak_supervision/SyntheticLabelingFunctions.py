@@ -11,6 +11,7 @@ from .LabelingFunctions import (
     LabelConfidence,
     LabelingFunctions,
 )
+from scipy.stats import loguniform
 
 if TYPE_CHECKING:
     from active_learning.dataStorage import (
@@ -19,30 +20,33 @@ if TYPE_CHECKING:
         IndiceMask,
         LabelList,
     )
+from active_learning.learner.standard import Learner
 
 
 class SyntheticLabelingFunctions(LabelingFunctions):
     identifier: str
-    abstain_threshold: float
-    clf: Any
+    ABSTAIN_THRESHOLD: float
+    LF_CLASSIFIER_NAME: str
+    AMOUNT_OF_LF_FEATURESSS: int
     restricted_features: List[int]
-    model: str
+    RANDOM_SEED:int
+    model: Learner
 
     def __init__(
         self,
         X: "FeatureList",
         Y: "LabelList",
-        AMOUNT_OF_LF_FEATURES: Union[str, float] = "rand",
-        LF_CLASSIFIER: str = "rand",
-        ABSTAIN_THRESHOLD: Union[str, float] = "rand",
+        RANDOM_SEED:int
     ):
         self.cost = 0
+
+        self.RANDOM_SEED = RANDOM_SEED
+        random.seed(RANDOM_SEED)
+        np.random.seed(RANDOM_SEED)
+
         self._compute_labeling_function(
             X,
             Y,
-            AMOUNT_OF_LF_FEATURES=AMOUNT_OF_LF_FEATURES,
-            LF_CLASSIFIER=LF_CLASSIFIER,
-            ABSTAIN_THRESHOLD=ABSTAIN_THRESHOLD,
         )
 
     def labeling_function(
@@ -50,13 +54,13 @@ class SyntheticLabelingFunctions(LabelingFunctions):
     ) -> Tuple["LabelList", LabelConfidence]:
         X = data_storage.X[query_indices]
 
-        if self.model in ["lr", "knn"]:
+        if self.LF_CLASSIFIER_NAME in ["lr", "knn"]:
             X = X[:, self.restricted_features]  # type: ignore
-        Y_pred = self.clf.predict(X)
-        Y_probas = self.clf.predict_proba(X)
+        Y_pred = self.model.predict(X)
+        Y_probas = self.model.predict_proba(X)
 
         # return abstain for those samples, for who we are not certain enough
-        Y_pred[Y_pred < self.abstain_threshold] = -1
+        Y_pred[Y_pred < self.ABSTAIN_THRESHOLD] = -1
 
         return Y_pred, Y_probas
 
@@ -64,62 +68,51 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         self,
         X: "FeatureList",
         Y: "LabelList",
-        AMOUNT_OF_LF_FEATURES: Union[str, float],
-        LF_CLASSIFIER: str,
-        ABSTAIN_THRESHOLD: Union[float, str],
     ) -> None:
-        """number_of_features: int = random.choices(
-            population=range(0, X.shape[1]),
-            weights=[i ** 10 for i in reversed(range(0, X.shape[1]))],
+        '''number_of_features: int = random.choices(
+            population=range(1, min(10, X.shape[1])),
+            weights=[i ** 10 for i in reversed(range(1, min(10, X.shape[1])))],
             k=1,
-        )[0]"""
+        )[0]'''
+        self.LF_CLASSIFIER_NAME = random.sample(["dt", "lr", "knn"], k=1)[0]
 
-        if LF_CLASSIFIER == "rand":
-            self.model = random.sample(["dt", "lr", "knn"], k=1)[0]
-        else:
-            self.model = LF_CLASSIFIER
-
-        # focus on a maximum of 3 features
-        if AMOUNT_OF_LF_FEATURES == "rand":
-            number_of_features: int = random.randint(1, X.shape[1])
-        else:
-            number_of_features = ceil(AMOUNT_OF_LF_FEATURES * X.shape[1])  # type: ignore
+        number_of_features: int = ceil(loguniform.rvs(a=0.01, b=0.5, size=1, random_state = self.RANDOM_SEED)*min(10, X.shape[1]))
 
         self.restricted_features = random.sample(
             [i for i in range(0, X.shape[1])], k=number_of_features
         )
+
+        self.AMOUNT_OF_LF_FEATURESSS = number_of_features
+
         log_it(
             "LF: "
-            + self.model
+            + self.LF_CLASSIFIER_NAME
             + " #"
             + str(number_of_features)
             + ": "
             + str(self.restricted_features)
         )
-        if self.model == "dt":
+        if self.LF_CLASSIFIER_NAME == "dt":
             # train a shallow decision tree focussing only on those two features
             clf = DecisionTreeClassifier(max_depth=number_of_features)
             clf.fit(X, Y)
-        elif self.model == "lr":
+        elif self.LF_CLASSIFIER_NAME == "lr":
             clf = LogisticRegression()
 
             # only use the two specified features
             clf.fit(X[:, self.restricted_features], Y)  # type: ignore
-        elif self.model == "knn":
+        elif self.LF_CLASSIFIER_NAME == "knn":
             clf = KNeighborsClassifier(algorithm="kd_tree")
             clf.fit(X[:, self.restricted_features], Y)  # type: ignore
 
-        self.clf = clf  # type: ignore
+        self.model = clf  # type: ignore
 
         # calculate a random threshold under which the lf abstains
-        if ABSTAIN_THRESHOLD == "rand":
-            self.abstain_threshold = random.random()
-        else:
-            self.abstain_threshold = ABSTAIN_THRESHOLD  # type: ignore
+        self.ABSTAIN_THRESHOLD = random.random()
 
         self.identifier = (
             "L_"
-            + self.model
+            + self.LF_CLASSIFIER_NAME
             + " #"
             + str(number_of_features)
             + ": "
