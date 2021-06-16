@@ -24,6 +24,7 @@ class DataStorage:
     test_mask: IndiceMask
     weakly_combined_mask: IndiceMask
     weak_supervisions: List[BaseWeakSupervision] = []
+    ws_labels_list: np.ndarray
 
     X: FeatureList
     Y_merged_final: LabelList  # the final label, merged from human_expert_Y and weak_combined_Y -> this is the stuff which trains the AL-model
@@ -205,10 +206,12 @@ class DataStorage:
         # to [[-1,-1,4,2], [-1,4,-1], …]
         ws_labels_array: np.ndarray = np.transpose(np.array(ws_labels_list))
 
+        self.ws_labels_list = ws_labels_array
+
         # magic
         self.weak_combined_Y[
             mask
-        ] = self.merge_weak_supervision_label_strategy.merge(  # type: ignore
+        ] = self.merge_weak_supervision_label_strategy.merge(
             ws_labels_array
         )
 
