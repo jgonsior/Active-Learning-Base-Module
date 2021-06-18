@@ -34,7 +34,6 @@ class DataStorage:
     costs_spend: int = 0
     merge_weak_supervision_label_strategy: BaseMergeWeakSupervisionLabelStrategy
 
-
     def __init__(
         self,
         df: pd.DataFrame,
@@ -208,9 +207,7 @@ class DataStorage:
         self.ws_labels_list = ws_labels_array
 
         # magic
-        self.weak_combined_Y[
-            mask
-        ] = self.merge_weak_supervision_label_strategy.merge(
+        self.weak_combined_Y[mask] = self.merge_weak_supervision_label_strategy.merge(
             ws_labels_array
         )
 

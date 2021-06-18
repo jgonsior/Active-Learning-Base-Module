@@ -29,15 +29,10 @@ class SyntheticLabelingFunctions(LabelingFunctions):
     LF_CLASSIFIER_NAME: str
     AMOUNT_OF_LF_FEATURESSS: int
     restricted_features: List[int]
-    RANDOM_SEED:int
+    RANDOM_SEED: int
     model: Learner
 
-    def __init__(
-        self,
-        X: "FeatureList",
-        Y: "LabelList",
-        RANDOM_SEED:int
-    ):
+    def __init__(self, X: "FeatureList", Y: "LabelList", RANDOM_SEED: int):
         self.cost = 0
 
         self.RANDOM_SEED = RANDOM_SEED
@@ -69,14 +64,17 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         X: "FeatureList",
         Y: "LabelList",
     ) -> None:
-        '''number_of_features: int = random.choices(
+        """number_of_features: int = random.choices(
             population=range(1, min(10, X.shape[1])),
             weights=[i ** 10 for i in reversed(range(1, min(10, X.shape[1])))],
             k=1,
-        )[0]'''
+        )[0]"""
         self.LF_CLASSIFIER_NAME = random.sample(["dt", "lr", "knn"], k=1)[0]
 
-        number_of_features: int = ceil(loguniform.rvs(a=0.01, b=0.5, size=1, random_state = self.RANDOM_SEED)*min(10, X.shape[1]))
+        number_of_features: int = ceil(
+            loguniform.rvs(a=0.01, b=0.5, size=1, random_state=self.RANDOM_SEED)
+            * min(10, X.shape[1])
+        )
 
         self.restricted_features = random.sample(
             [i for i in range(0, X.shape[1])], k=number_of_features
