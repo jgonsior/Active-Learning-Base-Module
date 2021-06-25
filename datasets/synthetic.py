@@ -13,6 +13,7 @@ def load_synthetic(
     no_valid_synthetic_arguments_found = True
     while no_valid_synthetic_arguments_found:
         log_it("Start finding synthetic dataset")
+
         N_SAMPLES = random.randint(100, 5000)
         N_FEATURES = random.randint(2, 100)
 
