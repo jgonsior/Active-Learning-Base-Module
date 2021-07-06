@@ -23,6 +23,7 @@ class DataStorage:
     labeled_mask: IndiceMask
     test_mask: IndiceMask
     weakly_combined_mask: IndiceMask
+    only_weak_mask: IndiceMask
     weak_supervisions: List[BaseWeakSupervision] = []
     ws_labels_list: np.ndarray
 
