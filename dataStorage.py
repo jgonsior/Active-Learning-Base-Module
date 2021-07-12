@@ -204,6 +204,7 @@ class DataStorage:
 
         # to [[-1,-1,4,2], [-1,4,-1], …]
         ws_labels_array: np.ndarray = np.transpose(np.array(ws_labels_list))
+        # print(ws_labels_array)
 
         self.ws_labels_list = ws_labels_array
 
@@ -212,7 +213,7 @@ class DataStorage:
             ws_labels_array
         )
 
-        # print(self.weak_combined_Y)
+        # print(self.weak_combined_Y[mask])
 
         # extract from self.weak_combined_Y only those who have not -1 and add them to the mask
         self.weakly_combined_mask = np.array(
@@ -235,9 +236,10 @@ class DataStorage:
         # problem: when we directly use weak_combined_Y as labels -> we potentially a lot of -1!!!
         # first write WS labels
         self.Y_merged_final[mask] = self.weak_combined_Y[mask]
+        # print(self.Y_merged_final[mask])
 
         # but later overwrite it with the true_Y labels
         self.Y_merged_final[self.labeled_mask] = self.true_Y[self.labeled_mask]
-
+        # print(self.Y_merged_final[mask])
         # if all WS return -1 the following does not hold true
         # assert -1 not in self.Y_merged_final[self.only_weak_mask]

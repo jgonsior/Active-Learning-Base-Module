@@ -55,7 +55,7 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         Y_probas = self.model.predict_proba(X)
 
         # return abstain for those samples, for who we are not certain enough
-        Y_pred[Y_pred < self.ABSTAIN_THRESHOLD] = -1
+        Y_pred[np.where(np.max(Y_probas, axis=1) < self.ABSTAIN_THRESHOLD)] = -1
 
         return Y_pred, Y_probas
 
@@ -106,6 +106,8 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         self.model = clf  # type: ignore
 
         # calculate a random threshold under which the lf abstains
+        # but only thresholds which don't default to "no" at all times ar accepted
+
         self.ABSTAIN_THRESHOLD = random.random()
 
         self.identifier = (

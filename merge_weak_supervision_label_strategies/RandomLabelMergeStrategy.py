@@ -15,5 +15,6 @@ class RandomLabelMergeStrategy(BaseMergeWeakSupervisionLabelStrategy):
         merged_labels = []
 
         for i in range(0, len(ws_labels_list)):
-            merged_labels.append(random.choice(ws_labels_list[i]))
+            rand_choice = random.choice(ws_labels_list[i])
+            merged_labels.append(rand_choice)
         return np.array(merged_labels)
