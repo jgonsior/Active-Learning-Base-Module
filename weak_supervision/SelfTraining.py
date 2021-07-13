@@ -4,7 +4,7 @@ import numpy as np
 from typing import Dict, TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
-    from active_learning.dataStorage import IndiceMask, LabelList
+    from active_learning.dataStorage import IndiceMask, LabelList, FeatureList
     from active_learning.dataStorage import DataStorage
 
 
@@ -25,13 +25,11 @@ class SelfTraining(BaseWeakSupervision):
 
         self.identifier += "_" + str(CERTAINTY_THRESHOLD) + "_" + str(CERTAINTY_RATIO)
 
-    def get_labels(
-        self, query_indices: "IndiceMask", data_storage: "DataStorage", learner: Learner
-    ) -> "LabelList":
+    def get_labels(self, X: "FeatureList", learner: Learner) -> "LabelList":
         # calculate certainties for all of X_train_unlabeled
-        certainties = learner.predict_proba(data_storage.X[query_indices])
+        certainties = learner.predict_proba(X)
 
-        Y_pred = learner.predict((data_storage.X[query_indices]))
+        Y_pred = learner.predict(X)
 
         Y_pred[Y_pred > self.CERTAINTY_THRESHOLD] = -1
 

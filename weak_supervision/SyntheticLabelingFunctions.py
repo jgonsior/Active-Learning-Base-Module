@@ -45,9 +45,9 @@ class SyntheticLabelingFunctions(LabelingFunctions):
         )
 
     def labeling_function(
-        self, query_indices: "IndiceMask", data_storage: "DataStorage"
+        self,
+        X: "FeatureList",
     ) -> Tuple["LabelList", LabelConfidence]:
-        X = data_storage.X[query_indices]
 
         if self.LF_CLASSIFIER_NAME in ["lr", "knn"]:
             X = X[:, self.restricted_features]  # type: ignore

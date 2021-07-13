@@ -186,6 +186,25 @@ class DataStorage:
     def get_experiment_labels(self, query_indice: IndiceMask) -> LabelList:
         return self.true_Y[query_indice]
 
+    def _classify_using_ws_and_merge(
+        self, learner: Learner, X: FeatureList
+    ) -> LabelList:
+        # store in weak_combined_Y
+        # merge together with human_expert_Y into Y
+        ws_labels_list: List[LabelList] = []
+        for weak_supervision in self.weak_supervisions:
+            ws_labels_list.append(weak_supervision.get_labels(X, learner))
+
+        # convert from [array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.])]
+
+        # to [[-1,-1,4,2], [-1,4,-1], …]
+        ws_labels_array: np.ndarray = np.transpose(np.array(ws_labels_list))
+
+        self.ws_labels_list = ws_labels_array
+
+        # magic
+        return self.merge_weak_supervision_label_strategy.merge(ws_labels_array)
+
     def generate_weak_labels(self, learner: Learner, mask="unlabeled_mask") -> None:
         if len(self.weak_supervisions) == 0:
             print("No weak supervision strategies provided")
@@ -194,25 +213,9 @@ class DataStorage:
         if mask == "unlabeled_mask":
             mask = self.unlabeled_mask
 
-        # store in weak_combined_Y
-        # merge together with human_expert_Y into Y
-        ws_labels_list: List[LabelList] = []
-        for weak_supervision in self.weak_supervisions:
-            ws_labels_list.append(weak_supervision.get_labels(mask, self, learner))
-
-        # convert from [array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.]), array([-1., -1., -1., ..., -1., -1., -1.])]
-
-        # to [[-1,-1,4,2], [-1,4,-1], …]
-        ws_labels_array: np.ndarray = np.transpose(np.array(ws_labels_list))
-        # print(ws_labels_array)
-
-        self.ws_labels_list = ws_labels_array
-
-        # magic
-        self.weak_combined_Y[mask] = self.merge_weak_supervision_label_strategy.merge(
-            ws_labels_array
+        self.weak_combined_Y[mask] = self._classify_using_ws_and_merge(
+            learner, self.X[mask]
         )
-
         # print(self.weak_combined_Y[mask])
 
         # extract from self.weak_combined_Y only those who have not -1 and add them to the mask
