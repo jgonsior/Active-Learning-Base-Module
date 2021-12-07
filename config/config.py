@@ -121,6 +121,7 @@ def get_active_config(
             (["--WS_MODE"], {"action": "store_true"}),
             (["--USE_WS_LABELS_CONTINOUSLY"], {"action": "store_true"}),
             (["--ANDREAS"], {"default": "None"}),
+            (["--ANDREAS_NUMBER"], {"type": int, "default": -1}),
             *additional_parameters,
         ],
         return_argparse=return_parser,

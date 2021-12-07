@@ -4,7 +4,7 @@ from sklearn.preprocessing import LabelEncoder
 
 def load_dwtc(DATASETS_PATH: str, RANDOM_SEED: int) -> pd.DataFrame:
 
-    df = pd.read_csv(DATASETS_PATH + "dwtc/aft.csv")
+    df = pd.read_csv(DATASETS_PATH + "/uci_cleaned/dwtc.csv")
 
     # shuffle df
     df = df.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
