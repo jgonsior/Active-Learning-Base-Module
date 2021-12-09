@@ -84,6 +84,7 @@ def get_active_config(
             (["--REPRESENTATIVE_FEATURES"], {"action": "store_true"}),
             (["--STOP_AFTER_MAXIMUM_ACCURACY_REACHED"], {"action": "store_true"}),
             (["--STATE_DIFF_PROBAS"], {"action": "store_true"}),
+            (["--STATE_ARGFIRST_PROBAS"], {"action": "store_true"}),
             (["--STATE_ARGSECOND_PROBAS"], {"action": "store_true"}),
             (["--STATE_ARGTHIRD_PROBAS"], {"action": "store_true"}),
             (["--STATE_DISTANCES_LAB"], {"action": "store_true"}),
