@@ -40,7 +40,6 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
         Y = pd.read_csv(
             os.path.dirname(NN_BINARY_PATH) + "/01_expert_actions_Y.csv", nrows=10
         )
-
         keras_model = keras.models.load_model(NN_BINARY_PATH)
 
         with open(NN_BINARY_PATH + "/params.json", "r") as f:
@@ -56,9 +55,29 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
             exit(-1)
 
         model = wrapper(keras_model)  # type: ignore
+
+        # if state reduction -> reduce X to correct dimensions!
+        print(X)
+
+        exclusion_translation = {
+            "state_argfirst_probas": "proba_argfirst",
+            "state_argsecond_probas": "proba_argsecond",
+            "state_argthird_probas": "proba_argthird",
+            "state_diff_probas": "??",
+            "state_predicted_class": "??",
+            "state_distances_lab": "proba_avg_dist_lab",
+            "state_distances_unlab": "proba_avg_dist_unlab",
+            "state_include_nr_features": "??",
+        }
+
+        for k, v in kwargs.items():
+            if k.startswith("STATE_") and v == False:
+                # remove these state columns
+                X = X.loc[:, ~X.columns.str.endswith(exclusion_translation[k.lower()])]
+        print(X)
         model.initialize(X, Y)
 
-        self.scaler = joblib.load(NN_BINARY_PATH + "/scaler.gz")
+        # self.scaler = joblib.load(NN_BINARY_PATH + "/scaler.gz")
 
         # with open(NN_BINARY_PATH, "rb") as handle:
         #    model = pickle.load(handle)
@@ -67,7 +86,7 @@ class TrainedImitALSampler(ImitationLearningBaseQuerySampler):
 
     def applyNN(self, X_input_state: InputState) -> OutputState:
         X_state = np.reshape(X_input_state, (1, len(X_input_state)))
-        X_state = self.scaler.transform(X_state)
+        X_state = X_state  # self.scaler.transform(X_state)
         Y_pred: OutputState = self.sampling_classifier.predict(X_state)
         return Y_pred
 

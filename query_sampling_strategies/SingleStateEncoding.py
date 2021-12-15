@@ -12,6 +12,7 @@ import math
 
 
 class SingleStateEncoding(ImitationLearningBaseQuerySampler):
+    STATE_ARGFIRST_PROBAS: bool
     STATE_ARGSECOND_PROBAS: bool
     STATE_ARGTHIRD_PROBAS: bool
     STATE_DIFF_PROBAS: bool
@@ -22,6 +23,7 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
 
     def __init__(
         self,
+        STATE_ARGFIRST_PROBAS: bool = True,
         STATE_ARGSECOND_PROBAS: bool = False,
         STATE_ARGTHIRD_PROBAS: bool = False,
         STATE_DIFF_PROBAS: bool = False,
@@ -34,6 +36,7 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
     ) -> None:
         super().__init__(*args, **kwargs)
 
+        self.STATE_ARGFIRST_PROBAS = STATE_ARGFIRST_PROBAS
         self.STATE_ARGSECOND_PROBAS = STATE_ARGSECOND_PROBAS
         self.STATE_ARGTHIRD_PROBAS = STATE_ARGTHIRD_PROBAS
         self.STATE_DIFF_PROBAS = STATE_DIFF_PROBAS
@@ -45,6 +48,7 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
     def pre_sample_potential_X_queries(
         self,
     ) -> PreSampledIndices:
+
         if self.PRE_SAMPLING_METHOD == "random":
             if self.AMOUNT_OF_PEAKED_OBJECTS > len(self.data_storage.unlabeled_mask):
                 replace = True
@@ -71,6 +75,7 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
                     size=self.AMOUNT_OF_PEAKED_OBJECTS,
                     replace=replace,
                 )
+
                 random_sample = self.data_storage.X[random_index]
 
                 # calculate distance to each other
@@ -79,14 +84,14 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
                         random_sample, random_sample, metric=self.DISTANCE_METRIC
                     )
                 )
-
                 total_distance += np.sum(
                     pairwise_distances(
-                        random_sample,
                         self.data_storage.X[self.data_storage.labeled_mask],
+                        random_sample,
                         metric=self.DISTANCE_METRIC,
                     )
                 )
+
                 if total_distance > max_sum:
                     max_sum = total_distance
                     X_query_index = random_index
@@ -110,7 +115,10 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
         sorted_probas = -np.sort(-possible_samples_probas, axis=1)  # type: ignore
         argmax_probas = sorted_probas[:, 0]
 
-        state_list: List[float] = list(argmax_probas.tolist())
+        state_list: List[float] = list()
+
+        if self.STATE_ARGFIRST_PROBAS:
+            state_list += argmax_probas.tolist()
 
         if self.STATE_ARGSECOND_PROBAS:
             argsecond_probas = sorted_probas[:, 1]
@@ -127,11 +135,12 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
 
         if self.STATE_DISTANCES_LAB:
             # calculate average distance to labeled and average distance to unlabeled samples
-            normalization_denominator = (
+            """normalization_denominator = (
                 2
                 * math.sqrt(self.data_storage.X.shape[1])
                 * len(self.data_storage.labeled_mask)
-            )
+            )"""
+            normalization_denominator = len(self.data_storage.labeled_mask)
 
             average_distance_labeled = (
                 np.sum(
@@ -149,11 +158,12 @@ class SingleStateEncoding(ImitationLearningBaseQuerySampler):
 
         if self.STATE_DISTANCES_UNLAB:
             # calculate average distance to labeled and average distance to unlabeled samples
-            normalization_denominator = (
+            """normalization_denominator = (
                 2
                 * math.sqrt(self.data_storage.X.shape[1])
                 * len(self.data_storage.unlabeled_mask)
-            )
+            )"""
+            normalization_denominator = len(self.data_storage.unlabeled_mask)
 
             average_distance_unlabeled = (
                 np.sum(

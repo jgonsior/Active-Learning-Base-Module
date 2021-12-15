@@ -82,11 +82,11 @@ class ImitationLearner(ImitationLearningBaseQuerySampler):
 
         copy_of_classifier.fit(
             self.data_storage.X[copy_of_labeled_mask],
-            self.data_storage.Y_merged_final[copy_of_labeled_mask],
+            self.data_storage.true_Y[copy_of_labeled_mask],
         )
 
         Y_pred_test = copy_of_classifier.predict(self.data_storage.X)
-        Y_true = self.data_storage.Y_merged_final
+        Y_true = self.data_storage.true_Y
 
         accuracy_with_that_label = accuracy_score(Y_pred_test, Y_true)
 

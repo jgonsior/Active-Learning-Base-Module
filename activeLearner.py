@@ -85,7 +85,7 @@ class ActiveLearner:
         self.learner.fit(
             self.data_storage.X[mask],
             self.data_storage.Y_merged_final[mask],
-            sample_weight=weights,
+            # sample_weight=weights,
         )
 
     def al_cycle(

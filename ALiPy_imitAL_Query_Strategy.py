@@ -53,6 +53,13 @@ class ALiPY_ImitAL_Query_Strategy:
         del kwargs["data_storage"]
         params.update(kwargs)
 
+        for excluding_param in kwargs.keys():
+            if not excluding_param.startswith("EXCLUDING_"):
+                continue
+            del params[excluding_param]
+            if kwargs[excluding_param] == True:
+                params[excluding_param[10:]] = False
+
         self.trained_imitAL_sampler = TrainedImitALSingleSampler(**params)
 
         self.trained_imitAL_sampler.data_storage = data_storage
@@ -75,6 +82,7 @@ class ALiPY_ImitAL_Query_Strategy:
         X_input_state: InputState = self.trained_imitAL_sampler.encode_input_state(
             pre_sampled_X_querie_indices
         )
+
         Y_output_state: OutputState = self.trained_imitAL_sampler.applyNN(
             X_input_state
         )[0]
